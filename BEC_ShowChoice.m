@@ -29,7 +29,7 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
             trialinfo.Pupil = 0;
         end
         if ~isfield(trialinfo,'ITI') || isempty(trialinfo.ITI)
-            trialinfo.ITI = exp_settings.fixation_choice(1) + rand * (exp_settings.fixation_choice(2)-exp_settings.fixation_choice(1));
+            trialinfo.ITI = exp_settings.timings.fixation_choice(1) + rand * (exp_settings.timings.fixation_choice(2)-exp_settings.timings.fixation_choice(1));
         end
     %Keyboard
         leftKey = KbName('LeftArrow');
@@ -54,27 +54,27 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                 end
             end
         %Choicetype-specific features
-            switch typenames(trialinfo.choicetype)
+            switch typenames{trialinfo.choicetype}
                 case 'delay'
                     SSCostText = 'ne pas attendre';
-                    LLCost = round(trialinfo.Delay*exp_settings.MaxDelay); %Expressed in # of weeks
+                    LLCost = round(trialinfo.Cost*exp_settings.MaxDelay); %Expressed in # of weeks <=== revise this for months!!!2j
                     [LLCost,LLCostText] = ConvertToCalendar(LLCost);
                     LLCostText = ['attendre ce délai' newline newline '(' LLCostText ')'];
                 case 'risk'
                     SSCostText = 'ne pas prendre de risque';
-                    LLCost = round(trialinfo.Risk*exp_settings.MaxRisk,1);
+                    LLCost = round(trialinfo.Cost*exp_settings.MaxRisk,1);
                     LLCostText = ['prendre ce risque' newline newline '(' num2str(LLCost) '%)'];
                 case 'physical_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = round(trialinfo.Effort*exp_settings.Max_phys_effort);
+                    LLCost = round(trialinfo.Cost*exp_settings.Max_phys_effort); %When round: expresses effort as a discrete # of floors
                     LLCostText = ['monter ces escaliers' newline newline '(' num2str(LLCost) ')'];
                 case 'mental_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = round(trialinfo.Effort*exp_settings.Max_ment_effort);
-                    LLCostText = ['copier ces pages' newline newline '(' num2str(LLCost) ')'];
+                    LLCost = round(trialinfo.Cost*exp_settings.Max_ment_effort);
+                    LLCostText = ['copier ces pages' newline newline '(' num2str(LLCost) ')']; %When round: expresses effort as a discrete # of pages
             end       
     %Set drawing parameters
-        drawchoice.choicetype = typenames(trialinfo.choicetype);
+        drawchoice.choicetype = typenames{trialinfo.choicetype};
         drawchoice.example = trialinfo.Example;
         drawchoice.titletext = 'EXEMPLE: Préférez-vous...';
         drawchoice.confirmation = [];
@@ -89,14 +89,14 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                 drawchoice.costright  = LLCost; 
                 drawchoice.costrighttext = LLCostText;
             case 'right'
-                drawchoice.rewardright = SSReward; 
-                drawchoice.rewardrighttext = SSRewardText;
-                drawchoice.costright = 0; 
-                drawchoice.costrighttext = SSCostText;
                 drawchoice.rewardleft = exp_settings.MaxReward; 
                 drawchoice.rewardlefttext = LLRewardText;
                 drawchoice.costleft  = LLCost; 
                 drawchoice.costlefttext = LLCostText;
+                drawchoice.rewardright = SSReward; 
+                drawchoice.rewardrighttext = SSRewardText;
+                drawchoice.costright = 0; 
+                drawchoice.costrighttext = SSCostText;
         end
 
 %% Present screens       
@@ -104,7 +104,6 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         t_fix_on = clock;
         exitflag = BEC_Fixation(window,exp_settings,trialinfo.ITI);
         if exitflag; return; end %Terminate experiment if ESCAPE is pressed at the end of the fixation time
-        trialinfo.ITI = toc; %Update to the real fixation time
     %Pupil marker
 %         if trialinfo.pupil
 %             S10_Exp_PhysiologyMark(phys,'choice',trialinfo.trial)
@@ -112,7 +111,7 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
     %Display choice screen
         KbReleaseWait;  % wait until all keys are released before start with trial again.                        
         t_onset = DrawChoiceScreen(exp_settings,drawchoice,window);
-        WaitSecs(exp_settings.min_resp_time);  % minimum response time to avoid constant button presses by the participant without thinking            
+        WaitSecs(exp_settings.timings.min_resp_time);  % minimum response time to avoid constant button presses by the participant without thinking            
     %Monitor for response
         keyCode(LRQ) = 0; exitflag = 0;
         while keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0 % as long no button is pressed keep checking the keyboard
@@ -127,7 +126,7 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                 drawchoice.confirmation = 'left';
                 DrawChoiceScreen(exp_settings,drawchoice,window);                                    
             end
-            WaitSecs(exp_settings.show_response);  % show response before proceeding
+            WaitSecs(exp_settings.timings.show_response);  % show response before proceeding
         elseif keyCode(rightKey)
             resp = rightKey; 
             rt = etime(clock,t_onset); 
@@ -136,7 +135,7 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                 drawchoice.confirmation = 'right';
                 DrawChoiceScreen(exp_settings,drawchoice,window);                                      
             end
-            WaitSecs(exp_settings.show_response);  % show response before proceeding
+            WaitSecs(exp_settings.timings.show_response);  % show response before proceeding
         elseif keyCode(escapeKey) 
             exitflag = 1;
             resp = NaN;
@@ -153,35 +152,32 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         end
         trialinfo.RT = rt;        
     %Record the full trial info
-        trialinfo.SideSS = SideSS; %which side is the uncostly option
-        trialinfo.Example = Example; %no example trial
-        trialinfo.pupil = Pupil; %set pupil (for mark)
         trialinfo.LLReward = 1; %Reward for the costly option (default)
-        trialinfo.Choicetype = typenames{choicetype}; %name of the choice type
+        trialinfo.Choicetype = typenames{trialinfo.choicetype}; %name of the choice type
         switch trialinfo.choicetype
             case 1 %Delay
-                trialinfo.Delay = Cost;
+                trialinfo.Delay = trialinfo.Cost;
                 trialinfo.Risk = 0; 
                 trialinfo.PhysicalEffort = 0;
                 trialinfo.MentalEffort = 0;
                 trialinfo.Loss = 0;
             case 2 %Risk
                 trialinfo.Delay = 0;
-                trialinfo.Risk = Cost;
+                trialinfo.Risk = trialinfo.Cost;
                 trialinfo.PhysicalEffort = 0;
                 trialinfo.MentalEffort = 0;
                 trialinfo.Loss = 0;
             case 3 %Physical effort
                 trialinfo.Delay = 0;
                 trialinfo.Risk = 0;
-                trialinfo.PhysicalEffort = Cost;
+                trialinfo.PhysicalEffort = trialinfo.Cost;
                 trialinfo.MentalEffort = 0;
                 trialinfo.Loss = exp_settings.RiskLoss/exp_settings.MaxReward;
             case 4 %Mental effort
                 trialinfo.Delay = 0;
                 trialinfo.Risk = 0;
                 trialinfo.PhysicalEffort = 0;
-                trialinfo.MentalEffort = Cost;
+                trialinfo.MentalEffort = trialinfo.Cost;
                 trialinfo.Loss = 0;
         end
         trialinfo.ITI = etime(t_onset,t_fix_on); %fixation time before choice onset (seconds)
@@ -254,9 +250,9 @@ function [t_onset] = DrawChoiceScreen(exp_settings,drawchoice,window)
             case 'risk'
                 t_onset = DrawRiskCost(window,exp_settings,drawchoice);
             case 'physical_effort'
-                %...
+                t_onset = DrawPhysicalEffortCost(window,exp_settings,drawchoice);
             case 'mental_effort'
-                %...
+                t_onset = DrawMentalEffortCost(window,exp_settings,drawchoice);
         end %switch choicetype
 end %function
     
@@ -464,7 +460,7 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
                     arcAngle_proba = 360-riskangle;
                     Screen('FillArc',window,color_proba_arc,wheelrect,startAngle_proba,arcAngle_proba);
                 %Draw wheel
-                    Screen('FrameArc',window,linecolor,wheelrect,0,360,exp_settings.choicescreen.linewidth);
+                    Screen('FrameArc',window,exp_settings.choicescreen.linecolor,wheelrect,0,360,exp_settings.choicescreen.linewidth);
                 %Draw pointer 
                     if animation && riskangle ~= 0
                         points = [mean(wheelrect([1 3])) wheelrect(2);    %pointer tip
@@ -496,12 +492,12 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
                     %Center question mark or fixation cross    
                         Screen('TextSize',window,exp_settings.font.RewardFontSize); 
                         if drawchoice.example == 1
-                            DrawFormattedText(window, 'ou', 'center', 'center', exp_settings.exp_settings.font.ChoiceFontColors.white);
+                            DrawFormattedText(window, 'ou', 'center', 'center', exp_settings.font.ChoiceFontColor);
                         else
                             if isempty(drawchoice.confirmation)
-                                DrawFormattedText(window, '?', 'center', 'center', exp_settings.exp_settings.font.ChoiceFontColors.white);
+                                DrawFormattedText(window, '?', 'center', 'center', exp_settings.font.ChoiceFontColor);
                             else
-                                DrawFormattedText(window, '+', 'center', 'center', exp_settings.exp_settings.font.ChoiceFontColors.white);
+                                DrawFormattedText(window, '+', 'center', 'center', exp_settings.font.ChoiceFontColor);
                             end
                         end
                 %Confirmation rectangle
@@ -563,4 +559,177 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
             end
             anglecount = anglecount+1;
         end %while anglecount
+end
+
+%% Draw Physical effort cost
+function [t_onset] = DrawPhysicalEffortCost(window,exp_settings,drawchoice)
+%Settings for drawing two staircases:
+    nfloors = exp_settings.Max_phys_effort/2; %Number of floors per staircase
+    nsteps = 10;    %Number of steps per floor
+    steepness = 2/3;%The ratio of the first step's width / the floor width
+
+%Identify the rectangle ("box") inside of which the costs will be drawn
+    [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
+    if drawchoice.example
+        rect_leftbox = exp_settings.choicescreen.costbox_left_example .* screensize;
+        rect_rightbox = exp_settings.choicescreen.costbox_right_example .* screensize;
+    else
+        rect_leftbox = exp_settings.choicescreen.costbox_left .* screensize;
+        rect_rightbox = exp_settings.choicescreen.costbox_right .* screensize;
+    end
+
+%Get the rectangle coordinates
+    %Get the staircase coordinates relative to the top left coordinate of the cost box
+        Y = rect_leftbox(4)-rect_leftbox(2);    %Total height of the cost box
+        X = rect_leftbox(3)-rect_leftbox(1);    %Total width of the cost box
+        h = Y/nfloors;  %height of one floor
+        w = X/5;        %width of one floor (given that there are two staircases)        
+        h_i = [(nfloors*nsteps:-1:1)' (nfloors*nsteps-1:-1:0)'].*(h/nsteps);%[y1 y2] coordinates of all steps  
+        b_i_left = ((1-steepness):(steepness/nsteps):1).*w;
+            b_i_left = [b_i_left(1:nsteps)' b_i_left(end).*ones(nsteps,1)]; %[x1 x2] coordinates of the left-side steps of the first staircase
+        b_i_right = (1+(0:(steepness/nsteps):steepness)).*w;
+            b_i_right = [b_i_right(1).*ones(nsteps,1) b_i_right(2:end)'];   %[x1 x2] coordinates of the right-side steps of the first staircase
+        b_i = [repmat([b_i_left; b_i_right],floor(nfloors/2),1);
+            repmat(b_i_left,rem(nfloors,2),1)];                             %[x1 x2] coordinates of all steps from the first staircase
+        staircases = [b_i(:,1) h_i(:,1) b_i(:,2) h_i(:,2);  %coordinates of the first staircase
+            b_i(:,1)+3*w h_i(:,1) b_i(:,2)+3*w h_i(:,2)]';  %coordinates of the second staircase
+    %Get the coordinates of the floors
+        draw_floors = 1:2*nfloors;
+            draw_floors = draw_floors(~ismember(draw_floors,[nfloors,2*nfloors]))*nsteps;
+        floors = staircases([1 4 3 4],draw_floors);
+    %Get the coordinates of the stairwells
+        stairwells = [0 0 2*w Y; 3*w 0 5*w Y]';
+        
+%Colors of the staircases' steps
+    left_coststeps = round(drawchoice.costleft*nsteps*nfloors*2);
+    right_coststeps = round(drawchoice.costright*nsteps*nfloors*2);
+    color_left = [repmat(exp_settings.choicescreen.fillcolor',1,left_coststeps) ...        %red: the steps corresponding to the cost level
+        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-left_coststeps)]; %white: the steps above the cost level
+    color_right = [repmat(exp_settings.choicescreen.fillcolor',1,right_coststeps) ...      %red: the steps corresponding to the cost level
+        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-right_coststeps)];%white: the steps above the cost level
+        
+%Draw two calendars
+    for side = 1:2
+        if side == 1 %left
+            %Fill the staircase rects
+                rects_left_staircases = staircases + rect_leftbox([1 2 1 2])';
+                Screen('FillRect',window,color_left,rects_left_staircases);
+            %Draw the floors
+                rects_left_floors = floors + rect_leftbox([1 2 1 2])';
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_floors,exp_settings.choicescreen.linewidth);
+            %Draw the staircases
+                rects_left_stairwells = stairwells + rect_leftbox([1 2 1 2])';
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_stairwells,exp_settings.choicescreen.linewidth);
+        else %right
+            %Fill the staircase rects
+                rects_right_staircases = staircases + rect_rightbox([1 2 1 2])';
+                Screen('FillRect',window,color_right,rects_right_staircases);
+            %Draw the floors
+                rects_right_floors = floors + rect_rightbox([1 2 1 2])';
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_floors,exp_settings.choicescreen.linewidth);
+            %Draw the staircases
+                rects_right_stairwells = stairwells + rect_rightbox([1 2 1 2])';
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_stairwells,exp_settings.choicescreen.linewidth);
+        end %if side
+    end %for side
+    
+%Flip
+    t_onset = clock;
+    Screen('Flip', window); 
+end
+
+%% Draw Mental effort cost
+function [t_onset] = DrawMentalEffortCost(window,exp_settings,drawchoice)
+%Settings for drawing the pages
+    nrows = floor(sqrt(exp_settings.Max_ment_effort));  %Number of rows of pages
+    ncols = ceil(sqrt(exp_settings.Max_ment_effort));   %Numbers of columns of pages
+    if rem(nrows*ncols,exp_settings.Max_ment_effort)>0
+        ncols = ncols+1;
+    end
+    density = 3/4;      %Total vertical area of the pages w.r.t. the cost box height
+    page_AR = 210/297;  %Aspect ratio of an A4 sheet of paper
+    margin = 0.1;       %Width of the text margin w.r.t. the page dimensions
+    nlines = 8;         %Lines on the page
+
+%Identify the rectangle ("box") inside of which the costs will be drawn
+    [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
+    if drawchoice.example
+        rect_leftbox = exp_settings.choicescreen.costbox_left_example .* screensize;
+        rect_rightbox = exp_settings.choicescreen.costbox_right_example .* screensize;
+    else
+        rect_leftbox = exp_settings.choicescreen.costbox_left .* screensize;
+        rect_rightbox = exp_settings.choicescreen.costbox_right .* screensize;
+    end
+
+%Get the rectangle coordinates
+    %Get the pages coordinates relative to the top left coordinate of the cost box
+        Y = rect_leftbox(4)-rect_leftbox(2);    %Total height of the cost box
+        X = rect_leftbox(3)-rect_leftbox(1);    %Total width of the cost box
+        h = density*Y/nrows;                    %height of a page
+        y_gap = (1-density)*Y/(nrows-1);        %vertical space between two pages
+        line_gap = h*(1-2*margin)/(nlines-1);   %vertical space between two lines
+        w = h * page_AR;                        %width of a page
+        x_gap = (X-ncols*w)/(ncols-1);          %horizontal space between two pages
+        pages = NaN(4,exp_settings.Max_ment_effort);
+        lines = NaN(4,nlines*exp_settings.Max_ment_effort);
+        for i_page = 1:size(pages,1) %Loop through all pages
+            %Get the page coordinates
+                i_row = ceil(i_page/ncols);
+                i_col = rem(i_page,ncols);
+                if i_col == 0; i_col = ncols; end
+                pages(1,i_page) = (i_col-1)*(w+x_gap);   %x1
+                pages(2,i_page) = (i_row-1)*(h+y_gap);   %y1
+                pages(3,i_page) = (i_col-1)*(w+x_gap)+w; %x2
+                pages(4,i_page) = (i_row-1)*(h+y_gap)+h; %y2
+            %Get the coordinates of the lines on the page
+                i_lines = (i_page-1)*nlines + (1:nlines);
+                lines(1,i_lines) = pages(1,i_page)+margin*w;
+                lines(3,i_lines) = pages(3,i_page)-margin*w;
+                lines([2 4],i_lines) = repmat((pages(2,i_page)+margin*h) : line_gap : (pages(4,i_page)-margin*h),2,1);
+        end        
+        
+%Colors of the pages
+    left_costpages = drawchoice.costleft*exp_settings.Max_ment_effort;
+    right_costpages = drawchoice.costleft*exp_settings.Max_ment_effort;
+    color_left = [repmat(exp_settings.choicescreen.fillcolor',1,floor(left_costpages)) ...      %red: the steps corresponding to the cost level
+        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-floor(left_costpages))];           %white: the steps above the cost level
+    color_right = [repmat(exp_settings.choicescreen.fillcolor',1,floor(right_costpages)) ...    %red: the steps corresponding to the cost level
+        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-floor(right_costpages))];          %white: the steps above the cost level
+        
+%Draw two calendars
+    for side = 1:2
+        if side == 1 %left
+            %Fill the pages' rects
+                rects_left_pages = pages + rect_leftbox([1 2 1 2])';
+                Screen('FillRect',window,color_left,rects_left_pages);
+                if left_costpages ~= floor(left_costpages) %If the number of pages is not an integer
+                    last_page_rect = rects_left_pages(:,ceil(left_costpages))';
+                    last_page_rect(4) = last_page_rect(2)+h*(left_costpages-ceil(left_costpages));
+                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
+                end
+            %Draw the page outlines
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_pages,exp_settings.choicescreen.linewidth);
+            %Draw the lines on the pages
+                rects_left_lines = lines + rect_leftbox([1 2 1 2])';
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_lines,exp_settings.choicescreen.linewidth);
+        else %right
+            %Fill the pages' rects
+                rects_right_pages = pages + rect_rightbox([1 2 1 2])';
+                Screen('FillRect',window,color_right,rects_right_pages);
+                if right_costpages ~= floor(right_costpages) %If the number of pages is not an integer
+                    last_page_rect = rects_right_pages(:,ceil(right_costpages))';
+                    last_page_rect(4) = last_page_rect(2)+h*(right_costpages-ceil(right_costpages));
+                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
+                end
+            %Draw the page outlines
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_pages,exp_settings.choicescreen.linewidth);
+            %Draw the lines on the pages
+                rects_right_lines = lines + rect_rightbox([1 2 1 2])';
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_lines,exp_settings.choicescreen.linewidth);
+        end %if side
+    end %for side
+    
+%Flip
+    t_onset = clock;
+    Screen('Flip', window); 
 end
