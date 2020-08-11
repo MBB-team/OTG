@@ -47,7 +47,7 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
             LLRewardText = sprintf('%.2f euros', exp_settings.MaxReward);
             LLLossText = sprintf('%.2f euros', exp_settings.RiskLoss);
             if trialinfo.Example
-                if strcmp(trialinfo.Choicetype,'risk')
+                if strcmp(typenames{trialinfo.choicetype},'risk')
                     LLRewardText = ['pour gagner ' LLRewardText ' ou perdre ' LLLossText];
                 else
                     LLRewardText = ['pour recevoir ' LLRewardText];
@@ -66,12 +66,12 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                     LLCostText = ['prendre ce risque' newline newline '(' num2str(LLCost) '%)'];
                 case 'physical_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = round(trialinfo.Cost*exp_settings.Max_phys_effort); %When round: expresses effort as a discrete # of floors
+                    LLCost = round(trialinfo.Cost*exp_settings.Max_phys_effort,1); 
                     LLCostText = ['monter ces escaliers' newline newline '(' num2str(LLCost) ')'];
                 case 'mental_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = round(trialinfo.Cost*exp_settings.Max_ment_effort);
-                    LLCostText = ['copier ces pages' newline newline '(' num2str(LLCost) ')']; %When round: expresses effort as a discrete # of pages
+                    LLCost = round(trialinfo.Cost*exp_settings.Max_ment_effort,1);
+                    LLCostText = ['copier ces pages' newline newline '(' num2str(LLCost) ')'];
             end       
     %Set drawing parameters
         drawchoice.choicetype = typenames{trialinfo.choicetype};
@@ -586,29 +586,30 @@ function [t_onset] = DrawPhysicalEffortCost(window,exp_settings,drawchoice)
         w = X/5;        %width of one floor (given that there are two staircases)        
         h_i = [(nfloors*nsteps:-1:1)' (nfloors*nsteps-1:-1:0)'].*(h/nsteps);%[y1 y2] coordinates of all steps  
         b_i_left = ((1-steepness):(steepness/nsteps):1).*w;
-            b_i_left = [b_i_left(1:nsteps)' b_i_left(end).*ones(nsteps,1)]; %[x1 x2] coordinates of the left-side steps of the first staircase
-        b_i_right = (1+(0:(steepness/nsteps):steepness)).*w;
-            b_i_right = [b_i_right(1).*ones(nsteps,1) b_i_right(2:end)'];   %[x1 x2] coordinates of the right-side steps of the first staircase
-        b_i = [repmat([b_i_left; b_i_right],floor(nfloors/2),1);
-            repmat(b_i_left,rem(nfloors,2),1)];                             %[x1 x2] coordinates of all steps from the first staircase
-        staircases = [b_i(:,1) h_i(:,1) b_i(:,2) h_i(:,2);  %coordinates of the first staircase
-            b_i(:,1)+3*w h_i(:,1) b_i(:,2)+3*w h_i(:,2)]';  %coordinates of the second staircase
+        b_i_right = 2*w-b_i_left;
+        b_i_left = [b_i_left(1:nsteps)' b_i_left(end).*ones(nsteps,1)]; %[x1 x2] coordinates of the left-side steps of the first staircase
+        b_i_right = [w.*ones(nsteps,1) b_i_right(1:nsteps)'];   %[x1 x2] coordinates of the right-side steps of the first staircase
+        b_i = [repmat([b_i_left; b_i_right],floor(nfloors/2),1); repmat(b_i_left,rem(nfloors,2),1)]; %[x1 x2] coordinates of all steps from the first staircase
+        staircases = [b_i(:,1) h_i(:,1) b_i(:,2) h_i(:,2);  %coordinates of the first staircase' steps
+            b_i(:,1)+3*w h_i(:,1) b_i(:,2)+3*w h_i(:,2)]';  %coordinates of the second staircase' steps
     %Get the coordinates of the floors
         draw_floors = 1:2*nfloors;
-            draw_floors = draw_floors(~ismember(draw_floors,[nfloors,2*nfloors]))*nsteps;
-        floors = staircases([1 4 3 4],draw_floors);
+            draw_floors = draw_floors(~ismember(draw_floors,[nfloors,2*nfloors]))*nsteps + 1; %The step numbers at which a floor must be drawn
+        floors = staircases([1 2 3 2],draw_floors);
+        floors([1,3],:) = round(floors([1,3],:)/w).*w;
+        floors(4,:) = floors(4,:)+1;
     %Get the coordinates of the stairwells
         stairwells = [0 0 2*w Y; 3*w 0 5*w Y]';
-        
+        spines = [w 0 w Y; 4*w 0 4*w Y]'; %Center of the stairwell
 %Colors of the staircases' steps
-    left_coststeps = round(drawchoice.costleft*nsteps*nfloors*2);
-    right_coststeps = round(drawchoice.costright*nsteps*nfloors*2);
+    left_coststeps = round(drawchoice.costleft*nsteps);
+    right_coststeps = round(drawchoice.costright*nsteps);
     color_left = [repmat(exp_settings.choicescreen.fillcolor',1,left_coststeps) ...        %red: the steps corresponding to the cost level
         repmat(exp_settings.colors.white',1,nsteps*nfloors*2-left_coststeps)]; %white: the steps above the cost level
     color_right = [repmat(exp_settings.choicescreen.fillcolor',1,right_coststeps) ...      %red: the steps corresponding to the cost level
         repmat(exp_settings.colors.white',1,nsteps*nfloors*2-right_coststeps)];%white: the steps above the cost level
         
-%Draw two calendars
+%Draw two staircases
     for side = 1:2
         if side == 1 %left
             %Fill the staircase rects
@@ -616,10 +617,15 @@ function [t_onset] = DrawPhysicalEffortCost(window,exp_settings,drawchoice)
                 Screen('FillRect',window,color_left,rects_left_staircases);
             %Draw the floors
                 rects_left_floors = floors + rect_leftbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_floors,exp_settings.choicescreen.linewidth);
+                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_floors);                
             %Draw the staircases
                 rects_left_stairwells = stairwells + rect_leftbox([1 2 1 2])';
                 Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_stairwells,exp_settings.choicescreen.linewidth);
+                if drawchoice.costleft ~= 0 %Draw the spines of the stairwells if the left side is the costly side
+                    L_spines = spines + rect_leftbox([1 2 1 2])';
+                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,L_spines(1),L_spines(2),L_spines(3),L_spines(4),exp_settings.choicescreen.linewidth);
+                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,L_spines(5),L_spines(6),L_spines(7),L_spines(8),exp_settings.choicescreen.linewidth);
+                end
         else %right
             %Fill the staircase rects
                 rects_right_staircases = staircases + rect_rightbox([1 2 1 2])';
@@ -630,6 +636,11 @@ function [t_onset] = DrawPhysicalEffortCost(window,exp_settings,drawchoice)
             %Draw the staircases
                 rects_right_stairwells = stairwells + rect_rightbox([1 2 1 2])';
                 Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_stairwells,exp_settings.choicescreen.linewidth);
+                if drawchoice.costright ~= 0 %Draw the spines of the stairwells if the right side is the costly side
+                    R_spines = spines + rect_rightbox([1 2 1 2])';
+                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,R_spines(1),R_spines(2),R_spines(3),R_spines(4),exp_settings.choicescreen.linewidth);
+                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,R_spines(5),R_spines(6),R_spines(7),R_spines(8),exp_settings.choicescreen.linewidth);
+                end
         end %if side
     end %for side
     
@@ -672,7 +683,7 @@ function [t_onset] = DrawMentalEffortCost(window,exp_settings,drawchoice)
         x_gap = (X-ncols*w)/(ncols-1);          %horizontal space between two pages
         pages = NaN(4,exp_settings.Max_ment_effort);
         lines = NaN(4,nlines*exp_settings.Max_ment_effort);
-        for i_page = 1:size(pages,1) %Loop through all pages
+        for i_page = 1:size(pages,2) %Loop through all pages
             %Get the page coordinates
                 i_row = ceil(i_page/ncols);
                 i_col = rem(i_page,ncols);
@@ -687,41 +698,40 @@ function [t_onset] = DrawMentalEffortCost(window,exp_settings,drawchoice)
                 lines(3,i_lines) = pages(3,i_page)-margin*w;
                 lines([2 4],i_lines) = repmat((pages(2,i_page)+margin*h) : line_gap : (pages(4,i_page)-margin*h),2,1);
         end        
+        lines(4,:) = lines(4,:)+1; %Thickness of the line
         
-%Colors of the pages
-    left_costpages = drawchoice.costleft*exp_settings.Max_ment_effort;
-    right_costpages = drawchoice.costleft*exp_settings.Max_ment_effort;
-    color_left = [repmat(exp_settings.choicescreen.fillcolor',1,floor(left_costpages)) ...      %red: the steps corresponding to the cost level
-        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-floor(left_costpages))];           %white: the steps above the cost level
-    color_right = [repmat(exp_settings.choicescreen.fillcolor',1,floor(right_costpages)) ...    %red: the steps corresponding to the cost level
-        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-floor(right_costpages))];          %white: the steps above the cost level
-        
-%Draw two calendars
+%Draw two sets of pages
     for side = 1:2
         if side == 1 %left
-            %Fill the pages' rects
-                rects_left_pages = pages + rect_leftbox([1 2 1 2])';
-                Screen('FillRect',window,color_left,rects_left_pages);
-                if left_costpages ~= floor(left_costpages) %If the number of pages is not an integer
-                    last_page_rect = rects_left_pages(:,ceil(left_costpages))';
-                    last_page_rect(4) = last_page_rect(2)+h*(left_costpages-ceil(left_costpages));
-                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
+            %Fill the cost pages
+                if drawchoice.costleft ~= 0 
+                    rects_left_pages = pages(:,1:floor(drawchoice.costleft)) + rect_leftbox([1 2 1 2])';
+                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,rects_left_pages);
+                    if drawchoice.costleft ~= floor(drawchoice.costleft) %If the number of pages is not an integer
+                        last_page_rect = pages(:,ceil(drawchoice.costleft))' + rect_leftbox([1 2 1 2]);
+                        last_page_rect(4) = last_page_rect(2)+h*(drawchoice.costleft-floor(drawchoice.costleft));
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
+                    end
                 end
             %Draw the page outlines
+                rects_left_pages = pages + rect_leftbox([1 2 1 2])';
                 Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_pages,exp_settings.choicescreen.linewidth);
             %Draw the lines on the pages
                 rects_left_lines = lines + rect_leftbox([1 2 1 2])';
                 Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_lines,exp_settings.choicescreen.linewidth);
         else %right
-            %Fill the pages' rects
-                rects_right_pages = pages + rect_rightbox([1 2 1 2])';
-                Screen('FillRect',window,color_right,rects_right_pages);
-                if right_costpages ~= floor(right_costpages) %If the number of pages is not an integer
-                    last_page_rect = rects_right_pages(:,ceil(right_costpages))';
-                    last_page_rect(4) = last_page_rect(2)+h*(right_costpages-ceil(right_costpages));
-                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
+            %Fill the cost pages
+                if drawchoice.costright ~= 0 
+                    rects_right_pages = pages(:,1:floor(drawchoice.costright)) + rect_rightbox([1 2 1 2])';
+                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,rects_right_pages);
+                    if drawchoice.costright ~= floor(drawchoice.costright) %If the number of pages is not an integer
+                        last_page_rect = pages(:,ceil(drawchoice.costright))' + rect_rightbox([1 2 1 2]);
+                        last_page_rect(4) = last_page_rect(2)+h*(drawchoice.costright-floor(drawchoice.costright));
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
+                    end
                 end
             %Draw the page outlines
+                rects_right_pages = pages + rect_rightbox([1 2 1 2])';
                 Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_pages,exp_settings.choicescreen.linewidth);
             %Draw the lines on the pages
                 rects_right_lines = lines + rect_rightbox([1 2 1 2])';
