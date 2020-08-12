@@ -26,8 +26,6 @@ function [exp_settings] = BEC_Settings
         exp_settings.font.RewardFontSize = 25;      %Font size of the reward amounts in the choice screen
         exp_settings.font.CostFontSize = exp_settings.font.RewardFontSize; %Idem for the cost amounts
         exp_settings.font.EmoFontSize = 22;         %Font size of the emotion induction text
-        exp_settings.font.RatingFontSize = 32;      %Font size of the text of the rating screen
-        exp_settings.font.RatingLabelSize = 15;     %Font size of the labels of the rating screen
         exp_settings.font.FontType = 'Arial';       %Font type (universal)
         exp_settings.font.Wrapat = 75;              %Wrapping (for longer texts of induction screens)
         exp_settings.font.vSpacing = 2;             %Vertical spacing
@@ -43,11 +41,13 @@ function [exp_settings] = BEC_Settings
             exp_settings.backgrounds.default = exp_settings.colors.black;   %Default background
             exp_settings.backgrounds.fixation = exp_settings.colors.black;  %Fixation screen
             exp_settings.backgrounds.choice = exp_settings.colors.black;    %Choice screen
-            exp_settings.backgrounds.emotion = exp_settings.colors.black;   %Emotion induction screen            
+            exp_settings.backgrounds.emotion = exp_settings.colors.black;   %Emotion induction screen         
+            exp_settings.backgrounds.rating = exp_settings.colors.black;    %Rating screen      
         %Font colors
             exp_settings.font.FixationFontColor = exp_settings.colors.white;%Fixation screen
             exp_settings.font.ChoiceFontColor = exp_settings.colors.white;  %Choice screen
-            exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen                    
+            exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen       
+            exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
     
 %% Choice screen configuration (universal)
     % Cost and reward features
@@ -149,6 +149,14 @@ function [exp_settings] = BEC_Settings
         exp_settings.timings.fix_pre_induction = [1.5 2];   %[s] min, max time of the jittered fixation before induction
         exp_settings.timings.fix_post_induction = 2;        %[s] fixed fixation time after emotion induction screen
         exp_settings.timings.washout = 8;                   %[s] resting time after rating
+    % Indices
+        exp_settings.Emostimuli.i_happiness = 1;
+        exp_settings.Emostimuli.i_sadness = 2;
+        exp_settings.Emostimuli.i_neutral = 3;
+    % Examples at the beginning of the experiment (for example vignettes, see below)
+        exp_settings.Emostimuli.ExampleEmotions = [1 2 3 1 2 3]; %Cf. indices above
+        exp_settings.Emostimuli.ExampleHappyMusic = 'Happy_ex';
+        exp_settings.Emostimuli.ExampleSadMusic = 'Sad_ex';
 %     % Simuli font and colors (TO DO: replace this by the settings higher up)   
 %         exp_settings.EmoBackground = [128 128 128]; %Grey
 %         exp_settings.EmoFontSize = 22;
@@ -280,8 +288,5 @@ function [exp_settings] = BEC_Settings
     'Peu après le championnat de Tripoli, la FIDE lance un appel d''offres pour l''organisation du match entre Kasparov et Qosimjonov, mais aucun sponsor n''y répond. En mars 2005, Kasparov annonce qu''il abandonne la compétition de haut niveau.';
     'Au bistrot le serveur est emballé de te reconnaitre et t''offre un café gratuit.';
     'Une collègue ou une camarade dit qu''elle ne veut pas travailler avec toi dans un travail de groupe parce qu''elle te trouve égoïste et arrogante.';
-    'Dès les années 1950, l''US Navy a mis en oeuvre les premiers avions de type AWACS équipés d''un puissant radar installé sur le dos de l''appareil.'};
-        exp_settings.Emostimuli.ExampleEmotions = [1 2 3 1 2 3];
-        exp_settings.Emostimuli.ExampleHappyMusic = 'Happy_ex';
-        exp_settings.Emostimuli.ExampleSadMusic = 'Sad_ex';
+    'Dès les années 1950, l''US Navy a mis en oeuvre les premiers avions de type AWACS équipés d''un puissant radar installé sur le dos de l''appareil.'};        
 
