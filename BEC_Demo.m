@@ -23,15 +23,5 @@
 
 % Exit
     sca; %Screen: close all
-    
-return
-%% Set outside choice function:
-%Emotion-related (optional)
-    emo_condition = AllData.triallist.choices.condition(choicetrial);
-    trialinfo.induction = trial; %induction number
-    trialinfo.ind_trialno = choicetrial-(trial-1)*exp_settings.choices_per_induction; %number of the choice following the induction
-    trialinfo.condition = emo_condition; %emotion condition
-    trialinfo.is_neutral = emo_condition==5; %is this a neutral trial (logical)
-%Save
-    AllData.trialinfo(choicetrial) = trialinfo;
+
 

@@ -7,7 +7,10 @@ function [exp_settings] = BEC_Settings
     exp_settings = struct;      %Predefine output
     expdir = which('BEC_Settings'); expdir = expdir(1:end-15);  %Get the directory where this function is stored
     cd(expdir);                 %Change directory to the directory where this function is situated
-        
+% Experimenter intervention keys
+    exp_settings.keys.escapekey = 'escape'; %Do not change this. 'Escape' remains the escape key.
+    exp_settings.keys.proceedkey = 'p';
+    
 %% Directories    
     %Where are the experiment scrips? (default: present working directory)
         exp_settings.expdir = expdir;
@@ -157,14 +160,6 @@ function [exp_settings] = BEC_Settings
         exp_settings.Emostimuli.ExampleEmotions = [1 2 3 1 2 3]; %Cf. indices above
         exp_settings.Emostimuli.ExampleHappyMusic = 'Happy_ex';
         exp_settings.Emostimuli.ExampleSadMusic = 'Sad_ex';
-%     % Simuli font and colors (TO DO: replace this by the settings higher up)   
-%         exp_settings.EmoBackground = [128 128 128]; %Grey
-%         exp_settings.EmoFontSize = 22;
-%         exp_settings.EmoFontType = 'Arial';
-%         exp_settings.EmoFontWrapat = 75;
-%         exp_settings.EmoFontvSpacing = 2;
-%         exp_settings.EmoFontColor = exp_settings.colors.red; %Text color (red): luminance-corrected value
-%         exp_settings.labeltextsize = 15; %labels of the rating screen
     % Music (1-5)
         exp_settings.Emostimuli.HappyMusic = {'Händel - Arrival of the Queen';
             'JS Bach - Brandenburg Concerto 2';

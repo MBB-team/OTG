@@ -3,7 +3,7 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
 % Inputs:
 %     window                %The Psychtoolbox session window
 %     exp_settings          %The experiment settings structure
-%     trialinfo.trial       %Trial number
+%     trialinfo.trial       %Trial number (only required for the pupil marker)
 %     trialinfo.choicetype  %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
 %     trialinfo.SSReward    %Reward for the uncostly (SS) option (between 0 and 1)
 %     trialinfo.Cost        %Cost level or the costly (LL) option (between 0 and 1)
