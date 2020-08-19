@@ -112,7 +112,7 @@
 %                 AllData.trialinfo = struct;
 %                 if AllData.pupil; AllData.eye_calibration = []; end
 %             %Store
-%                 save([exp_settings.savedir filesep 'AllData'],'AllData'); 
+%                 save([AllData.savedir filesep 'AllData'],'AllData'); 
 %             %Instructions
 %                 exitflag = BEC_InstructionScreens(window,exp_settings,'phase_2');
 %                 if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
@@ -136,11 +136,11 @@
                     EyeTribeInit(60,90); % init EyeTribe at 60Hz and 90 seconds buffer
                 end
             %Make pupil directory and store data
-                mkdir(exp_settings.savedir,'Pupil'); %Make directory, if it doesn't exist yet
+                mkdir(AllData.savedir,'Pupil'); %Make directory, if it doesn't exist yet
                 EyeTribeGetDataSimple; %Clear the buffer
         end
     %Instructions
-        exitflag = BEC_InstructionScreens(window,exp_settings,'start_main_experiment');
+        exitflag = BECInstructionScreens(window,exp_settings,'start_main_experiment');
         if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
     %Loop through inductions
         for induction = i_induction:exp_settings.trialgen_emotions.n_inductions
@@ -154,7 +154,7 @@
                         exitflag = BEC_InstructionScreens(window,exp_settings,'break');
                         if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                     %Monitor keypress to proceed
-                        proceed_Key = KbName(exp_settings.keys.proceedkey); escape_Key = KbName('escape');
+                        proceed_Key = KbName(exp_settings.keys.proceedkey); escape_Key = KbName(exp_settings.keys.escapekey);
                         keyCode([proceed_Key escape_Key]) = 0; 
                         while keyCode(proceed_Key) == 0 && keyCode(escape_Key) == 0 % as long no button is pressed keep checking the keyboard
                             [~, ~, keyCode] = KbCheck(-1);
@@ -187,9 +187,8 @@
                         Trial_PupilData = [Trial_PupilData; PupilData];
                     end
             %Choice battery following the induction
-                for choicetrial = (induction-1)*exp_settings.choices_per_induction + (1:exp_settings.choices_per_induction)
+                for choicetrial = (induction-1)*exp_settings.trialgen_emotions.choices_per_induction + (1:exp_settings.trialgen_emotions.choices_per_induction)
                     %Set the trial info
-                        typenames = {'delay','risk','effort'};
                         sidenames = {'left','right'};
                         trialinfo.trial = choicetrial; %Trial number (only required for the pupil marker)
                         trialinfo.induction = induction; %Emotion induction number
@@ -214,11 +213,11 @@
                 AllData.Ratings(induction,:) = [RateHappy RateSad RateCurious];
                 AllData.timings.rating_duration(induction,1) = toc;
             %Save the data at the end of each trial
-                save([exp_settings.savedir filesep 'AllData'],'AllData');
+                save([AllData.savedir filesep 'AllData'],'AllData');
                 if AllData.pupil %Save pupil data from this trial
                     [ ~, PupilData ,~] = EyeTribeGetDataSimple;
                     Trial_PupilData = [Trial_PupilData; PupilData];
-                    save([exp_settings.savedir filesep 'Pupil' filesep 'Pupil_' num2str(induction)],'Trial_PupilData');
+                    save([AllData.savedir filesep 'Pupil' filesep 'Pupil_' num2str(induction)],'Trial_PupilData');
                 end
         end
         %Terminate the physiology recordings at the end of the battery
@@ -236,6 +235,6 @@
         %Reward calculation
             % TO DO ?
         %Terminate the experiment
-            RH_WaitForKeyPress({'UpArrow'});
+            RH_WaitForKeyPress({exp_settings.keys.proceedkey});
             BEC_ExitExperiment(AllData)
     end

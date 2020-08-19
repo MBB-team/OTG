@@ -7,9 +7,13 @@ function [exp_settings] = BEC_Settings
     exp_settings = struct;      %Predefine output
     expdir = which('BEC_Settings'); expdir = expdir(1:end-15);  %Get the directory where this function is stored
     cd(expdir);                 %Change directory to the directory where this function is situated
-% Experimenter intervention keys
+% Keyboard settings
     exp_settings.keys.escapekey = 'escape'; %Do not change this. 'Escape' remains the escape key.
-    exp_settings.keys.proceedkey = 'p';
+    exp_settings.keys.proceedkey = 'p'; %Key to be pressed by experimenter in order to proceed.
+    exp_settings.keys.quiz_A = 'F'; %Mood quiz - answer A
+    exp_settings.keys.quiz_B = 'G'; %Mood quiz - answer B
+    exp_settings.keys.quiz_C = 'H'; %Mood quiz - answer C
+    exp_settings.keys.quiz_D = 'J'; %Mood quiz - answer D    
     
 %% Directories    
     %Where are the experiment scrips? (default: present working directory)
@@ -24,11 +28,15 @@ function [exp_settings] = BEC_Settings
         
 %% Graphics defaults
     %Fonts
-        exp_settings.font.FixationFontSize = 50;    %Font size of the fixation cross
-        exp_settings.font.TitleFontSize = 32;       %Font size of screen titles
-        exp_settings.font.RewardFontSize = 25;      %Font size of the reward amounts in the choice screen
+        exp_settings.font.FixationFontSize = 50;    %Fixation cross
+        exp_settings.font.TitleFontSize = 32;       %Screen titles
+        exp_settings.font.RewardFontSize = 25;      %Reward amounts in the choice screen
         exp_settings.font.CostFontSize = exp_settings.font.RewardFontSize; %Idem for the cost amounts
-        exp_settings.font.EmoFontSize = 22;         %Font size of the emotion induction text
+        exp_settings.font.EmoFontSize = 22;         %Emotion induction text
+        exp_settings.font.QuestionFontSize = 32;    %Quiz question text
+        exp_settings.font.AnswerFontSize = 28;      %Quiz answers
+        exp_settings.font.FeedbackFontSize = 32;    %Quiz feedback screen
+        exp_settings.font.RatingFontSize = 32;      %Quiz rating font size
         exp_settings.font.FontType = 'Arial';       %Font type (universal)
         exp_settings.font.Wrapat = 75;              %Wrapping (for longer texts of induction screens)
         exp_settings.font.vSpacing = 2;             %Vertical spacing
@@ -45,12 +53,18 @@ function [exp_settings] = BEC_Settings
             exp_settings.backgrounds.fixation = exp_settings.colors.black;  %Fixation screen
             exp_settings.backgrounds.choice = exp_settings.colors.black;    %Choice screen
             exp_settings.backgrounds.emotion = exp_settings.colors.black;   %Emotion induction screen         
+            exp_settings.backgrounds.mood = exp_settings.colors.black;      %Mood induction (quiz question screen)
             exp_settings.backgrounds.rating = exp_settings.colors.black;    %Rating screen      
         %Font colors
             exp_settings.font.FixationFontColor = exp_settings.colors.white;%Fixation screen
             exp_settings.font.ChoiceFontColor = exp_settings.colors.white;  %Choice screen
             exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen       
             exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
+            exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
+            exp_settings.font.color_content = [0 255 0];    %Green (mood rating)
+            exp_settings.font.color_calme = [102 204 255];  %Blue (mood rating)
+            exp_settings.font.color_triste = [0 0 0];       %Black (mood rating)
+            exp_settings.font.color_tendu = [255 255 0];    %Yellow (mood rating)
     
 %% Choice screen configuration (universal)
     % Cost and reward features
@@ -113,16 +127,27 @@ function [exp_settings] = BEC_Settings
         exp_settings.trialgen_emotions.i_neutral = 3;       %index of the neutral condition
         exp_settings.trialgen_emotions.inductions_per_emo = 20;     %number of inductions per emotion condition
         exp_settings.trialgen_emotions.choices_per_induction = 6;   %number of choices following each induction
-    % TO DO: Trial generation settings: moods experiment
-        %...    
+    % Trial generation settings: moods experiment
+        exp_settings.trialgen_moods.QuizExamples = [7 4];   %number of trials in mood/neutral condition (i.e. to be answered and pre-answered)
+        exp_settings.trialgen_moods.QuizTrials = 252;       %total number of quiz trials
+        exp_settings.trialgen_moods.choices_per_question = 3; %3 choices following each quiz question (1 of each type)
+        exp_settings.trialgen_moods.i_break = [85,169];     %break from the experiment at these trials
+        exp_settings.trialgen_moods.nSessions = 9;          %total number of sessions
+        exp_settings.trialgen_moods.SessionConditions = [1,0,-1];      % Respectively, positive-mood, neutral-mood, and negative-mood episodes
+        exp_settings.trialgen_moods.MoodFraction = [7/28 21/28];       % Respectively, the baseline bias (first trials within session), and the full positive/negative bias (rest of the session)
+        exp_settings.trialgen_moods.SessionQuizBias.positive = 0.5;    % 50% of the wrong answers is (incorrectly) biased to show positive feedback (positive mood)
+        exp_settings.trialgen_moods.SessionQuizBias.baseline = 0.25;   % 25% of the wrong answers is (incorrectly) biased to show positive feedback (baseline mood - transition)
+        exp_settings.trialgen_moods.SessionQuizBias.negative = 0;      % none of the wrong answers is (incorrectly) biased to show positive feedback (negative mood)
+        exp_settings.trialgen_moods.RatingDimensions_male = {'content';'triste';'calme';'tendu'};  % Rating dimensions
+        exp_settings.trialgen_moods.RatingDimensions_female = {'contente';'triste';'calme';'tendue'};  % Rating dimensions
     % TO DO: Trial generation settings: DEER only
 
 %% Participant reward calculation settings
-    exp_settings.Pay.Base = 20; %euros base pay
-    exp_settings.Pay.LLRew = 30; %euros for LL option
-    exp_settings.Pay.delaycriterion = 0.50; %Max. delay of costly option
-    exp_settings.Pay.effortcriterion = 0.50; %Max. effort of costly option
-    exp_settings.Pay.riskcriterion = 0.75; %Max. risk of costly option
+    exp_settings.Pay.Base = 20;     %euros base pay
+    exp_settings.Pay.LLRew = 30;    %euros for LL option
+    exp_settings.Pay.delaycriterion = 0.50;     %Max. delay of costly option
+    exp_settings.Pay.effortcriterion = 0.50;    %Max. effort of costly option
+    exp_settings.Pay.riskcriterion = 0.75;  %Max. risk of costly option
     exp_settings.Pay.min_total = 40; %Min. total reward
     exp_settings.Pay.max_total = 65; %Max. total reward
     exp_settings.Pay.SSCriterion = 0.10; %For very low amounts of SS choices: allow maximum to be higher
@@ -146,8 +171,31 @@ function [exp_settings] = BEC_Settings
 %     exp_settings.instructions_emotions.rate_music = 28:29;
 %     exp_settings.instructions_emotions.rewardtrial = 30;    
     
+%% Mood stimuli
+    % Timings
+        exp_settings.timings.delay_answers = 0; %[s] delay between question presentation and answers presentation
+        exp_settings.timings.min_quiz_time = 1; %[s] delay between presentation of answers 
+        exp_settings.timings.quiz_timeout = 15; %[s] maximum response time to a quiz question
+        exp_settings.timings.fix_pre_quiz = [0.75 1.25]; %[s] [min max] fixation time
+        exp_settings.timings.show_feedback = 2; %[s]
+        exp_settings.timings.wait_blank = 1; %[s]%         
+        exp_settings.timings.min_rating_time = 4; %[s]
+    % Quiz screen layout
+        exp_settings.Moodstimuli.quizquestion_y = 1/5;  %Quiz question y position
+        exp_settings.Moodstimuli.answers_ymin = 2/5;    %Top of answers boxes
+        exp_settings.Moodstimuli.answers_ymax = 4/5;    %Bottom of answers boxes
+        exp_settings.Moodstimuli.answers_xmin = 2/5;    %Left margin of answers boxes
+        exp_settings.Moodstimuli.feedback_y = [1/6 5/6];%Quiz answer feedback text positions
+    % Quiz questions and answers (first answer is the correct one)
+        QR = load([exp_settings.stimdir filesep 'QR_fMRI.mat'], 'QR'); 
+        exp_settings.QuizQuestions = QR.QR; 
+        listTrainingQuizz = load([exp_settings.stimdir filesep 'listTrainingQuizz.mat']); 
+        exp_settings.QuizTraining = listTrainingQuizz.listTrainingQuizz;
+        questionAccuracy = load([exp_settings.stimdir filesep 'questionAccuracy.mat']); 
+        exp_settings.QuizAccuracy = questionAccuracy.questionAccuracy;  % Quiz accuracy
+
 %% Emotion stimuli
-    % Timings (TO DO: field "timings" did not exist first)
+    % Timings
         exp_settings.timings.inductiontime = 10;            %[s] duration of the emotion induction screen (vignette)
         exp_settings.timings.fix_pre_induction = [1.5 2];   %[s] min, max time of the jittered fixation before induction
         exp_settings.timings.fix_post_induction = 2;        %[s] fixed fixation time after emotion induction screen

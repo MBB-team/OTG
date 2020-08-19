@@ -127,11 +127,11 @@ for j = 1:4 %Loop through all 3 emotions, then confirm/correct
                         sliderpos = CenterRectOnPoint(slider,x,winRect(4)*(j+8)/16);
                             Screen('FillRect', window, [255 153 51], sliderpos)
                     end
-                %Draw the confirmation and correction boxes
+                %Draw the confirmation and correction boxes (grey background, white text)
                     if j == 4
                         leftrect = [(winRect(3)-axesWidth)/2 (12/16)*winRect(4) (winRect(3)-axesWidth/3)/2 (13/16)*winRect(4)];
                         rightrect = [(winRect(3)+axesWidth/3)/2 (12/16)*winRect(4) (winRect(3)+axesWidth)/2 (13/16)*winRect(4)];
-                        Screen('FillRect',window,exp_settings.colors.black, [leftrect; rightrect]')
+                        Screen('FillRect',window,exp_settings.colors.grey, [leftrect; rightrect]')
                         Screen('TextSize',window,RatingLabelSize);                     
                         DrawFormattedText(window, 'Confirmer', 'center', 'center', ...
                             exp_settings.font.RatingFontColor, [], [], [], [], [], leftrect);
