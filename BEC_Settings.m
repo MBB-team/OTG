@@ -96,7 +96,6 @@ function [exp_settings] = BEC_Settings
         exp_settings.timings.min_resp_time = 0.5; %[s] before ppt can respond
         exp_settings.timings.show_response = 0.25; %[s] visual feedback duration in example choice trials
         exp_settings.timings.fixation_choice = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during experiment
-        exp_settings.timings.fixation_choice_cal = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during calibration
     
 %% Choice trial generation settings
     % Choice triallist creation settings       
@@ -117,6 +116,9 @@ function [exp_settings] = BEC_Settings
         exp_settings.ATG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
         exp_settings.ATG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
         exp_settings.ATG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
+        exp_settings.ATG.fixed_beta = 5;  % Assume this value for the inverse choice temperature (based on past results) to improve model fit.
+        exp_settings.ATG.prior_bias = -3; % Note: this is log(prior)
+        exp_settings.ATG.prior_var = 2;   % Note: applies to all parameters
     
 %% Trial Generation Settings (per experiment type)
     % Trial generation settings: emotions experiment
