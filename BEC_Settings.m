@@ -58,6 +58,7 @@ function [exp_settings] = BEC_Settings
         %Font colors
             exp_settings.font.FixationFontColor = exp_settings.colors.white;%Fixation screen
             exp_settings.font.ChoiceFontColor = exp_settings.colors.white;  %Choice screen
+            exp_settings.font.LossFontColor = exp_settings.colors.red;      %Loss amount on choice screen
             exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen       
             exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
             exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
@@ -72,29 +73,30 @@ function [exp_settings] = BEC_Settings
         exp_settings.RiskLoss = 10;   % [euros] possible loss in the lottery
         exp_settings.MaxDelay = 52;   % [weeks] maximum delay
         exp_settings.MaxRisk = 100;   % [percent] maximum risk
-        exp_settings.Max_phys_effort = 12; % max # flights of stairs to climb (NOTE: must be even number, because there are two stairwells being drawn)
+        exp_settings.Max_phys_effort = 12; % max # flights of stairs to climb
         exp_settings.Max_ment_effort = 12; % max # pages to copy
     % Choice screen parameters
         exp_settings.choicescreen.title_y = 1/8;                        %Title y position (choice)
-        exp_settings.choicescreen.cost_left = [1/8 2/8 3/8 3/8];        %Left cost text
-        exp_settings.choicescreen.cost_right = [5/8 2/8 7/8 3/8];       %Right costtext
-        exp_settings.choicescreen.reward_left = [1/8 13/16 3/8 15/16];  %Left reward text
-        exp_settings.choicescreen.reward_right = [5/8 13/16 7/8 15/16]; %Right reward text
-        exp_settings.choicescreen.reward_shift = -[0 3/16 0 3/16];      %During actual choice trials, show rewards closer to the center of the screen
+        exp_settings.choicescreen.cost_y = [2/8 3/8];                   %Y-coordinates of the cost above the cost box (example trials only)
+        exp_settings.choicescreen.reward_y_example = [13/16 15/16];     %Y-coordinates of the reward below the cost box (example trials only)
+        exp_settings.choicescreen.reward_y = [9/16 11/16];              %Y-coordinates of the reward below the cost box
         exp_settings.choicescreen.costbox_left_example = [3/16 1/2 5/16 3/4];      %Left cost visualization
         exp_settings.choicescreen.costbox_right_example = [11/16 1/2 13/16 3/4];   %Right cost visualization
-        exp_settings.choicescreen.costbox_left = [3/16 1/4 5/16 1/2];   %Left cost visualization
-        exp_settings.choicescreen.costbox_right = [11/16 1/4 13/16 1/2];%Right cost visualization
+        exp_settings.choicescreen.costbox_left = [2/16 1/5 5/16 1/2];   %Left cost visualization
+        exp_settings.choicescreen.costbox_right = [11/16 1/5 14/16 1/2];%Right cost visualization
         exp_settings.choicescreen.monthrects = [(0:11)./12; zeros(1,12); (1:12)./12; [31 28 31 30 31 30 31 31 30 31 30 31]./50]; %Delay visualization
+        exp_settings.choicescreen.flightsteps = 18; %Physical effort visualization: 1 flight of stairs = 18 steps
+        exp_settings.choicescreen.pagelines = 25;   %One page of text is 25 lines
         exp_settings.choicescreen.linewidth = 1;    %Width of the lines of the cost drawings
         exp_settings.choicescreen.linecolor = exp_settings.colors.white;%Color of the lines of the cost drawings
         exp_settings.choicescreen.fillcolor = exp_settings.colors.red;  %Color of the costs
+        exp_settings.choicescreen.probabilitycolor = exp_settings.colors.green;     %Color of the risk arc representing probability to win
         exp_settings.choicescreen.confirmcolor = exp_settings.colors.white;         %Color of the confirmation rectangle around the chosen option
     % Timings
         exp_settings.timings.min_resp_time = 0.5; %[s] before ppt can respond
         exp_settings.timings.show_response = 0.25; %[s] visual feedback duration in example choice trials
         exp_settings.timings.fixation_choice = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during experiment
-        exp_settings.timings.fixation_choice_cal = [0.75 1.25]; %[s] minimum and maximum jittered fixation time during calibration
+        exp_settings.timings.fixation_choice_cal = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during calibration
     
 %% Trial generation settings: general
     % Choice triallist creation settings       

@@ -45,20 +45,25 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
             if trialinfo.Example; SSRewardText = ['et recevoir ' SSRewardText]; end
         %Reward for costly option
             LLRewardText = sprintf('%.2f euros', exp_settings.MaxReward);
-            LLLossText = sprintf('%.2f euros', exp_settings.RiskLoss);
+            if strcmp(typenames{trialinfo.choicetype},'risk')
+                LLLossText = ['ou -' sprintf('%.2f euros', exp_settings.RiskLoss)];
+            else
+                LLLossText = [];
+            end
             if trialinfo.Example
                 if strcmp(typenames{trialinfo.choicetype},'risk')
-                    LLRewardText = ['pour gagner ' LLRewardText ' ou perdre ' LLLossText];
+                    LLRewardText = ['pour gagner ' LLRewardText];
+                    LLLossText = ['ou perdre ' sprintf('%.2f euros', exp_settings.RiskLoss)];
                 else
-                    LLRewardText = ['pour recevoir ' LLRewardText];
+                    LLRewardText = ['pour recevoir ' LLRewardText];                    
                 end
             end
         %Choicetype-specific features
             switch typenames{trialinfo.choicetype}
                 case 'delay'
                     SSCostText = 'ne pas attendre';
-                    LLCost = round(trialinfo.Cost*exp_settings.MaxDelay); %Expressed in # of weeks <=== revise this for months!!!2j
-                    [LLCost,LLCostText] = ConvertToCalendar(LLCost);
+                    LLCost = round(trialinfo.Cost*exp_settings.MaxDelay); %Expressed in # of weeks <=== revise this for months!!!
+                    [LLCost,LLCostText] = ConvertCost(LLCost,1,exp_settings);
                     LLCostText = ['attendre ce délai' newline newline '(' LLCostText ')'];
                 case 'risk'
                     SSCostText = 'ne pas prendre de risque';
@@ -66,12 +71,14 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                     LLCostText = ['prendre ce risque' newline newline '(' num2str(LLCost) '%)'];
                 case 'physical_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = round(trialinfo.Cost*exp_settings.Max_phys_effort,1); 
-                    LLCostText = ['monter ces escaliers' newline newline '(' num2str(LLCost) ')'];
+                    LLCost = trialinfo.Cost*exp_settings.Max_phys_effort;
+                    [~,LLCostText] = ConvertCost(LLCost,3,exp_settings);
+                    LLCostText = ['monter ces escaliers' newline newline '(' LLCostText ')'];
                 case 'mental_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = round(trialinfo.Cost*exp_settings.Max_ment_effort,1);
-                    LLCostText = ['copier ces pages' newline newline '(' num2str(LLCost) ')'];
+                    LLCost = trialinfo.Cost*exp_settings.Max_ment_effort;
+                    [~,LLCostText] = ConvertCost(LLCost,4,exp_settings);
+                    LLCostText = ['copier ces pages' newline newline '(' LLCostText ')'];
             end       
     %Set drawing parameters
         drawchoice.choicetype = typenames{trialinfo.choicetype};
@@ -82,19 +89,23 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
             case 'left'
                 drawchoice.rewardleft = SSReward; 
                 drawchoice.rewardlefttext = SSRewardText;
+                drawchoice.losslefttext = [];
                 drawchoice.costleft = 0; 
                 drawchoice.costlefttext = SSCostText;
                 drawchoice.rewardright = exp_settings.MaxReward; 
                 drawchoice.rewardrighttext = LLRewardText;
+                drawchoice.lossrighttext = LLLossText;
                 drawchoice.costright  = LLCost; 
                 drawchoice.costrighttext = LLCostText;
             case 'right'
                 drawchoice.rewardleft = exp_settings.MaxReward; 
                 drawchoice.rewardlefttext = LLRewardText;
+                drawchoice.losslefttext = LLLossText;
                 drawchoice.costleft  = LLCost; 
                 drawchoice.costlefttext = LLCostText;
                 drawchoice.rewardright = SSReward; 
                 drawchoice.rewardrighttext = SSRewardText;
+                drawchoice.lossrighttext = [];
                 drawchoice.costright = 0; 
                 drawchoice.costrighttext = SSCostText;
         end
@@ -117,6 +128,9 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         while keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0 % as long no button is pressed keep checking the keyboard
             [~, ~, keyCode] = KbCheck(-1);
         end
+    %Screenshot
+        imageArray=Screen('GetImage', window);
+        imwrite(imageArray, 'choiceExample.png');
     %Record response and display confirmation screen
         if keyCode(leftKey)
             resp = leftKey; 
@@ -190,6 +204,21 @@ function [t_onset] = DrawChoiceScreen(exp_settings,drawchoice,window)
     %Setup
         [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
         Screen('TextFont',window,'Arial');
+        if drawchoice.example == 1
+            text_cost_left = exp_settings.choicescreen.costbox_left_example; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
+            text_cost_right = exp_settings.choicescreen.costbox_right_example; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
+            text_reward_left = exp_settings.choicescreen.costbox_left_example; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y_example;
+            text_reward_right = exp_settings.choicescreen.costbox_right_example; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y_example;
+            confirm_left = [text_reward_left; text_cost_left]; confirm_left(:,[1,3]) = confirm_left(:,[1 3]) + [-diff(confirm_left(:,[1 3]),[],2) diff(confirm_left(:,[1 3]),[],2)];
+            confirm_right = [text_reward_right; text_cost_right]; confirm_right(:,[1,3]) = confirm_right(:,[1 3]) + [-diff(confirm_right(:,[1 3]),[],2) diff(confirm_right(:,[1 3]),[],2)];
+        else
+            text_cost_left = exp_settings.choicescreen.costbox_left; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
+            text_cost_right = exp_settings.choicescreen.costbox_right; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
+            text_reward_left = exp_settings.choicescreen.costbox_left; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y;
+            text_reward_right = exp_settings.choicescreen.costbox_right; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y;
+            confirm_left = text_reward_left.*screensize;
+            confirm_right = text_reward_right.*screensize;
+        end        
     %Background
         Screen('FillRect',window,exp_settings.backgrounds.choice);
     %Title
@@ -197,40 +226,28 @@ function [t_onset] = DrawChoiceScreen(exp_settings,drawchoice,window)
             Screen('TextSize',window,exp_settings.font.TitleFontSize); 
             DrawFormattedText(window, drawchoice.titletext, 'center', exp_settings.choicescreen.title_y*Ysize, exp_settings.colors.white);
         end
-    %Left cost and reward text
+    %Draw cost and reward text
         Screen('TextSize',window,exp_settings.font.RewardFontSize); %Same as CostFontSize
-        if drawchoice.example == 1
-            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.reward_left.*screensize);
-            DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.cost_left.*screensize);
-        else
-            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], (exp_settings.choicescreen.reward_left+exp_settings.choicescreen.reward_shift).*screensize);
-        end
-    %Right cost and reward text
-        if drawchoice.example == 1
-            DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.reward_right.*screensize);
-            DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.cost_right.*screensize);
-        else
-            DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], (exp_settings.choicescreen.reward_right+exp_settings.choicescreen.reward_shift).*screensize);
-        end
+        %Reward
+            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_left.*screensize); %Left
+            [~,~,textbounds] = DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_right.*screensize); %Right
+        %Loss (risk only)
+            if strcmp(drawchoice.choicetype,'risk')
+                DrawFormattedText(window, drawchoice.losslefttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_left.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Left
+                DrawFormattedText(window, drawchoice.lossrighttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_right.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Right
+            end
+        %Cost (example only)
+            if drawchoice.example == 1
+                DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_left.*screensize);
+                DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_right.*screensize);
+            end
     %Confirmation rectangle
         if ~isempty(drawchoice.confirmation)
-            if strcmp(drawchoice.confirmation,'left')
-                confirm_rect = exp_settings.choicescreen.reward_left;
-                confirm_rew = exp_settings.choicescreen.cost_left;
-            elseif strcmp(drawchoice.confirmation,'right') 
-                confirm_rect = exp_settings.choicescreen.reward_right;
-                confirm_rew = exp_settings.choicescreen.cost_right;
+            if strcmp(drawchoice.confirmation,'left'); confirm_rect = confirm_left;
+            elseif strcmp(drawchoice.confirmation,'right'); confirm_rect = confirm_right;
             end
-            if drawchoice.example; confirm_rect = [confirm_rect; confirm_rew]' .* [screensize; screensize]';
-            else; confirm_rect = (confirm_rect + exp_settings.choicescreen.reward_shift) .* screensize;     
-            end
-            %Hack
-                if strcmp(drawchoice.choicetype,'risk') && drawchoice.example
-                    confirm_width = confirm_rect(3)-confirm_rect(1);
-                    confirm_rect(1) = confirm_rect(1)-confirm_width/4;
-                    confirm_rect(3) = confirm_rect(3)+confirm_width/4;
-                end
-            Screen('FrameRect',window,exp_settings.colors.white,confirm_rect,3);
+            if drawchoice.example; confirm_rect = (confirm_rect.*screensize)'; end
+            Screen('FrameRect',window,exp_settings.colors.white,confirm_rect,3); %Note, confirm_rect has already been converted to pixels!
         end
     %Center question mark or fixation cross    
         Screen('TextSize',window,exp_settings.font.RewardFontSize); 
@@ -257,52 +274,94 @@ function [t_onset] = DrawChoiceScreen(exp_settings,drawchoice,window)
 end %function
     
 %% Convert delay cost level to calendar values
-function [LLCost,LLCostText] = ConvertToCalendar(LLCost)
-% input:  LLCost: delay between 0 and 1, where 1 corresponds to 1 year.
-% output: LLCost: [#months #days_in_last_month], required to fill in the calendar.
-%         LLCostText: in text, the amount of "months,weeks,days" of waiting time
+function [LLCost,LLCostText] = ConvertCost(LLCost,choicetype,exp_settings)
+% input:  LLCost is the cost level expressed as the fraction of the maximal cost
 
-%Convert in years/months/days
-    total_days = LLCost*7;
-    cal_days = [31 28 31 30 31 30 31 31 30 31 30 31]; %The days in 12 months
-    cum_days = cumsum(cal_days); %The cumulative amount of days up to 1 year
-    total_months = find(total_days>cum_days,1,'last');
-    if isempty(total_months); total_months = 0; end                    
-    if total_months == 0
-        n_weeks = floor(total_days/7);
-        if n_weeks > 0
-            n_days = rem(total_days,7);
-        else
-            n_days = total_days; 
-        end
-        delta_days = total_days;
-    else
-        n_weeks = floor((total_days - cum_days(total_months))/7);
-        n_days = rem(total_days - cum_days(total_months),7);
-        delta_days = total_days - cum_days(total_months);
-    end
-    LLCostText = [];
-    if total_months >= 1
-        LLCostText = [LLCostText num2str(total_months) ' mois']; 
-        if any([n_weeks n_days]>=1); LLCostText = [LLCostText ', ']; end
-    end
-    if n_weeks >= 1
-        if n_weeks == 1; LLCostText = [LLCostText num2str(n_weeks) ' semaine'];
-        elseif n_weeks > 1; LLCostText = [LLCostText num2str(n_weeks) ' semaines'];
-        end
-        if n_days>=1; LLCostText = [LLCostText ', ']; end
-    end
-    if n_days >= 1
-        if n_days == 1; LLCostText = [LLCostText num2str(n_days) ' jour']; 
-        elseif n_days > 1; LLCostText = [LLCostText num2str(n_days) ' jours']; 
-        end
-    end
-    if LLCost == 52
-        LLCostText = '1 an';
-        total_months = 12; delta_days = 0;
-    end
-    LLCost = [total_months delta_days]; %Note: this is required for drawing the calendar!
-    
+switch choicetype
+    case 1 %DELAY
+        % output: LLCost: [#months #days_in_last_month], required to fill in the calendar.
+        %         LLCostText: in text, the amount of "months,weeks,days" of waiting time
+        %Convert in years/months/days
+            total_days = LLCost*7;
+            cal_days = [31 28 31 30 31 30 31 31 30 31 30 31]; %The days in 12 months
+            cum_days = cumsum(cal_days); %The cumulative amount of days up to 1 year
+            total_months = find(total_days>cum_days,1,'last');
+            if isempty(total_months); total_months = 0; end                    
+            if total_months == 0
+                n_weeks = floor(total_days/7);
+                if n_weeks > 0
+                    n_days = rem(total_days,7);
+                else
+                    n_days = total_days; 
+                end
+                delta_days = total_days;
+            else
+                n_weeks = floor((total_days - cum_days(total_months))/7);
+                n_days = rem(total_days - cum_days(total_months),7);
+                delta_days = total_days - cum_days(total_months);
+            end
+            LLCostText = [];
+            if total_months >= 1
+                LLCostText = [LLCostText num2str(total_months) ' mois']; 
+                if any([n_weeks n_days]>=1); LLCostText = [LLCostText ', ']; end
+            end
+            if n_weeks >= 1
+                if n_weeks == 1; LLCostText = [LLCostText num2str(n_weeks) ' semaine'];
+                elseif n_weeks > 1; LLCostText = [LLCostText num2str(n_weeks) ' semaines'];
+                end
+                if n_days>=1; LLCostText = [LLCostText ', ']; end
+            end
+            if n_days >= 1
+                if n_days == 1; LLCostText = [LLCostText num2str(n_days) ' jour']; 
+                elseif n_days > 1; LLCostText = [LLCostText num2str(n_days) ' jours']; 
+                end
+            end
+            if LLCost == 52
+                LLCostText = '1 an';
+                total_months = 12; delta_days = 0;
+            end
+            LLCost = [total_months delta_days]; %Note: this is required for drawing the calendar!
+    case 3 %PHYSICAL EFFORT
+        nfloors = floor(LLCost);
+        nsteps = round((LLCost-floor(LLCost))*exp_settings.choicescreen.flightsteps);
+        %Floors
+            if nfloors == 1
+                LLCostText = '1 étage';
+            elseif nfloors > 1
+                LLCostText = [num2str(nfloors) ' étages'];
+            end
+        %Steps
+            if nsteps > 0
+                if nfloors > 0
+                    LLCostText = [LLCostText ' + '];
+                end
+                if nsteps == 1
+                    LLCostText = [LLCostText '1 marche'];
+                else
+                    LLCostText = [LLCostText num2str(nsteps) ' marches'];
+                end
+            end
+    case 4 %MENTAL EFFORT
+        npages = floor(LLCost);
+        nlines = round((LLCost-floor(LLCost))*exp_settings.choicescreen.pagelines);
+        %Pages
+            if npages == 1
+                LLCostText = '1 page';
+            elseif npages > 1
+                LLCostText = [num2str(npages) ' pages'];
+            end
+        %Lines
+            if nlines > 0
+                if npages > 0
+                    LLCostText = [LLCostText ' + '];
+                end
+                if nlines == 1
+                    LLCostText = [LLCostText '1 ligne'];
+                else
+                    LLCostText = [LLCostText num2str(nlines) ' lignes'];
+                end
+            end
+end
 end
 
 %% Draw Delay cost
@@ -399,11 +458,22 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
     if drawchoice.example
         rect_leftbox = exp_settings.choicescreen.costbox_left_example .* screensize;
         rect_rightbox = exp_settings.choicescreen.costbox_right_example .* screensize;
+        text_cost_left = exp_settings.choicescreen.costbox_left_example; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
+        text_cost_right = exp_settings.choicescreen.costbox_right_example; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
+        text_reward_left = exp_settings.choicescreen.costbox_left_example; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y_example;
+        text_reward_right = exp_settings.choicescreen.costbox_right_example; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y_example;
+        confirm_left = [text_reward_left; text_cost_left]; confirm_left(:,[1,3]) = confirm_left(:,[1 3]) + [-diff(confirm_left(:,[1 3]),[],2) diff(confirm_left(:,[1 3]),[],2)];
+        confirm_right = [text_reward_right; text_cost_right]; confirm_right(:,[1,3]) = confirm_right(:,[1 3]) + [-diff(confirm_right(:,[1 3]),[],2) diff(confirm_right(:,[1 3]),[],2)];
     else
         rect_leftbox = exp_settings.choicescreen.costbox_left .* screensize;
         rect_rightbox = exp_settings.choicescreen.costbox_right .* screensize;
+        text_cost_left = exp_settings.choicescreen.costbox_left; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
+        text_cost_right = exp_settings.choicescreen.costbox_right; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
+        text_reward_left = exp_settings.choicescreen.costbox_left; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y;
+        text_reward_right = exp_settings.choicescreen.costbox_right; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y;
+        confirm_left = text_reward_left.*screensize;
+        confirm_right = text_reward_right.*screensize;
     end
-
 %Draw two wheels of fortune
     %Prepare to animate the lottery (in example trials)
         if ~isempty(drawchoice.confirmation) && drawchoice.example == 1 
@@ -429,10 +499,10 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
             else
                 loopangles = 0;
             end
-            color_proba_arc = exp_settings.colors.green;
+            color_proba_arc = exp_settings.choicescreen.probabilitycolor;
         else; animation = 0; %Before the wheel is on screen
             loopangles = 0;
-            color_proba_arc = exp_settings.backgrounds.choice;
+            color_proba_arc = exp_settings.choicescreen.probabilitycolor;
         end
     %Loop through the angles of the wheel (for animation; otherwise: fixed)
         anglecount = 1; 
@@ -472,22 +542,28 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
                     %Title
                         if isempty(drawchoice.confirmation) && drawchoice.example == 1
                             Screen('TextSize',window,exp_settings.font.TitleFontSize); 
-                            DrawFormattedText(window, drawchoice.titletext, 'center', exp_settings.choicescreen.title_y*Ysize, exp_settings.font.ChoiceFontColor);
+                            DrawFormattedText(window, drawchoice.titletext, 'center', exp_settings.choicescreen.title_y*Ysize, exp_settings.colors.white);
                         end
-                    %Left cost and reward
-                        Screen('TextSize',window,exp_settings.font.RewardFontSize);  
-                        if drawchoice.example == 1
-                            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.reward_left.*screensize);
-                            DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.cost_left.*screensize);
-                        else
-                            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], (exp_settings.choicescreen.reward_left+exp_settings.choicescreen.reward_shift).*screensize);
-                        end
-                    %Right cost and reward
-                        if drawchoice.example == 1
-                            DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.reward_right.*screensize);
-                            DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], exp_settings.choicescreen.cost_right.*screensize);
-                        else
-                            DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], (exp_settings.choicescreen.reward_right+exp_settings.choicescreen.reward_shift).*screensize);
+                    %Draw cost and reward text
+                        Screen('TextSize',window,exp_settings.font.RewardFontSize); %Same as CostFontSize
+                        %Reward
+                            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_left.*screensize); %Left
+                            [~,~,textbounds] = DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_right.*screensize); %Right
+                        %Loss (risk only)
+                            DrawFormattedText(window, drawchoice.losslefttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_left.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Left
+                            DrawFormattedText(window, drawchoice.lossrighttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_right.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Right
+                        %Cost (example only)
+                            if drawchoice.example == 1
+                                DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_left.*screensize);
+                                DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_right.*screensize);
+                            end
+                    %Confirmation rectangle
+                        if ~isempty(drawchoice.confirmation)
+                            if strcmp(drawchoice.confirmation,'left'); confirm_rect = confirm_left;
+                            elseif strcmp(drawchoice.confirmation,'right'); confirm_rect = confirm_right;
+                            end
+                            if drawchoice.example; confirm_rect = (confirm_rect.*screensize)'; end
+                            Screen('FrameRect',window,exp_settings.colors.white,confirm_rect,3); %Note, confirm_rect has already been converted to pixels!
                         end
                     %Center question mark or fixation cross    
                         Screen('TextSize',window,exp_settings.font.RewardFontSize); 
@@ -500,26 +576,6 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
                                 DrawFormattedText(window, '+', 'center', 'center', exp_settings.font.ChoiceFontColor);
                             end
                         end
-                %Confirmation rectangle
-                    if ~isempty(drawchoice.confirmation)
-                        if strcmp(drawchoice.confirmation,'left')
-                            confirm_rect = exp_settings.choicescreen.reward_left;
-                            confirm_rew = exp_settings.choicescreen.cost_left;
-                        elseif strcmp(drawchoice.confirmation,'right') 
-                            confirm_rect = exp_settings.choicescreen.reward_right;
-                            confirm_rew = exp_settings.choicescreen.cost_right;
-                        end
-                        if drawchoice.example; confirm_rect = [confirm_rect; confirm_rew]' .* [screensize; screensize]';
-                        else; confirm_rect = (confirm_rect + exp_settings.choicescreen.reward_shift) .* screensize;     
-                        end
-                        %Hack
-                            if drawchoice.example
-                                confirm_width = confirm_rect(3)-confirm_rect(1);
-                                confirm_rect(1) = confirm_rect(1)-confirm_width/4;
-                                confirm_rect(3) = confirm_rect(3)+confirm_width/4;
-                            end
-                        Screen('FrameRect',window,exp_settings.choicescreen.confirmcolor,confirm_rect,3);
-                    end
                 %Text outcome
                     sidenames = {'left','right'};
                     if animation && length(loopangles) == 1; waittime = [3 3]; 
@@ -554,6 +610,7 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
             Screen('Flip',window);
             if animation
                 WaitSecs(max(waittime)); 
+                t_onset = NaN;
             else
                 t_onset = clock;
             end
@@ -563,11 +620,15 @@ end
 
 %% Draw Physical effort cost
 function [t_onset] = DrawPhysicalEffortCost(window,exp_settings,drawchoice)
-%Settings for drawing two staircases:
-    nfloors = exp_settings.Max_phys_effort/2; %Number of floors per staircase
-    nsteps = 10;    %Number of steps per floor
-    steepness = 2/3;%The ratio of the first step's width / the floor width
-
+%Settings for drawing staircases:
+    nrows = floor(sqrt(exp_settings.Max_phys_effort));  %Number of rows of pages
+    ncols = ceil(sqrt(exp_settings.Max_phys_effort));   %Numbers of columns of pages
+    if rem(nrows*ncols,exp_settings.Max_ment_effort)>0
+        ncols = ncols+1;
+    end
+    nsteps = 9; %Number of steps per floor
+    gapratio = 1/3; %Width width of the gap between staircases/width of the base of a staircase
+    
 %Identify the rectangle ("box") inside of which the costs will be drawn
     [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
     if drawchoice.example
@@ -578,75 +639,77 @@ function [t_onset] = DrawPhysicalEffortCost(window,exp_settings,drawchoice)
         rect_rightbox = exp_settings.choicescreen.costbox_right .* screensize;
     end
 
-%Get the rectangle coordinates
-    %Get the staircase coordinates relative to the top left coordinate of the cost box
-        Y = rect_leftbox(4)-rect_leftbox(2);    %Total height of the cost box
-        X = rect_leftbox(3)-rect_leftbox(1);    %Total width of the cost box
-        h = Y/nfloors;  %height of one floor
-        w = X/5;        %width of one floor (given that there are two staircases)        
-        h_i = [(nfloors*nsteps:-1:1)' (nfloors*nsteps-1:-1:0)'].*(h/nsteps);%[y1 y2] coordinates of all steps  
-        b_i_left = ((1-steepness):(steepness/nsteps):1).*w;
-        b_i_right = 2*w-b_i_left;
-        b_i_left = [b_i_left(1:nsteps)' b_i_left(end).*ones(nsteps,1)]; %[x1 x2] coordinates of the left-side steps of the first staircase
-        b_i_right = [w.*ones(nsteps,1) b_i_right(1:nsteps)'];   %[x1 x2] coordinates of the right-side steps of the first staircase
-        b_i = [repmat([b_i_left; b_i_right],floor(nfloors/2),1); repmat(b_i_left,rem(nfloors,2),1)]; %[x1 x2] coordinates of all steps from the first staircase
-        staircases = [b_i(:,1) h_i(:,1) b_i(:,2) h_i(:,2);  %coordinates of the first staircase' steps
-            b_i(:,1)+3*w h_i(:,1) b_i(:,2)+3*w h_i(:,2)]';  %coordinates of the second staircase' steps
-    %Get the coordinates of the floors
-        draw_floors = 1:2*nfloors;
-            draw_floors = draw_floors(~ismember(draw_floors,[nfloors,2*nfloors]))*nsteps + 1; %The step numbers at which a floor must be drawn
-        floors = staircases([1 2 3 2],draw_floors);
-        floors([1,3],:) = round(floors([1,3],:)/w).*w;
-        floors(4,:) = floors(4,:)+1;
-    %Get the coordinates of the stairwells
-        stairwells = [0 0 2*w Y; 3*w 0 5*w Y]';
-        spines = [w 0 w Y; 4*w 0 4*w Y]'; %Center of the stairwell
-%Colors of the staircases' steps
-    left_coststeps = round(drawchoice.costleft*nsteps);
-    right_coststeps = round(drawchoice.costright*nsteps);
-    color_left = [repmat(exp_settings.choicescreen.fillcolor',1,left_coststeps) ...        %red: the steps corresponding to the cost level
-        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-left_coststeps)]; %white: the steps above the cost level
-    color_right = [repmat(exp_settings.choicescreen.fillcolor',1,right_coststeps) ...      %red: the steps corresponding to the cost level
-        repmat(exp_settings.colors.white',1,nsteps*nfloors*2-right_coststeps)];%white: the steps above the cost level
-        
-%Draw two staircases
-    for side = 1:2
-        if side == 1 %left
-            %Fill the staircase rects
-                rects_left_staircases = staircases + rect_leftbox([1 2 1 2])';
-                Screen('FillRect',window,color_left,rects_left_staircases);
-            %Draw the floors
-                rects_left_floors = floors + rect_leftbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_floors);                
-            %Draw the staircases
-                rects_left_stairwells = stairwells + rect_leftbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_stairwells,exp_settings.choicescreen.linewidth);
-                if drawchoice.costleft ~= 0 %Draw the spines of the stairwells if the left side is the costly side
-                    L_spines = spines + rect_leftbox([1 2 1 2])';
-                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,L_spines(1),L_spines(2),L_spines(3),L_spines(4),exp_settings.choicescreen.linewidth);
-                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,L_spines(5),L_spines(6),L_spines(7),L_spines(8),exp_settings.choicescreen.linewidth);
+%Get the staircase coordinates 
+    X = rect_leftbox(3)-rect_leftbox(1);    %Total width of the cost box
+    side = X/(ncols + gapratio*(ncols-1));  %Dimension of the sides of a box that contains a staircase
+    gap = side*gapratio;                    %Horizontal width between two staircase boxes
+    steps = [0:1:nsteps-1;                  %Draw template staircase
+             nsteps-1:-1:0;
+             nsteps*ones(1,nsteps);
+             nsteps:-1:1].*side/nsteps;
+    allsteps = NaN(4,exp_settings.Max_phys_effort*nsteps);
+    for i = 1:exp_settings.Max_phys_effort
+        i_row = ceil(i/ncols);
+        i_col = i-(i_row-1)*ncols;
+        allsteps(:,(i-1)*nsteps+(1:nsteps)) = (i_col-1)*(side+gap)*[1;0;1;0] + (i_row-1)*(side+gap)*[0;1;0;1] + steps;
+    end
+    allsteps_left = [rect_leftbox(1) rect_leftbox(2) rect_leftbox(1) rect_leftbox(2)]' + allsteps; %Coordinates of the left cost box steps
+    allsteps_right = [rect_rightbox(1) rect_rightbox(2) rect_rightbox(1) rect_rightbox(2)]' + allsteps; %Coordinates of the right cost box steps
+    
+%Translate cost level into amount of steps:
+    costlevel = max([drawchoice.costleft,drawchoice.costright]); %Effort level in terms of flights of stairs
+    cost = costlevel/exp_settings.Max_phys_effort; %Effort level of the costly option, expressed as fraction of max effort level
+    cost_steps = floor(cost*size(allsteps,2)); %Integer number of steps to fill for the costly option
+    last_step = round(((costlevel-floor(costlevel)) - (cost_steps/nsteps - floor(cost_steps/nsteps)))*exp_settings.choicescreen.flightsteps)/exp_settings.choicescreen.flightsteps*nsteps; %Height of the last step (fraction of a full step)         
+%Draw the steps
+    %Left
+        if drawchoice.costleft ~= 0 %Left is the costly side
+            %Fill steps above cost level with line color (white)
+                if cost_steps ~= length(allsteps)
+                    Screen('FillRect',window,exp_settings.choicescreen.linecolor,allsteps_left(:,cost_steps:end));
                 end
-        else %right
-            %Fill the staircase rects
-                rects_right_staircases = staircases + rect_rightbox([1 2 1 2])';
-                Screen('FillRect',window,color_right,rects_right_staircases);
-            %Draw the floors
-                rects_right_floors = floors + rect_rightbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_floors,exp_settings.choicescreen.linewidth);
-            %Draw the staircases
-                rects_right_stairwells = stairwells + rect_rightbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_stairwells,exp_settings.choicescreen.linewidth);
-                if drawchoice.costright ~= 0 %Draw the spines of the stairwells if the right side is the costly side
-                    R_spines = spines + rect_rightbox([1 2 1 2])';
-                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,R_spines(1),R_spines(2),R_spines(3),R_spines(4),exp_settings.choicescreen.linewidth);
-                    Screen('DrawLine',window,exp_settings.choicescreen.linecolor,R_spines(5),R_spines(6),R_spines(7),R_spines(8),exp_settings.choicescreen.linewidth);
+            %Fill steps until cost level with cost color (red)
+                if cost_steps ~= 0
+                    if cost_steps == 1 %Write function differently
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,allsteps_left(:,1)');
+                    else
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,allsteps_left(:,1:cost_steps));
+                    end
                 end
-        end %if side
-    end %for side
+            %Draw the last (fractional) cost step
+                if last_step ~= 0
+                    last_step = allsteps_left(:,cost_steps+1)' + [0 (1-last_step)*side/nsteps 0 0];
+                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_step); %Last costly step (if not whole step)
+                end
+        else
+            Screen('FillRect',window,exp_settings.choicescreen.linecolor,allsteps_left); %No-cost steps
+        end
+    %Right
+        if drawchoice.costright ~= 0 %Right is the costly side
+            %Fill steps above cost level with line color (white)
+                if cost_steps ~= length(allsteps)
+                    Screen('FillRect',window,exp_settings.choicescreen.linecolor,allsteps_right(:,cost_steps:end));
+                end
+            %Fill steps until cost level with cost color (red)
+                if cost_steps ~= 0
+                    if cost_steps == 1 %Write function differently
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,allsteps_right(:,1)');
+                    else
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,allsteps_right(:,1:cost_steps));
+                    end
+                end
+            %Draw the last (fractional) cost step
+                if last_step ~= 0
+                    last_step = allsteps_right(:,cost_steps+1)' + [0 (1-last_step)*side/nsteps 0 0];
+                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_step); %Last costly step (if not whole step)
+                end
+        else
+            Screen('FillRect',window,exp_settings.choicescreen.linecolor,allsteps_right); %No-cost steps
+        end
     
 %Flip
     t_onset = clock;
-    Screen('Flip', window); 
+    Screen('Flip', window);
 end
 
 %% Draw Mental effort cost
