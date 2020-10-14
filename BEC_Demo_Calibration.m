@@ -23,9 +23,10 @@
         [w,h] = Screen('WindowSize',0); demo_rect = [0.1*w 0.1*h 0.9*w 0.9*h]; %The demo screen will not fill the entire screen
         [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default,demo_rect); %0 for Windows Desktop screen
 % Run calibration
-    choicetype = 1; %1:delay/2:risk/3:physical effort/4:mental effort
+    choicetype = 4; %1:delay/2:risk/3:physical effort/4:mental effort
     exp_settings.calibration.ntrials = 20; 
-    AllData.trialinfo = BEC_Calibration(exp_settings,choicetype,window);
+    [AllData.trialinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,AllData.savedir);
+    if exitflag; BEC_ExitExperiment(AllData); end
 % Save
     save([AllData.savedir filesep 'AllData'],'AllData'); 
 % Terminate

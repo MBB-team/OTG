@@ -324,6 +324,7 @@ switch choicetype
     case 3 %PHYSICAL EFFORT
         nfloors = floor(LLCost);
         nsteps = round((LLCost-floor(LLCost))*exp_settings.choicescreen.flightsteps);
+        LLCostText = [];
         %Floors
             if nfloors == 1
                 LLCostText = '1 étage';
@@ -344,6 +345,7 @@ switch choicetype
     case 4 %MENTAL EFFORT
         npages = floor(LLCost);
         nlines = round((LLCost-floor(LLCost))*exp_settings.choicescreen.pagelines);
+        LLCostText = [];
         %Pages
             if npages == 1
                 LLCostText = '1 page';
@@ -764,43 +766,48 @@ function [t_onset] = DrawMentalEffortCost(window,exp_settings,drawchoice)
         lines(4,:) = lines(4,:)+1; %Thickness of the line
         
 %Draw two sets of pages
-    for side = 1:2
-        if side == 1 %left
-            %Fill the cost pages
-                if drawchoice.costleft ~= 0 
-                    rects_left_pages = pages(:,1:floor(drawchoice.costleft)) + rect_leftbox([1 2 1 2])';
-                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,rects_left_pages);
+    %Left
+        %Fill the cost pages
+            if drawchoice.costleft ~= 0 
+                rects_left_pages = pages(:,1:floor(drawchoice.costleft)) + rect_leftbox([1 2 1 2])';
+                %Draw the full pages
+                    if ~isempty(rects_left_pages)
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,rects_left_pages);
+                    end
+                %Draw the additional lines    
                     if drawchoice.costleft ~= floor(drawchoice.costleft) %If the number of pages is not an integer
                         last_page_rect = pages(:,ceil(drawchoice.costleft))' + rect_leftbox([1 2 1 2]);
                         last_page_rect(4) = last_page_rect(2)+h*(drawchoice.costleft-floor(drawchoice.costleft));
                         Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
                     end
-                end
-            %Draw the page outlines
-                rects_left_pages = pages + rect_leftbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_pages,exp_settings.choicescreen.linewidth);
-            %Draw the lines on the pages
-                rects_left_lines = lines + rect_leftbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_lines,exp_settings.choicescreen.linewidth);
-        else %right
-            %Fill the cost pages
-                if drawchoice.costright ~= 0 
-                    rects_right_pages = pages(:,1:floor(drawchoice.costright)) + rect_rightbox([1 2 1 2])';
-                    Screen('FillRect',window,exp_settings.choicescreen.fillcolor,rects_right_pages);
+            end
+        %Draw the page outlines
+            rects_left_pages = pages + rect_leftbox([1 2 1 2])';
+            Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_pages,exp_settings.choicescreen.linewidth);
+        %Draw the lines on the pages
+            rects_left_lines = lines + rect_leftbox([1 2 1 2])';
+            Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_left_lines,exp_settings.choicescreen.linewidth);
+    %Right
+        %Fill the cost pages
+            if drawchoice.costright ~= 0 
+                rects_right_pages = pages(:,1:floor(drawchoice.costright)) + rect_rightbox([1 2 1 2])';
+                %Draw the full pages
+                    if ~isempty(rects_right_pages)
+                        Screen('FillRect',window,exp_settings.choicescreen.fillcolor,rects_right_pages);
+                    end
+                %Draw the additional lines
                     if drawchoice.costright ~= floor(drawchoice.costright) %If the number of pages is not an integer
                         last_page_rect = pages(:,ceil(drawchoice.costright))' + rect_rightbox([1 2 1 2]);
                         last_page_rect(4) = last_page_rect(2)+h*(drawchoice.costright-floor(drawchoice.costright));
                         Screen('FillRect',window,exp_settings.choicescreen.fillcolor,last_page_rect);
                     end
-                end
-            %Draw the page outlines
-                rects_right_pages = pages + rect_rightbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_pages,exp_settings.choicescreen.linewidth);
-            %Draw the lines on the pages
-                rects_right_lines = lines + rect_rightbox([1 2 1 2])';
-                Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_lines,exp_settings.choicescreen.linewidth);
-        end %if side
-    end %for side
+            end
+        %Draw the page outlines
+            rects_right_pages = pages + rect_rightbox([1 2 1 2])';
+            Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_pages,exp_settings.choicescreen.linewidth);
+        %Draw the lines on the pages
+            rects_right_lines = lines + rect_rightbox([1 2 1 2])';
+            Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_lines,exp_settings.choicescreen.linewidth);
     
 %Flip
     t_onset = clock;

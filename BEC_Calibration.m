@@ -1,4 +1,4 @@
-function [trialinfo] = BEC_Calibration(exp_settings,choicetype,window)
+function [trialinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,save_figure)
 % Calibrate choice preferences using an online trial generation and parameter estimation procedure.
 % RLH - Update: October 2020
 % Note: entirely coded for 5 cost bins
@@ -62,7 +62,7 @@ function [trialinfo] = BEC_Calibration(exp_settings,choicetype,window)
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
             [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
-            if exitflag; BEC_ExitExperiment(AllData); return; end
+            if exitflag; return; end
         %Store selected trial
             trialinfo.u(:,trial) = [reward; cost];
             trialinfo.y(trial) = trialoutput.choiceSS;
@@ -78,19 +78,23 @@ function [trialinfo] = BEC_Calibration(exp_settings,choicetype,window)
         P_indiff = (0.5-abs(P_SS'-0.5))./0.5; 
         trialinfo.P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
     %Visualize calibration process and save figure
-        set(0,'DefaultFigureVisible','off');
-        hf = CalibrationFigure(trialinfo,grid);
-        F = getframe(hf);
-        Im = frame2im(F);
-        filename = ['Calibration_' typenames{choicetype}];
-        imwrite(Im,[exp_settings.savedata filesep filename '.png'])
-        close
-        set(0,'DefaultFigureVisible','on');
+        if exist('save_figure','var') && ~isempty(save_figure)
+            set(0,'DefaultFigureVisible','off');
+            hf = CalibrationFigure(trialinfo,grid);
+            F = getframe(hf);
+            Im = frame2im(F);
+            filename = ['Calibration_' typenames{choicetype}];
+            imwrite(Im,[save_figure filesep filename '.png'])
+            close
+            set(0,'DefaultFigureVisible','on');
+        end
 
 end %function
 
 %% Subfunction: Get default settings
 function [options,dim,grid] = GetDefaultSettings(exp_settings)
+    %Get sampling grid
+        grid = exp_settings.ATG.grid;
     %Dimensions
         dim.n_theta = 0;
         dim.n = 0;
@@ -111,7 +115,6 @@ function [options,dim,grid] = GetDefaultSettings(exp_settings)
         options.priors.muPhi(1) = exp_settings.ATG.prior_bias; %Prior for choice bias
         options.priors.muPhi(2:dim.n_phi) = log(1/diff(grid.rewardlimits)); %Priors for weights on cost
     %Sampling grid
-        grid = exp_settings.ATG.grid;
         grid.binlimits = grid.costlimits(1) + ([0:grid.nbins-1;1:grid.nbins])'  * (grid.costlimits(2)-grid.costlimits(1))/grid.nbins;
         grid.gridY = grid.rewardlimits(1):(grid.rewardlimits(2)-grid.rewardlimits(1))/(grid.binrewardlevels-1):grid.rewardlimits(2);
         grid.gridX = grid.costlimits(1):(grid.costlimits(2)-grid.costlimits(1))/(grid.bincostlevels*grid.nbins):grid.costlimits(2);
