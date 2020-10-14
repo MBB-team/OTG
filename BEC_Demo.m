@@ -3,7 +3,7 @@
 
 % Set the choice trial settings-----------------------------------------------------------------------------------------
     trialinfo.trial = 1;        %Trial number
-    trialinfo.choicetype = 2;   %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
+    trialinfo.choicetype = 1;   %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
     trialinfo.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
     trialinfo.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
     trialinfo.Example = 1;      %Is this an example trial?

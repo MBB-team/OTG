@@ -128,9 +128,9 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         while keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0 % as long no button is pressed keep checking the keyboard
             [~, ~, keyCode] = KbCheck(-1);
         end
-    %Screenshot
-        imageArray=Screen('GetImage', window);
-        imwrite(imageArray, 'choiceExample.png');
+%     %Screenshot
+%         imageArray=Screen('GetImage', window);
+%         imwrite(imageArray, 'choiceExample.png');
     %Record response and display confirmation screen
         if keyCode(leftKey)
             resp = leftKey; 

@@ -98,10 +98,10 @@ function [exp_settings] = BEC_Settings
         exp_settings.timings.fixation_choice = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during experiment
         exp_settings.timings.fixation_choice_cal = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during calibration
     
-%% Trial generation settings: general
+%% Choice trial generation settings
     % Choice triallist creation settings       
-        exp_settings.trialgen_emotions.which_choicetypes = 1:3;     %which choice types to include (1:delay/2:risk/3:physical effort/4:mental effort)
-        exp_settings.trialgen_emotions.n_choicetypes = 3;           %amount of choice types
+        exp_settings.trialgen_choice.which_choicetypes = 1:4;     %which choice types to include (1:delay/2:risk/3:physical effort/4:mental effort)
+        exp_settings.trialgen_choice.n_choicetypes = 4;           %amount of choice types
         exp_settings.trialgen_choice.cost_bins = 5;                 %divide cost spectrum into bins; make sure each bin is represented
         exp_settings.trialgen_choice.cost_crit_min = 1;             %minimum # of trials sampled per bin
         exp_settings.trialgen_choice.cost_crit_max = 27;            %maximum # of trials sampled per bin
@@ -116,7 +116,7 @@ function [exp_settings] = BEC_Settings
         exp_settings.ATG.grid.bincostlevels = 10;    % # cost levels per bin  
         exp_settings.ATG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
         exp_settings.ATG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
-        exp_settings.ATG.grid.rewardlimits = [1/60 59/60]; % [min max] reward for uncostly option
+        exp_settings.ATG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
     
 %% Trial Generation Settings (per experiment type)
     % Trial generation settings: emotions experiment
@@ -130,19 +130,16 @@ function [exp_settings] = BEC_Settings
         exp_settings.trialgen_emotions.inductions_per_emo = 20;     %number of inductions per emotion condition
         exp_settings.trialgen_emotions.choices_per_induction = 6;   %number of choices following each induction
     % Trial generation settings: moods experiment
-        exp_settings.trialgen_moods.QuizExamples = [7 4];   %number of trials in mood/neutral condition (i.e. to be answered and pre-answered)
-        exp_settings.trialgen_moods.QuizTrials = 252;       %total number of quiz trials
-        exp_settings.trialgen_moods.choices_per_question = 3; %3 choices following each quiz question (1 of each type)
-        exp_settings.trialgen_moods.i_break = [85,169];     %break from the experiment at these trials
-        exp_settings.trialgen_moods.nSessions = 9;          %total number of sessions
-        exp_settings.trialgen_moods.SessionConditions = [1,0,-1];      % Respectively, positive-mood, neutral-mood, and negative-mood episodes
-        exp_settings.trialgen_moods.MoodFraction = [7/28 21/28];       % Respectively, the baseline bias (first trials within session), and the full positive/negative bias (rest of the session)
-        exp_settings.trialgen_moods.SessionQuizBias.positive = 0.5;    % 50% of the wrong answers is (incorrectly) biased to show positive feedback (positive mood)
-        exp_settings.trialgen_moods.SessionQuizBias.baseline = 0.25;   % 25% of the wrong answers is (incorrectly) biased to show positive feedback (baseline mood - transition)
-        exp_settings.trialgen_moods.SessionQuizBias.negative = 0;      % none of the wrong answers is (incorrectly) biased to show positive feedback (negative mood)
-        exp_settings.trialgen_moods.RatingDimensions_male = {'content';'triste';'calme';'tendu'};  % Rating dimensions
-        exp_settings.trialgen_moods.RatingDimensions_female = {'contente';'triste';'calme';'tendue'};  % Rating dimensions
-    % TO DO: Trial generation settings: DEER only
+        exp_settings.trialgen_moods.QuizExamples = 5;       %number of example quiz trials
+        exp_settings.trialgen_moods.QuizTrials = 144;       %total number of quiz trials
+        exp_settings.trialgen_moods.choices_per_question = 4; %4 choices following each quiz question (1 of each type)
+        exp_settings.trialgen_moods.i_break = NaN;          %break from the experiment at these trials
+        exp_settings.trialgen_moods.nSessions = 6;          %total number of sessions
+        exp_settings.trialgen_moods.SessionConditions = [1,-1];        % 1: positive-mood, 0: neutral-mood, -1: negative-mood
+        exp_settings.trialgen_moods.SessionQuizBias.positive = [0.25 0.375 0.5 0.375 0.25];    % pct of the wrong answers that are biased to (incorrectly) display positive feedback (positive condition)
+        exp_settings.trialgen_moods.SessionQuizBias.negative = [0.25 0.125 0   0.125 0.25];    % pct of the wrong answers that are biased to (incorrectly) display positive feedback (negative condition)
+        exp_settings.trialgen_moods.SessionBiasTrials = [3 6 6 6 3];   % The number of consecutive trials corresponding to the mood biases
+        exp_settings.trialgen_moods.Ratingconditions = {'before','after','none'};
 
 %% Participant reward calculation settings
     exp_settings.Pay.Base = 20;     %euros base pay

@@ -14,7 +14,7 @@
                 AllData.exp_settings = exp_settings; 
             %Participant data
                 AllData.initials = input('Initials: ','s');
-                AllData.gender = input('Gender (m/f): ','s'); %This information is needed for the French emotion vignettes (which are gendered)
+                AllData.ID = input('Enter the ppt ID: ');
             %Get the settings and directories
                 savename = [AllData.initials '_' datestr(clock,30)]; %Directory name where the dataset will be saved
                 AllData.savedir = [exp_settings.datadir filesep savename]; %Path of the directory where the data will be saved      
@@ -180,7 +180,7 @@ if startpoint == 0 || startpoint == 3
     %Loop through quiz questions
         for question = i_question:exp_settings.trialgen_moods.QuizTrials
             %Break time after sessions 3 and 6
-                if ismember(question,exp_settings.trialgen_emotions.i_break)
+                if ismember(question,exp_settings.trialgen_moods.i_break)
                     i_break = find(question==exp_settings.trialgen_emotions.i_break);   %Break number
                     %Timing
                         AllData.timings.breakstart(i_break,:) = clock;
@@ -217,8 +217,7 @@ if startpoint == 0 || startpoint == 3
 %                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
 %                 end
             %Define Eyetracker scene (i.e. quiz trial number)
-                Trial_PupilData = [];
-                if AllData.pupil; EyeTribeSetCurrentScene(question); end            
+                if AllData.pupil; Trial_PupilData = []; EyeTribeSetCurrentScene(question); end            
             %Quiz question
                 AllData.quiztrialinfo(question).IsNeutral = AllData.triallist(question).quizcondition == 0;
                 AllData.quiztrialinfo(question).Question = AllData.triallist.quizquestions{question};
@@ -256,10 +255,10 @@ if startpoint == 0 || startpoint == 3
                 WaitSecs(exp_settings.timings.wait_blank)
             %Rating    
                 AllData.timings.rating_timestamp(question,:) = clock;
-                switch AllData.gender
-                    case 'm'; dimension = exp_settings.RatingDimensions_male{rate};
-                    case 'f'; dimension = exp_settings.RatingDimensions_female{rate};
-                end
+%                 switch AllData.gender
+%                     case 'm'; dimension = exp_settings.RatingDimensions_male{rate};
+%                     case 'f'; dimension = exp_settings.RatingDimensions_female{rate};
+%                 end
                 [rating,RT] = BEC_RateMood(window,AllData,dimension);
                 AllData.Ratings(question,AllData.triallist.ratings_num(question)) = rating;
                 AllData.timings.rating_duration(question,1) = RT;
