@@ -1,6 +1,5 @@
 function [exp_settings] = BEC_Settings
 % Settings structure for the Battery of Economic CHoices And Mood/Emotion Links experiments
-% See "TO DO" ! !
 
 % Setup
     rng('shuffle')              %Shuffle the random number generator
@@ -105,20 +104,27 @@ function [exp_settings] = BEC_Settings
         exp_settings.trialgen_choice.cost_crit_min = 1;             %minimum # of trials sampled per bin
         exp_settings.trialgen_choice.cost_crit_max = 27;            %maximum # of trials sampled per bin
         exp_settings.trialgen_choice.ind_bins = [20 10 5 3 2 0 0 0 0 0]; %also divide P_indiff into bins; these are the amounts of trials to be sampled from each bin    
-    % Example choice trials (TO DO: decide if discrete or continuous)
+    % Example choice trials 
         exp_settings.exampletrials = [...
             [0 2 3 5 6 8 7.5 9 10 12 13 14.75]./15; %Rewards for the uncostly option
-            [0.7 0.5 0.8 0.3 0.6 0.1 0.9 0.4 0.7 0.2 0.5 0.3]]; %Corresponding costs for the costly option (TO DO: discrete quantities)
-    % Online trial generation/choice calibration settings (TO DO: this was called "calibration" before)
-        exp_settings.ATG.ntrials = 60;               % # calibration trials per choice type
-        exp_settings.ATG.grid.nbins = 5;             % # bins
-        exp_settings.ATG.grid.bincostlevels = 10;    % # cost levels per bin  
-        exp_settings.ATG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
-        exp_settings.ATG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
-        exp_settings.ATG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
-        exp_settings.ATG.fixed_beta = 5;  % Assume this value for the inverse choice temperature (based on past results) to improve model fit.
-        exp_settings.ATG.prior_bias = -3; % Note: this is log(prior)
-        exp_settings.ATG.prior_var = 2;   % Note: applies to all parameters
+            [0.7 0.5 0.8 0.3 0.6 0.1 0.9 0.4 0.7 0.2 0.5 0.3]]; %Corresponding costs for the costly option
+    % Automatic trial generation
+        %General
+            exp_settings.ATG.grid.nbins = 5;             % # bins
+            exp_settings.ATG.grid.bincostlevels = 10;    % # cost levels per bin  
+            exp_settings.ATG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
+            exp_settings.ATG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
+            exp_settings.ATG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
+        %Choice calibration
+            exp_settings.ATG.ntrials = 60;    % # calibration trials per choice type
+            exp_settings.ATG.fixed_beta = 5;  % Assume this value for the inverse choice temperature (based on past results) to improve model fit.
+            exp_settings.ATG.prior_bias = -3; % Note: this is log(prior)
+            exp_settings.ATG.prior_var = 2;   % Note: applies to all parameters
+        %Online trial generation during incidental mood/emotion task
+            exp_settings.ATG.online_burntrials = 1; % # of trials per bin that must have been sampled before inverting
+            exp_settings.ATG.online_priorvar = 1e1*eye(3); % Prior variance for each parameter
+            exp_settings.ATG.online_max_iter = 100; % Max. # of iterations, after which we conclude the algorithm does not converge
+            exp_settings.ATG.online_maxperbin = 10; % Max. # of trials in a bin - pick the most recent ones.
     
 %% Trial Generation Settings (per experiment type)
     % Trial generation settings: emotions experiment

@@ -131,19 +131,15 @@ end
 %% [3] Main Experiment
 if startpoint == 0 || startpoint == 3
     startpoint = 0;
-%     %Make triallist (AFTER calibration)
-% 
-% ---------------------- TO DO: INCLUDE THESE
-%                 AllData.triallist.quizquestions
-%                 AllData.triallist.quizanswers
-%                 AllData.triallist.answerorder
-%                 AllData.triallist.correctanswer
-% ------------------------------------------------
-% 
+    
+%     %Make triallist
 %         if isfield(AllData,'triallist') %Resume previously interrupted
 %             i_question = size(AllData.quiztrialinfo,2);
 %             if i_question == 0; i_question = 1; end
 %         else
+AllData.trialinfo = struct;
+AllData.OTG_prior = struct;
+AllData.OTG_posterior = struct;
 %             AllData.timings.StartMainExperiment = clock; 
 %             AllData.triallist = S8_Exp_MakeTriallist(exp_settings,AllData);
 %             AllData.Ratings = NaN(exp_settings.QuizTrials,length(exp_settings.RatingDimensions_male));    
@@ -208,14 +204,6 @@ if startpoint == 0 || startpoint == 3
                     %Timing
                         AllData.timings.breakend(i_break,:) = clock;
                 end
-            %Announce new quiz condition -- TO DO: only when there is a change from neutral to nonneutral
-%                 if question == 1 || (AllData.triallist.quizcondition(question-1) ~= AllData.triallist.quizcondition(question))
-%                     if AllData.triallist.quizcondition(question) == 0; slides = 15;
-%                     else; slides = 14;
-%                     end
-%                     exitflag = S8_Exp_InstructionScreens(window,exp_settings,slides);
-%                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
-%                 end
             %Define Eyetracker scene (i.e. quiz trial number)
                 if AllData.pupil; Trial_PupilData = []; EyeTribeSetCurrentScene(question); end            
             %Quiz question
