@@ -5,7 +5,6 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
         exp_settings = AllData.exp_settings;
     %Texts
         if isstruct(question) %Example trial - "question" is a structure
-            isneutral = question.IsNeutral;
             correctanswer = question.CorrectAnswer;
             questiontext = question.Question;
             answer_A = ['A. ' question.ans_A];
@@ -14,7 +13,6 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
             answer_D = ['D. ' question.ans_D];
             question = [];
         else %Main experiment trial - "question" is the quiz trial number
-            isneutral = AllData.quiztrialinfo(question).IsNeutral;
             correctanswer = AllData.quiztrialinfo(question).CorrectAnswer;
             questiontext = AllData.quiztrialinfo(question).Question;
             answer_A = ['A. ' AllData.quiztrialinfo(question).ans_A];
@@ -22,8 +20,8 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
             answer_C = ['C. ' AllData.quiztrialinfo(question).ans_C];
             answer_D = ['D. ' AllData.quiztrialinfo(question).ans_D];
         end
-    %Prepare screen
-        Screen('TextSize',window,exp_settings.font.EmoFontSize);    
+    %Prepare screen   
+        Screen('TextSize',window,exp_settings.font.QuestionFontSize); 
         Screen('TextFont',window,exp_settings.font.FontType);
         Screen('FillRect',window,exp_settings.backgrounds.mood);
     %Prepare rects
@@ -51,9 +49,9 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
         ITI = exp_settings.timings.fix_pre_quiz(1) + ...
             rand*(exp_settings.timings.fix_pre_quiz(2)-exp_settings.timings.fix_pre_quiz(1));
     %Pupil mark
-        if AllData.pupil && ~isempty(question)
-            S10_Exp_PhysiologyMark(AllData,'fix_pre_quiz')
-        end
+%         if AllData.pupil && ~isempty(question)
+%             S10_Exp_PhysiologyMark(AllData,'fix_pre_quiz')
+%         end
     %Flip
         tic
         exitflag = BEC_Fixation(window,exp_settings,ITI);
@@ -66,7 +64,6 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
     i_select = 0;
     while ~terminate
         %Write question
-            Screen('TextSize',window,exp_settings.font.QuestionFontSize); 
             DrawFormattedText(window, questiontext, 'center', exp_settings.Moodstimuli.quizquestion_y*Ysize, exp_settings.font.QuizFontColor, exp_settings.font.Wrapat, [], [], exp_settings.font.vSpacing);
         %Write answers
             if etime(clock,t1) > exp_settings.timings.delay_answers            
@@ -93,15 +90,7 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
                         end                                                    
                     end
                %Draw the rectangle
-                    if isneutral %Around the correct answer
-                        switch correctanswer
-                            case 1; correct_rect = [textbounds_A(1)-margin textbounds_A(2)-margin textbounds_A(3)+margin textbounds_A(4)+margin];
-                            case 2; correct_rect = [textbounds_B(1)-margin textbounds_B(2)-margin textbounds_B(3)+margin textbounds_B(4)+margin];
-                            case 3; correct_rect = [textbounds_C(1)-margin textbounds_C(2)-margin textbounds_C(3)+margin textbounds_C(4)+margin];
-                            case 4; correct_rect = [textbounds_D(1)-margin textbounds_D(2)-margin textbounds_D(3)+margin textbounds_D(4)+margin];
-                        end
-                        Screen('FrameRect',window,select_color,correct_rect,width);
-                    elseif i_select ~= 0 %Around the selected answer
+                    if i_select ~= 0 %Around the selected answer
                         switch i_select
                             case 1; select_rect = [textbounds_A(1)-margin textbounds_A(2)-margin textbounds_A(3)+margin textbounds_A(4)+margin];
                             case 2; select_rect = [textbounds_B(1)-margin textbounds_B(2)-margin textbounds_B(3)+margin textbounds_B(4)+margin];
@@ -111,14 +100,7 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
                         Screen('FrameRect',window,select_color,select_rect,width);
                     end
                 %Record valid keypress
-                    if isneutral
-                        if i_select == i_correct
-                            SelectedAnswer = i_select;
-                            IsCorrect = NaN;
-                            terminate = 1;
-                            RT = etime(clock,t1);
-                        end
-                    elseif i_select ~= 0
+                    if i_select ~= 0
                         terminate = 1;
                         RT = etime(clock,t1);
                         SelectedAnswer = i_select;
@@ -137,9 +119,9 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
                 IsCorrect = -1;
             end
         %Pupil -- TO DO
-            if AllData.pupil && ~isempty(question) && i_loop == 0
-                S10_Exp_PhysiologyMark(AllData,'fix_pre_quiz')
-            end
+%             if AllData.pupil && ~isempty(question) && i_loop == 0
+%                 S10_Exp_PhysiologyMark(AllData,'fix_pre_quiz')
+%             end
         %Flip
             Screen('Flip', window);
             if i_loop == 0 && ~isempty(question)

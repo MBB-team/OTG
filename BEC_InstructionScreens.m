@@ -15,6 +15,10 @@ function [exitflag] = BEC_InstructionScreens(window,exp_settings,which_instructi
         rightKey    = KbName('RightArrow'); %39
         spacebar    = KbName('space'); %32
         escapeKey   = KbName('ESCAPE'); %27
+    %Scaling of the slides
+        [width, height]=Screen('WindowSize',window);
+        SF = 1;   %Scaling factor w.r.t. full screen
+        sliderect = ((1-SF)/2+[0 0 SF SF]).*[width height width height];
             
 %Loop through slides
     slide = 1; %start slide
@@ -27,7 +31,7 @@ function [exitflag] = BEC_InstructionScreens(window,exp_settings,which_instructi
                 im_instruction = imread([exp_settings.stimdir filesep 'Slide' num2str(slides(slide)) '.png']);
             end
             tex_instruction = Screen('MakeTexture',window,im_instruction);
-            Screen('DrawTexture', window, tex_instruction);
+            Screen('DrawTexture', window, tex_instruction, [], sliderect);
             Screen('Flip', window);
         %Monitor responses
             valid = 0;

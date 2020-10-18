@@ -21,7 +21,7 @@
     if max(screens)==2; [window,winRect] = Screen('OpenWindow',2,exp_settings.backgrounds.default); %2 for external monitors
     else; [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
     end
-%     HideCursor  
+    HideCursor  
 % Choice screen
     [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo);
 % Exit

@@ -61,10 +61,6 @@ function [exp_settings] = BEC_Settings
             exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen       
             exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
             exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
-            exp_settings.font.color_content = [0 255 0];    %Green (mood rating)
-            exp_settings.font.color_calme = [102 204 255];  %Blue (mood rating)
-            exp_settings.font.color_triste = [0 0 0];       %Black (mood rating)
-            exp_settings.font.color_tendu = [255 255 0];    %Yellow (mood rating)
     
 %% Choice screen configuration (universal)
     % Cost and reward features
@@ -100,6 +96,7 @@ function [exp_settings] = BEC_Settings
     % Choice triallist creation settings       
         exp_settings.trialgen_choice.which_choicetypes = 1:4;     %which choice types to include (1:delay/2:risk/3:physical effort/4:mental effort)
         exp_settings.trialgen_choice.n_choicetypes = 4;           %amount of choice types
+        exp_settings.trialgen_choice.typenames = {'delay','risk','physical_effort','mental_effort'};
         exp_settings.trialgen_choice.cost_bins = 5;                 %divide cost spectrum into bins; make sure each bin is represented
         exp_settings.trialgen_choice.cost_crit_min = 1;             %minimum # of trials sampled per bin
         exp_settings.trialgen_choice.cost_crit_max = 27;            %maximum # of trials sampled per bin
@@ -148,6 +145,9 @@ function [exp_settings] = BEC_Settings
         exp_settings.trialgen_moods.SessionQuizBias.negative = [0.25 0.125 0   0.125 0.25];    % pct of the wrong answers that are biased to (incorrectly) display positive feedback (negative condition)
         exp_settings.trialgen_moods.SessionBiasTrials = [3 6 6 6 3];   % The number of consecutive trials corresponding to the mood biases
         exp_settings.trialgen_moods.Ratingconditions = {'before','after','none'};
+        exp_settings.trialgen_moods.Ratingquestion = 'Comment je me sens?';
+        exp_settings.trialgen_moods.Rating_label_min = 'de mauvaise humeur';
+        exp_settings.trialgen_moods.Rating_label_max = 'de bonne humeur';
 
 %% Participant reward calculation settings
     exp_settings.Pay.Base = 20;     %euros base pay
@@ -160,6 +160,7 @@ function [exp_settings] = BEC_Settings
     exp_settings.Pay.SSCriterion = 0.10; %For very low amounts of SS choices: allow maximum to be higher
     
 %% Experiment instructions (per experiment type)
+% Emotions experiment
 %     exp_settings.instructions_emotions.start_emotion_instructions = 1:4;
 %     exp_settings.instructions_emotions.end_emotion_instructions = 5;
 %     exp_settings.instructions_emotions.instr_effort = 6:9;
@@ -177,6 +178,20 @@ function [exp_settings] = BEC_Settings
 %     exp_settings.instructions_emotions.break = 27;
 %     exp_settings.instructions_emotions.rate_music = 28:29;
 %     exp_settings.instructions_emotions.rewardtrial = 30;    
+
+% Moods experiment
+    exp_settings.instructions_moods.introduction = 1:2;
+    exp_settings.instructions_moods.delay_instructions = 3:5;
+    exp_settings.instructions_moods.delay_start_calibration = 6:7;
+    exp_settings.instructions_moods.risk_instructions = 8:10;
+    exp_settings.instructions_moods.risk_start_calibration = 11:12;
+    exp_settings.instructions_moods.mental_effort_instructions = 13:15;
+    exp_settings.instructions_moods.mental_effort_start_calibration = 16:17;
+    exp_settings.instructions_moods.physical_effort_instructions = 18:20;
+    exp_settings.instructions_moods.physical_effort_start_calibration = 21:22;
+    exp_settings.instructions_moods.start_phase_2 = 23:26; %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
+    exp_settings.instructions_moods.end_of_instructions = 27;
+    exp_settings.instructions_moods.end_of_experiment = 28;
     
 %% Mood stimuli
     % Timings

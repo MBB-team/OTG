@@ -54,9 +54,9 @@ function BEC_ShowFeedback(window,AllData,feedback)
     %Draw on screen
         Screen('Flip',window);
     %Pupil mark -- TO DO
-        if AllData.pupil && ~is_example
-            S10_Exp_PhysiologyMark(AllData,'quiz_feedback')
-        end
+%         if AllData.pupil && ~is_example
+%             S10_Exp_PhysiologyMark(AllData,'quiz_feedback')
+%         end
     %Play sound
         [audio, FS] = audioread([exp_settings.stimdir filesep soundfile]); %Read sound file
         player = audioplayer(audio, FS); %,16,ID); %nBits = 16 by default, volume = 1 by default.

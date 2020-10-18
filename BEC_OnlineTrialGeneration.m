@@ -1,21 +1,4 @@
-AllData.trialinfo = struct;
-AllData.OTG_prior = struct;
-AllData.OTG_posterior = struct;
-[exp_settings] = BEC_Settings;
-SIMULATE = 1;
-close all; figure(1)
-% AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi(1) = log(AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi(1));
-
-
-for trl = 1:100
-    choicetype = 1;
-
-    if SIMULATE
-        figure(1); subplot(1,2,1); hold on
-        cla
-    end
-
-% [AllData,exitflag] = function BEC_OnlineTrialGeneration(exp_settings,window,AllData,choicetype)
+function [AllData,exitflag] = BEC_OnlineTrialGeneration(exp_settings,window,AllData,trial)
 %     Inputs:
 %       exp_settings: experiment settings structure
 %       window: PsychToolbox window
@@ -24,21 +7,31 @@ for trl = 1:100
 %       AllData.OTG_prior: prior from the choice calibration
 %       choicetype: 1, 2, 3, or 4
 
+%For simulation__________________________________________________________________________
+    SIMULATE = 1;
+    choicetype = 1;
+    AllData.triallist = BEC_MakeTriallist_Mood(exp_settings);
+    close all; figure(1)
+    [exp_settings] = BEC_Settings;
+    %note: names and bias is different in S10
+    AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi(1) = log(AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi(1));
+for trl = 1:100
+    if SIMULATE
+        figure(1); subplot(1,2,1); hold on
+        cla
+    end
+%For simulation__________________________________________________________________________
+
 %% Sample and present a choice of the given choice type
     %Settings
-        typenames = {'delay','risk','phys_effort','ment_effort'};
+        typenames = exp_settings.trialgen_choice.typenames;
+        type_trialno = sum(trialinfo.choicetype==choicetype)+1;
+        choicetype = AllData.triallist.choicetypes(trial);
     %Define sampling grid
         grid = exp_settings.ATG.grid;
         grid.binlimits = grid.costlimits(1) + ([0:grid.nbins-1;1:grid.nbins])'  * (grid.costlimits(2)-grid.costlimits(1))/grid.nbins;
         grid.gridY = grid.rewardlimits(1):(grid.rewardlimits(2)-grid.rewardlimits(1))/(grid.binrewardlevels-1):grid.rewardlimits(2);
         grid.gridX = grid.costlimits(1):(grid.costlimits(2)-grid.costlimits(1))/(grid.bincostlevels*grid.nbins):grid.costlimits(2);
-    %Get trial numbers
-        if ~isfield(AllData.trialinfo,'choicetype')
-            trialno = 1; type_trialno = 1;
-        else
-            trialno = length(AllData.trialinfo)+1;
-            type_trialno = sum(trialinfo.choicetype==choicetype)+1;
-        end
     %First trial of the given choice type: make OTG structures
         if type_trialno == 1
             %Priors from calibration
@@ -86,15 +79,15 @@ for trl = 1:100
             beta = exp(mu0(3));
             DV = reward + b0 - 1 + k * cost;
             P_SS = sig(DV*beta);     
-            AllData.trialinfo(trialno).choicetype = choicetype;
-            AllData.trialinfo(trialno).SSReward = reward;
-            AllData.trialinfo(trialno).Cost = cost;
-            AllData.trialinfo(trialno).choiceSS = sampleFromArbitraryP([P_SS,1-P_SS]',[1,0]',1);
+            AllData.trialinfo(trial).choicetype = choicetype;
+            AllData.trialinfo(trial).SSReward = reward;
+            AllData.trialinfo(trial).Cost = cost;
+            AllData.trialinfo(trial).choiceSS = sampleFromArbitraryP([P_SS,1-P_SS]',[1,0]',1);
         else
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
-            [AllData.trialinfo(trialno),exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
+            [AllData.trialinfo(trial),exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
             if exitflag; return; end
         end
         
@@ -206,7 +199,7 @@ for trl = 1:100
                             end
                         end
                     %Record evolution of posteriors
-                        AllData.OTG_posterior.(typenames{choicetype}).all_muPhi(trialno,:) = AllData.OTG_posterior.(typenames{choicetype}).muPhi;                    
+                        AllData.OTG_posterior.(typenames{choicetype}).all_muPhi(trial,:) = AllData.OTG_posterior.(typenames{choicetype}).muPhi;                    
                 end
             %Compute the indifference grid
                 all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %All rewards

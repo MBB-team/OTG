@@ -1,4 +1,4 @@
-function [rating,RT] = BEC_RateMood(window,AllData,dimension)
+function [rating,RT] = BEC_RateMood(window,AllData)
 %Rate the presented stimuli along the spectrum of the presented dimension
 
 %% Prepare the screen
@@ -12,14 +12,7 @@ function [rating,RT] = BEC_RateMood(window,AllData,dimension)
         line        = 3;    %# pixels axis thickness
         axesWidth   = 700;  %# pixels axis length
         whisLength  = 5;    %# length of the whiskers at axis end
-        slider      = [0 0 10 30];  %size of the slider rectangle        
-    %Determine rating theme color
-        switch dimension
-            case {'content','contente'}; themecolor = exp_settings.font.color_content;
-            case {'calme'}; themecolor = exp_settings.font.color_calme;
-            case {'triste'}; themecolor = exp_settings.font.color_triste;
-            case {'tendu','tendue'}; themecolor = exp_settings.font.color_tendu;
-        end
+        slider      = [0 0 10 30];  %size of the slider rectangle            
     
 %% Write text and draw axes
     %Background
@@ -33,16 +26,15 @@ function [rating,RT] = BEC_RateMood(window,AllData,dimension)
         Screen('FrameRect', window, 255, whiskers, line-1); %Whiskers
     %Draw slilder in the middle
         rating = 0.5;
-        Screen('FillRect', window, themecolor, CenterRectOnPoint(slider,((winRect(3)-axesWidth)/2+1+rating*axesWidth),winRect(4)*9/16))
+        Screen('FillRect', window, exp_settings.colors.orange, CenterRectOnPoint(slider,((winRect(3)-axesWidth)/2+1+rating*axesWidth),winRect(4)*9/16))
     %Write question:
         Screen('TextSize',window,exp_settings.font.RatingFontSize);    
         Screen('TextFont',window,exp_settings.font.FontType);
-        text = 'A quel point vous sentez-vous ';
-        [nx,ny] = DrawFormattedText(window,text,'center',winRect(4)/3,exp_settings.colors.white); %At 1/3 of the screen height
-        DrawFormattedText(window,[dimension ' ?'],nx,ny,themecolor);
+        DrawFormattedText(window,exp_settings.trialgen_moods.Ratingquestion,'center',winRect(4)/3,exp_settings.colors.white); %At 1/3 of the screen height
+    %Write axis extrema labels
         Screen('TextSize',window,18); Screen('TextStyle', window, 2); %italics
-            DrawFormattedText(window,'Pas du tout',round(winRect(3)/2-axesWidth/2-50),round(winRect(4)*1/2),255);
-            DrawFormattedText(window,'Tout à fait',round(winRect(3)/2+axesWidth/2),round(winRect(4)*1/2),255,16);                
+            DrawFormattedText(window,exp_settings.trialgen_moods.Rating_label_min,round(winRect(3)/2-axesWidth/2-50),round(winRect(4)*1/2),255);
+            DrawFormattedText(window,exp_settings.trialgen_moods.Rating_label_max,round(winRect(3)/2+axesWidth/2),round(winRect(4)*1/2),255,16);                
     %Flip
         Screen('Flip',window)    
     %Eyetracking marker -- TO DO
@@ -76,21 +68,21 @@ SetMouse(round(winRect(3)/2), round(winRect(4)/2), window)
             location = (x >= (winRect(3)-axesWidth)/2-10) + (x <= (winRect(3)+axesWidth)/2+10);
             if location == 2 % i.e., mouse is above the scale
                 %Draw the former graphics
+                    %Question
                         Screen('FrameRect', window, 255, axes, line); %Axes
                         Screen('FrameRect', window, 255, whiskers, line-1); %Whiskers
                         Screen('TextSize',window,exp_settings.font.RatingFontSize);    
-                        Screen('TextFont',window,exp_settings.font.FontType);
                         Screen('TextStyle', window, 0); %Normal
-                        text = 'A quel point vous sentez-vous ';
-                        [nx,ny] = DrawFormattedText(window,text,'center',winRect(4)/3,exp_settings.font.RatingFontColor); %At 1/3 of the screen height
-                        DrawFormattedText(window,[dimension ' ?'],nx,ny,themecolor);
-                        Screen('TextSize',window,18); Screen('TextStyle', window, 2); %italics
-                        DrawFormattedText(window,'Pas du tout',round(winRect(3)/2-axesWidth/2-50),round(winRect(4)*1/2),exp_settings.font.RatingFontColor);
-                        DrawFormattedText(window,'Tout à fait',round(winRect(3)/2+axesWidth/2),round(winRect(4)*1/2),exp_settings.font.RatingFontColor,16);
+                        DrawFormattedText(window,exp_settings.trialgen_moods.Ratingquestion,'center',winRect(4)/3,exp_settings.colors.white); %At 1/3 of the screen height
+                        Screen('TextSize',window,18); 
+                    %Rating axis labels
+                        Screen('TextStyle', window, 2); %italics
+                        DrawFormattedText(window,exp_settings.trialgen_moods.Rating_label_min,round(winRect(3)/2-axesWidth/2-50),round(winRect(4)*1/2),255);
+                        DrawFormattedText(window,exp_settings.trialgen_moods.Rating_label_max,round(winRect(3)/2+axesWidth/2),round(winRect(4)*1/2),255,16);         
                         Screen('TextStyle', window, 0); %Set back to normal
                 %Draw slilder at confirmed position
                     if response == 1
-                        Screen('FillRect', window, themecolor, CenterRectOnPoint(slider,rating,winRect(4)*9/16))
+                        Screen('FillRect', window, exp_settings.colors.orange, CenterRectOnPoint(slider,rating,winRect(4)*9/16))
                     else
                 %Draw slider live
                         %Sligth adjustment for the extrema (allow to move out of borders a bit more flexibly):
@@ -100,18 +92,16 @@ SetMouse(round(winRect(3)/2), round(winRect(4)/2), window)
                                 x = (winRect(3)+axesWidth)/2;
                             end
                         sliderpos = CenterRectOnPoint(slider,x,winRect(4)*9/16);
-                            Screen('FillRect', window, themecolor, sliderpos)
+                            Screen('FillRect', window, exp_settings.colors.orange, sliderpos)
                     end
                 %Draw the confirmation and correction boxes
                     if response == 1 && confirm == 0
                         leftrect = [(winRect(3)-axesWidth)/2 (12/16)*winRect(4) (winRect(3)-axesWidth/3)/2 (13/16)*winRect(4)];
                         rightrect = [(winRect(3)+axesWidth/3)/2 (12/16)*winRect(4) (winRect(3)+axesWidth)/2 (13/16)*winRect(4)];
-                        Screen('FillRect',window, exp_settings.colors.grey, [leftrect; rightrect]') %Black
+                        Screen('FillRect',window, 0.5*exp_settings.colors.grey, [leftrect; rightrect]') %Dark grey
                         Screen('TextSize',window,18);                     
-                        DrawFormattedText(window, leftrecttext, 'center', 'center', ...
-                            exp_settings.font.RatingFontColor, [], [], [], [], [], leftrect);
-                        DrawFormattedText(window, rightrecttext, 'center', 'center', ...
-                            exp_settings.font.RatingFontColor, [], [], [], [], [], rightrect);
+                        DrawFormattedText(window, leftrecttext, 'center', 'center', exp_settings.colors.white, [], [], [], [], [], leftrect);
+                        DrawFormattedText(window, rightrecttext, 'center', 'center', exp_settings.colors.white, [], [], [], [], [], rightrect);
                     end
                 %Flip
                     Screen('Flip',window);
@@ -139,11 +129,11 @@ SetMouse(round(winRect(3)/2), round(winRect(4)/2), window)
         rating = (rating-(winRect(3)-axesWidth)/2)/axesWidth;     
     %Waiting
         RT = etime(clock,t1); %Response time
-        if RT < exp_settings.timings.min_rating_time
-            WaitSecs(exp_settings.timings.min_rating_time-RT);
-        else
-            WaitSecs(0.3);
-        end
+%         if RT < exp_settings.timings.min_rating_time
+%             WaitSecs(exp_settings.timings.min_rating_time-RT);
+%         else
+%             WaitSecs(0.3);
+%         end
     %Cleanup
         Screen('Flip',window);
         Screen('Close');
