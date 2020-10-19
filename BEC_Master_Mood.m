@@ -22,7 +22,7 @@
                 disp('Dataset and directory created.')
                 AllData.Instructions.Progress = 0; %Start with the beginning of the instructions
         else %A dataset already exists
-            clearvars -except AllData %Keep only the data structure
+            clearvars -except AllData exp_settings %Keep only the data structure
             startpoint = input('Enter start point (1.Choice instructions and calibration/2.Quiz instructions/3.Main Experiment/4.Reward calculation): '); %Pre-start checks
         end
     %Add all experiment scripts and functions to the path
@@ -69,6 +69,7 @@
                     for trl = 1:length(i_examples)                                    
                         exampletrial.SSReward = exp_settings.exampletrials(1,i_examples(trl));   %Reward for the uncostly (SS) option (between 0 and 1)
                         exampletrial.Cost = exp_settings.exampletrials(2,i_examples(trl));       %Cost level or the costly (LL) option (between 0 and 1)
+                        exampletrial.Example = 1;
                         [~,exitflag] = BEC_ShowChoice(window,exp_settings,exampletrial);
                         if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                     end
@@ -83,12 +84,11 @@
                     AllData.Instructions.Progress = AllData.Instructions.Progress + 1;
             end %for i_type
         %E-mail the results of the four calibrations
-            AllData.initials = 'RH';
             title = ['Calibration results for participant ' AllData.initials]; 
-            appendix = {[exp_settings.savedata filesep 'Calibration_delay.png'];
-                        [exp_settings.savedata filesep 'Calibration_risk.png'];
-                        [exp_settings.savedata filesep 'Calibration_physical_effort.png'];
-                        [exp_settings.savedata filesep 'Calibration_mental_effort.png']};
+            appendix = {[AllData.savedir filesep 'Calibration_delay.png'];
+                        [AllData.savedir filesep 'Calibration_risk.png'];
+                        [AllData.savedir filesep 'Calibration_physical_effort.png'];
+                        [AllData.savedir filesep 'Calibration_mental_effort.png']};
             try RH_SendMail(title,[],appendix); 
             catch; disp('Sending e-mail failed'); 
             end
@@ -172,7 +172,7 @@ if startpoint == 0 || startpoint == 3
                 EyeTribeGetDataSimple; %Clear the buffer
         end
     %Instructions
-        exitflag = BEC_InstructionScreens(window,exp_settings,'start_main_experiment');
+        exitflag = BEC_InstructionScreens(window,exp_settings,exp_settings.instructions_moods.end_of_instructions);
         if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
     %Loop through quiz questions
         for question = i_question:exp_settings.trialgen_moods.QuizTrials

@@ -85,7 +85,22 @@ SIMULATE = 0;
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
-            [AllData.trialinfo(trial),exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
+            [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
+            AllData.trialinfo(trial).choicetype = trialoutput.choicetype;
+            AllData.trialinfo(trial).SSReward = trialoutput.SSReward;
+            AllData.trialinfo(trial).Cost = trialoutput.Cost;
+            AllData.trialinfo(trial).SideSS = trialoutput.SideSS;
+            AllData.trialinfo(trial).ITI = trialoutput.ITI;
+            AllData.trialinfo(trial).choiceSS = trialoutput.choiceSS;
+            AllData.trialinfo(trial).RT = trialoutput.RT;
+            AllData.trialinfo(trial).LLReward = trialoutput.LLReward;
+            AllData.trialinfo(trial).Choicetype = trialoutput.Choicetype;
+            AllData.trialinfo(trial).Delay = trialoutput.Delay;
+            AllData.trialinfo(trial).Risk = trialoutput.Risk;
+            AllData.trialinfo(trial).PhysicalEffort = trialoutput.PhysicalEffort;
+            AllData.trialinfo(trial).MentalEffort = trialoutput.MentalEffort;
+            AllData.trialinfo(trial).Loss = trialoutput.Loss;
+            AllData.trialinfo(trial).timestamp = trialoutput.timestamp;
             if exitflag; return; end
         end
         

@@ -64,6 +64,7 @@ function [AllData,exitflag] = BEC_ShowQuizQuestion(window,question,AllData)
     i_select = 0;
     while ~terminate
         %Write question
+            Screen('TextSize',window,exp_settings.font.QuestionFontSize); 
             DrawFormattedText(window, questiontext, 'center', exp_settings.Moodstimuli.quizquestion_y*Ysize, exp_settings.font.QuizFontColor, exp_settings.font.Wrapat, [], [], exp_settings.font.vSpacing);
         %Write answers
             if etime(clock,t1) > exp_settings.timings.delay_answers            

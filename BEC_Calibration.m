@@ -4,7 +4,7 @@ function [trialinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,s
 % Note: entirely coded for 5 cost bins
 
 %% Configuration
-    ntrials = exp_settings.calibration.ntrials;        
+    ntrials = exp_settings.ATG.ntrials;        
     [options,dim,grid] = GetDefaultSettings(exp_settings); %NB: options are updated each trial
     inv_options = options; %options for parameter estimation only (invariable)!
     trialinfo.options = options;
