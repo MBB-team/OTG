@@ -12,7 +12,6 @@ function [trialinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,s
     all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %All rewards
     all_cost = repmat(grid.gridX(2:end),grid.binrewardlevels,1); %All costs
     u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,[numel(all_cost) 1])]'; %Full grid
-    typenames = {'delay','risk','phys_effort','ment_effort'};
         
 %% Loop through trials
     for trial = 1:ntrials           
@@ -83,7 +82,7 @@ function [trialinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,s
             hf = CalibrationFigure(trialinfo,grid);
             F = getframe(hf);
             Im = frame2im(F);
-            filename = ['Calibration_' typenames{choicetype}];
+            filename = ['Calibration_' exp_settings.trialgen_choice.typenames{choicetype}];
             imwrite(Im,[save_figure filesep filename '.png'])
             close
             set(0,'DefaultFigureVisible','on');

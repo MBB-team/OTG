@@ -82,44 +82,53 @@
                 %Update instruction progress
                     AllData.Instructions.Progress = AllData.Instructions.Progress + 1;
             end %for i_type
+        %E-mail the results of the four calibrations
+            AllData.initials = 'RH';
+            title = ['Calibration results for participant ' AllData.initials]; 
+            appendix = {[exp_settings.savedata filesep 'Calibration_delay.png'];
+                        [exp_settings.savedata filesep 'Calibration_risk.png'];
+                        [exp_settings.savedata filesep 'Calibration_physical_effort.png'];
+                        [exp_settings.savedata filesep 'Calibration_mental_effort.png']};
+            try RH_SendMail(title,[],appendix); 
+            catch; disp('Sending e-mail failed'); 
+            end
     end %if startpoint
     
 %% [2] Quiz and Rating Examples
 if startpoint == 0 || startpoint == 2
     startpoint = 0;    
-    %Instructions and examples: Quiz
-        if AllData.Instructions.Progress == 5
-            %Break, announce phase 2, show instructions for quiz and rating
-                AllData.timings.break = clock;
-                exitflag = BEC_InstructionScreens(window,exp_settings,exp_settings.instructions_moods.start_phase_2); %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
-                if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
-            %Loop through examples
-                AllData.timings.StartQuizInstructions = clock; 
-                for trial = 1:sum(exp_settings.trialgen_moods.QuizExamples)
-                    %Quiz question
-                        answerorder = randperm(4);
-                        example_question.Question = exp_settings.QuizTraining{trial,1};
-                        example_question.ans_A = exp_settings.QuizTraining{trial,1+answerorder(1)};
-                        example_question.ans_B = exp_settings.QuizTraining{trial,1+answerorder(2)};
-                        example_question.ans_C = exp_settings.QuizTraining{trial,1+answerorder(3)};
-                        example_question.ans_D = exp_settings.QuizTraining{trial,1+answerorder(4)};
-                        example_question.CorrectAnswer = find(answerorder==1);
-                        [ExampleData,exitflag] = BEC_ShowQuizQuestion(window,example_question,AllData);
-                        if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
-                    %Give feedback
-                        switch ExampleData.quiztrialinfo.IsCorrect
-                            case 1; feedback = 1; %Correct answer
-                            case -1; feedback = -1; %Timeout
-                            case 0; feedback = 0; %Wrong answer
-                        end
-                        BEC_ShowFeedback(window,AllData,feedback)
-                    %Rate mood
-                        BEC_RateMood(window,AllData);
-                end                     
-            %Save
-                AllData.Instructions.Progress = 6;
-                save([AllData.savedir filesep 'AllData'],'AllData');
-        end            
+    if AllData.Instructions.Progress == 5
+        %Break, announce phase 2, show instructions for quiz and rating
+            AllData.timings.break = clock;
+            exitflag = BEC_InstructionScreens(window,exp_settings,exp_settings.instructions_moods.start_phase_2); %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+        %Loop through examples
+            AllData.timings.StartQuizInstructions = clock; 
+            for trial = 1:sum(exp_settings.trialgen_moods.QuizExamples)
+                %Quiz question
+                    answerorder = randperm(4);
+                    example_question.Question = exp_settings.QuizTraining{trial,1};
+                    example_question.ans_A = exp_settings.QuizTraining{trial,1+answerorder(1)};
+                    example_question.ans_B = exp_settings.QuizTraining{trial,1+answerorder(2)};
+                    example_question.ans_C = exp_settings.QuizTraining{trial,1+answerorder(3)};
+                    example_question.ans_D = exp_settings.QuizTraining{trial,1+answerorder(4)};
+                    example_question.CorrectAnswer = find(answerorder==1);
+                    [ExampleData,exitflag] = BEC_ShowQuizQuestion(window,example_question,AllData);
+                    if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+                %Give feedback
+                    switch ExampleData.quiztrialinfo.IsCorrect
+                        case 1; feedback = 1; %Correct answer
+                        case -1; feedback = -1; %Timeout
+                        case 0; feedback = 0; %Wrong answer
+                    end
+                    BEC_ShowFeedback(window,AllData,feedback)
+                %Rate mood
+                    BEC_RateMood(window,AllData);
+            end                     
+        %Save
+            AllData.Instructions.Progress = 6;
+            save([AllData.savedir filesep 'AllData'],'AllData');
+    end            
 end
 
 %% [3] Main Experiment
@@ -224,9 +233,11 @@ if startpoint == 0 || startpoint == 3
 %                 if AllData.pupil; EyeTribeSetCurrentMark(4); end -- TO DO
 %                 Screen('Flip',window);
 %                 WaitSecs(exp_settings.timings.wait_blank)
-            %Rating    
-                AllData.timings.rating_timestamp(question,:) = clock;
-                [AllData.Ratings(question),AllData.timings.rating_duration(question,1)] = BEC_RateMood(window,AllData);
+            %Rating (if before choices) 
+                if strcmp(AllData.triallist.rating(question),'before')
+                    AllData.timings.rating_timestamp(question,:) = clock;
+                    [AllData.Ratings(question),AllData.timings.rating_duration(question,1)] = BEC_RateMood(window,AllData);
+                end
             %Get pupil data from part one of the trial (mood induction)
                 if AllData.pupil
 %                     [ ~, PupilData ,~] = EyeTribeGetDataSimple;
@@ -236,6 +247,11 @@ if startpoint == 0 || startpoint == 3
                 for choicetrial = (question-1)*exp_settings.trialgen_moods.choices_per_question + (1:exp_settings.trialgen_moods.choices_per_question)
                     [AllData,exitflag] = BEC_OnlineTrialGeneration(exp_settings,window,AllData,choicetrial);
                     if exitflag; BEC_ExitExperiment(AllData); return; end
+                end
+            %Rating (if before choices) 
+                if strcmp(AllData.triallist.rating(question),'after')
+                    AllData.timings.rating_timestamp(question,:) = clock;
+                    [AllData.Ratings(question),AllData.timings.rating_duration(question,1)] = BEC_RateMood(window,AllData);
                 end
             %Save the data at the end of each trial
                 save([AllData.savedir filesep 'AllData'],'AllData');
@@ -257,6 +273,6 @@ end
         %Reward calculation
             % TO DO
         %Terminate the experiment
-            RH_WaitForKeyPress({exp_settings.keys.proceedkey});
+%             RH_WaitForKeyPress({exp_settings.keys.proceedkey});
             BEC_ExitExperiment(AllData)
     end

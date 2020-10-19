@@ -118,10 +118,11 @@ function [exp_settings] = BEC_Settings
             exp_settings.ATG.prior_bias = -3; % Note: this is log(prior)
             exp_settings.ATG.prior_var = 2;   % Note: applies to all parameters
         %Online trial generation during incidental mood/emotion task
-            exp_settings.ATG.online_burntrials = 1; % # of trials per bin that must have been sampled before inverting
-            exp_settings.ATG.online_priorvar = 1e1*eye(3); % Prior variance for each parameter
+            exp_settings.ATG.online_burntrials = 2; % # of trials per bin that must have been sampled before inverting
+            exp_settings.ATG.online_priorvar = 1e0*eye(3); % Prior variance for each parameter
             exp_settings.ATG.online_max_iter = 100; % Max. # of iterations, after which we conclude the algorithm does not converge
             exp_settings.ATG.online_maxperbin = 10; % Max. # of trials in a bin - pick the most recent ones.
+            exp_settings.ATG.online_min_k = 0.01; % Minimum value for k when updating bins
     
 %% Trial Generation Settings (per experiment type)
     % Trial generation settings: emotions experiment
@@ -198,7 +199,7 @@ function [exp_settings] = BEC_Settings
         exp_settings.timings.delay_answers = 0; %[s] delay between question presentation and answers presentation
         exp_settings.timings.min_quiz_time = 1; %[s] delay between presentation of answers 
         exp_settings.timings.quiz_timeout = 15; %[s] maximum response time to a quiz question
-        exp_settings.timings.fix_pre_quiz = [0.75 1.25]; %[s] [min max] fixation time
+        exp_settings.timings.fix_pre_quiz = [0.5 0.75]; %[s] [min max] fixation time
         exp_settings.timings.show_feedback = 2; %[s]
         exp_settings.timings.wait_blank = 1; %[s]%         
         exp_settings.timings.min_rating_time = 4; %[s]
