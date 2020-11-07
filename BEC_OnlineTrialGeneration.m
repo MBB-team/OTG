@@ -122,7 +122,7 @@ SIMULATE = 0;
             %Get trial features of this bin
                 X1 = [u(1,bins==costbin)' zeros(n,1) ones(n,1)]; %utility features of the uncostly option: [small reward, no cost, bias]
                 X2 = [ones(n,1) u(2,bins==costbin)' zeros(n,1)]; %utility features of the uncostly option: [large reward, cost, no bias]
-                y = y(bins==costbin);
+                y = y(bins==costbin);   
             %Restrict the inversion to the most recent trials
                 if n > exp_settings.ATG.online_maxperbin
                     X1 = X1(end-(exp_settings.ATG.online_maxperbin-1):end,:);
@@ -137,7 +137,7 @@ SIMULATE = 0;
                 while ~stop
                     %Check mu
                         if isweird(mu) || isweird(exp(mu))
-                            stop = 1; converged = 0; break
+                            converged = 0; break
                         end
                     %First and second derivative of log posterior function:
                         df = -pinv(S0)*(mu-mu0); % gradient of log(p(b|y))

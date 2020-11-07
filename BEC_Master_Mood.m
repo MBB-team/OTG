@@ -271,8 +271,8 @@ end
             exitflag = BEC_InstructionScreens(window,exp_settings,exp_settings.instructions_moods.end_of_experiment); %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment            
         %Reward calculation
-            % TO DO
+            [AllData] = BEC_RewardTrialSelection(window,AllData);
         %Terminate the experiment
-%             RH_WaitForKeyPress({exp_settings.keys.proceedkey});
+            RH_WaitForKeyPress({exp_settings.keys.proceedkey});
             BEC_ExitExperiment(AllData)
     end

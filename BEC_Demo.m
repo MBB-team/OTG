@@ -1,7 +1,7 @@
 % Demonstration of choice types.
 % Opens a screen and presents one choice, to be set below.
 
-% Set the choice trial settings-----------------------------------------------------------------------------------------
+%Set the choice trial settings-----------------------------------------------------------------------------------------
     trialinfo.trial = 1;        %Trial number
     trialinfo.choicetype = 4;   %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
     trialinfo.SSReward = 2/30;  %Reward for the uncostly (SS) option (between 0 and 1)

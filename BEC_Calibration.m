@@ -164,11 +164,11 @@ function [hf] = CalibrationFigure(trialinfo,grid)
         hf = figure('color',[1 1 1],'units','normalized','outerposition',[0 0 1 1]); % set(hf,'Position',[100 300 1500 700]);       
     %Parameter values
         muPhi_k = exp(trialinfo.muPhi(2:end,:));
-        SigmaPhi_k = trialinfo.SigmaPhi(2:end,:);
+%         SigmaPhi_k = trialinfo.SigmaPhi(2:end,:);
         all_bias = trialinfo.bin_bias;
-        SigmaPhi_bias = trialinfo.SigmaPhi(1,:);
+%         SigmaPhi_bias = trialinfo.SigmaPhi(1,:);
     %Generated trials and probability of indifference
-        ha1 = subplot(4,grid.nbins,1:3*grid.nbins,'parent',hf); hold on
+        ha1 = subplot(3,grid.nbins,1:3*grid.nbins,'parent',hf); hold on
         %P(indifference)
             Im = imagesc(ha1,grid.gridX([2 end]),grid.gridY([1 end]),trialinfo.P_indiff);
             Im.AlphaData = 0.75;
@@ -188,25 +188,25 @@ function [hf] = CalibrationFigure(trialinfo,grid)
             ylabel(ha1,'SS Reward')
             xlabel(ha1,'LL Cost') 
     %Fitted parameters per cost bin
-        for bin = 1:grid.nbins
-            ha3 = subplot(4,grid.nbins,3*grid.nbins+bin,'parent',hf); hold on
-            Y1 = muPhi_k(bin,:); X = 1:length(Y1); %Discount factor
-                E1 = SigmaPhi_k(bin,:);
-                hp1 = patch(ha3,[X X(end:-1:1)], [Y1+E1 Y1(end:-1:1)-E1(end:-1:1)], [0.2 0.2 0.6], 'facealpha', 0.2, 'Edgecolor', 'none');
-                set(get(get(hp1,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-                plot(ha3, X, Y1, 'linestyle', '-', 'LineWidth', 1, 'color', [0.2 0.2 0.6]);
-            Y2 = all_bias(bin,:);
-                if bin == 1 %This is the only "real" bias that is inverted
-                    E2 = SigmaPhi_bias;
-                    hp2 = patch(ha3,[X X(end:-1:1)], [Y2+E2 Y2(end:-1:1)-E2(end:-1:1)], [0.6 0 0], 'facealpha', 0.2, 'Edgecolor', 'none');
-                    set(get(get(hp2,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
-                end
-                plot(ha3, X, Y2, 'linestyle', '-', 'LineWidth', 1, 'color', [0.6 0 0]);
-            %Figure layout
-%                 legend({'k','bias','k','bias'},'Location','northoutside','Orientation','horizontal')
-%                 title('Parameter estimates'); 
-                if bin == 1; ylabel('Parameter estimates'); end
-                xlabel('Trials');
-        end
+%         for bin = 1:grid.nbins
+%             ha3 = subplot(4,grid.nbins,3*grid.nbins+bin,'parent',hf); hold on
+%             Y1 = muPhi_k(bin,:); X = 1:length(Y1); %Discount factor
+%                 E1 = SigmaPhi_k(bin,:);
+%                 hp1 = patch(ha3,[X X(end:-1:1)], [Y1+E1 Y1(end:-1:1)-E1(end:-1:1)], [0.2 0.2 0.6], 'facealpha', 0.2, 'Edgecolor', 'none');
+%                 set(get(get(hp1,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+%                 plot(ha3, X, Y1, 'linestyle', '-', 'LineWidth', 1, 'color', [0.2 0.2 0.6]);
+%             Y2 = all_bias(bin,:);
+%                 if bin == 1 %This is the only "real" bias that is inverted
+%                     E2 = SigmaPhi_bias;
+%                     hp2 = patch(ha3,[X X(end:-1:1)], [Y2+E2 Y2(end:-1:1)-E2(end:-1:1)], [0.6 0 0], 'facealpha', 0.2, 'Edgecolor', 'none');
+%                     set(get(get(hp2,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+%                 end
+%                 plot(ha3, X, Y2, 'linestyle', '-', 'LineWidth', 1, 'color', [0.6 0 0]);
+%             %Figure layout
+% %                 legend({'k','bias','k','bias'},'Location','northoutside','Orientation','horizontal')
+% %                 title('Parameter estimates'); 
+%                 if bin == 1; ylabel('Parameter estimates'); end
+%                 xlabel('Trials');
+%         end
         drawnow
 end %function

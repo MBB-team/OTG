@@ -4,7 +4,11 @@ function [exitflag] = BEC_InstructionScreens(window,exp_settings,which_instructi
 
 %Prepare
     if isa(which_instruction,'char') %When the instruction topic is entered as a string
-        slides = exp_settings.instructions_moods.(which_instruction); %Get slides
+        try
+            slides = exp_settings.instructions_moods.(which_instruction); %Get slides
+        catch
+            slides = exp_settings.instructions_emotions.(which_instruction); %Get slides
+        end
     else %When the slide numbers are directly entered
         slides = which_instruction;
     end

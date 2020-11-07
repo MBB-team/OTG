@@ -1,0 +1,18 @@
+BECHAMEL to do:
+
+- Remove Sendmail
+- Pupil...
+- Fix or Remove RewardTrialSelection
+- Fix triallist generation error
+- finish: visualization of online trial generation procedure
+- confirmation square of costly risk option larger
+- questions and answers font larger in quiz
+- bailout of online trial generation is not possible?
+- reward trial selection could be better...
+- 'mauvaise humeur' and 'bonne humeur' better centered on mood rating scale (at the extremes of the axes)
+- TIMINGS:
+    - several timing components missing
+    - timing must not me stored again when participant interrupts and resumes experiment
+    - record duration of calibrations (not just timestamps)
+
+* Online Trial Generation must be further optimized.

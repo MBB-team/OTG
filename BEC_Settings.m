@@ -156,8 +156,8 @@ function [exp_settings] = BEC_Settings
     exp_settings.Pay.delaycriterion = 0.50;     %Max. delay of costly option
     exp_settings.Pay.effortcriterion = 0.50;    %Max. effort of costly option
     exp_settings.Pay.riskcriterion = 0.75;  %Max. risk of costly option
-    exp_settings.Pay.min_total = 40; %Min. total reward
-    exp_settings.Pay.max_total = 65; %Max. total reward
+    exp_settings.Pay.min_total = 20; %Min. total reward
+    exp_settings.Pay.max_total = 35; %Max. total reward
     exp_settings.Pay.SSCriterion = 0.10; %For very low amounts of SS choices: allow maximum to be higher
     
 %% Experiment instructions (per experiment type)
