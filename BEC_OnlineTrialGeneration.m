@@ -46,6 +46,8 @@ SIMULATE = 0;
                 AllData.OTG_posterior.(typenames{choicetype}).muPhi = AllData.OTG_prior.(typenames{choicetype}).muPhi;
                 AllData.OTG_posterior.(typenames{choicetype}).all_muPhi = cell(sum(AllData.triallist.choicetypes==choicetype),grid.nbins);
                     AllData.OTG_posterior.(typenames{choicetype}).all_muPhi(1,:) = AllData.OTG_prior.(typenames{choicetype}).muPhi;
+                    %TO DO: THIS IS WRONG --- NOT (!!) THE FIRST LINE, BECAUSE IT REPRESENTS THE
+                    %FIRST TRIAL ACROSS (!!) CHOICE TYPE.
                 AllData.OTG_posterior.(typenames{choicetype}).P_indiff = AllData.(['calibration_' typenames{choicetype}]).P_indiff;
         end
     %Sample cost level
