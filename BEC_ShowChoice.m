@@ -180,13 +180,13 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                 trialinfo.Risk = trialinfo.Cost;
                 trialinfo.PhysicalEffort = 0;
                 trialinfo.MentalEffort = 0;
-                trialinfo.Loss = 0;
+                trialinfo.Loss = exp_settings.RiskLoss/exp_settings.MaxReward;
             case 3 %Physical effort
                 trialinfo.Delay = 0;
                 trialinfo.Risk = 0;
                 trialinfo.PhysicalEffort = trialinfo.Cost;
                 trialinfo.MentalEffort = 0;
-                trialinfo.Loss = exp_settings.RiskLoss/exp_settings.MaxReward;
+                trialinfo.Loss = 0;
             case 4 %Mental effort
                 trialinfo.Delay = 0;
                 trialinfo.Risk = 0;
