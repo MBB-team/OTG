@@ -105,24 +105,32 @@ function [exp_settings] = BEC_Settings
         exp_settings.exampletrials = [...
             [0 2 3 5 6 8 7.5 9 10 12 13 14.75]./15; %Rewards for the uncostly option
             [0.7 0.5 0.8 0.3 0.6 0.1 0.9 0.4 0.7 0.2 0.5 0.3]]; %Corresponding costs for the costly option
-    % Automatic trial generation
-        %General
-            exp_settings.ATG.grid.nbins = 5;             % # bins
-            exp_settings.ATG.grid.bincostlevels = 10;    % # cost levels per bin  
-            exp_settings.ATG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
-            exp_settings.ATG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
-            exp_settings.ATG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
-        %Choice calibration
-            exp_settings.ATG.ntrials = 60;    % # calibration trials per choice type
-            exp_settings.ATG.fixed_beta = 5;  % Assume this value for the inverse choice temperature (based on past results) to improve model fit.
-            exp_settings.ATG.prior_bias = -3; % Note: this is log(prior)
-            exp_settings.ATG.prior_var = 2;   % Note: applies to all parameters
-        %Online trial generation during incidental mood/emotion task
-            exp_settings.ATG.online_burntrials = 2; % # of trials per bin that must have been sampled before inverting
-            exp_settings.ATG.online_priorvar = 1e0*eye(3); % Prior variance for each parameter
-            exp_settings.ATG.online_max_iter = 100; % Max. # of iterations, after which we conclude the algorithm does not converge
-            exp_settings.ATG.online_maxperbin = 10; % Max. # of trials in a bin - pick the most recent ones.
-            exp_settings.ATG.online_min_k = 0.01; % Minimum value for k when updating bins
+    % Calibration trials
+        exp_settings.calibration_ntrials = 60; %Number of trials per choice type in the calibration
+        exp_settings.calibration_burntrials = [59/60  0     55/60  2/30;
+                                               46/50  5/50  1      1/50]; 
+    % Online trial generation
+        %Choice types
+            exp_settings.OTG.choicetypes = exp_settings.trialgen_choice.which_choicetypes;
+            exp_settings.OTG.typenames = exp_settings.trialgen_choice.typenames;
+        %Sampling grid
+            exp_settings.OTG.grid.nbins = 5;             % # bins
+            exp_settings.OTG.grid.bincostlevels = 10;    % # cost levels per bin  
+            exp_settings.OTG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
+            exp_settings.OTG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
+            exp_settings.OTG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
+            exp_settings.OTG.grid.binlimits = exp_settings.OTG.grid.costlimits(1) + ([0:exp_settings.OTG.grid.nbins-1;1:exp_settings.OTG.grid.nbins])'  * (exp_settings.OTG.grid.costlimits(2)-exp_settings.OTG.grid.costlimits(1))/exp_settings.OTG.grid.nbins; % Upper limit and lower limit of each cost bin
+            exp_settings.OTG.grid.gridY = exp_settings.OTG.grid.rewardlimits(1):(exp_settings.OTG.grid.rewardlimits(2)-exp_settings.OTG.grid.rewardlimits(1))/(exp_settings.OTG.grid.binrewardlevels-1):exp_settings.OTG.grid.rewardlimits(2);  % Uncostly option rewards for the indifference grid
+            exp_settings.OTG.grid.gridX = exp_settings.OTG.grid.costlimits(1):(exp_settings.OTG.grid.costlimits(2)-exp_settings.OTG.grid.costlimits(1))/(exp_settings.OTG.grid.bincostlevels*exp_settings.OTG.grid.nbins):exp_settings.OTG.grid.costlimits(2);   % Cost amounts for sampling grid
+        %Parameter settings
+            exp_settings.OTG.prior_beta = 5;        % Assume this value for the inverse choice temperature (based on past results) to improve model fit.
+            exp_settings.OTG.prior_bias = -3;       % Note: this is log(prior) [used in calibration only]
+            exp_settings.OTG.prior_var_cal = 2;     % Note: applies to all parameters [used in calibration only]
+            exp_settings.OTG.burntrials = 2;        % # of trials per bin that must have been sampled before inverting
+            exp_settings.OTG.priorvar = eye(3);     % Prior variance for each parameter [used in main experiment only]
+            exp_settings.OTG.max_iter = 100;        % Max. # of iterations, after which we conclude the algorithm does not converge
+            exp_settings.OTG.maxperbin = 10;        % Max. # of trials in a bin - pick the most recent ones.
+            exp_settings.OTG.min_k = 0.01;          % Minimum value for k when updating bins
     
 %% Trial Generation Settings (per experiment type)
     % Trial generation settings: emotions experiment

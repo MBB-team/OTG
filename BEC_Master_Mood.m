@@ -78,7 +78,7 @@
                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                 %Calibration
                     AllData.timings.(['Calibration_' exp_settings.trialgen_choice.typenames{i_type}]) = clock; %Timing
-                    [AllData.(['calibration_' exp_settings.trialgen_choice.typenames{i_type}]),exitflag] = BEC_Calibration(exp_settings,i_type,window,AllData.savedir);
+                    [AllData.calibration.(exp_settings.trialgen_choice.typenames{i_type}),exitflag] = BEC_Calibration(exp_settings,i_type,window,AllData.savedir);
                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                 %Update instruction progress
                     AllData.Instructions.Progress = AllData.Instructions.Progress + 1;
@@ -143,9 +143,6 @@ if startpoint == 0 || startpoint == 3
             i_question = 1;
             AllData.timings.StartMainExperiment = clock;
             AllData.quiztrialinfo = struct;
-            AllData.trialinfo = struct; %Online trial generation: history of choices
-            AllData.OTG_prior = struct; %Online trial generation: priors
-            AllData.OTG_posterior = struct; %Online trial generation: posteriors
             AllData.Ratings = NaN(exp_settings.trialgen_moods.QuizTrials,1);    
 %             if AllData.pupil; AllData.eye_calibration = []; end
         end    
@@ -244,8 +241,8 @@ if startpoint == 0 || startpoint == 3
 %                     Trial_PupilData = [Trial_PupilData; PupilData];
                 end
             %Online trial generation
-                for choicetrial = (question-1)*exp_settings.trialgen_moods.choices_per_question + (1:exp_settings.trialgen_moods.choices_per_question)
-                    [AllData,exitflag] = BEC_OnlineTrialGeneration(exp_settings,window,AllData,choicetrial);
+                for choicetrial = 1:4 %(question-1)*exp_settings.trialgen_moods.choices_per_question + (1:exp_settings.trialgen_moods.choices_per_question)
+                    [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window);
                     if exitflag; BEC_ExitExperiment(AllData); return; end
                 end
             %Rating (if before choices) 
