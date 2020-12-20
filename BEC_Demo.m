@@ -4,10 +4,11 @@
 %Set the choice trial settings-----------------------------------------------------------------------------------------
     trialinfo.trial = 1;        %Trial number
     trialinfo.choicetype = 4;   %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
-    trialinfo.SSReward = 2/30;  %Reward for the uncostly (SS) option (between 0 and 1)
-    trialinfo.Cost = 1/50;      %Cost level or the costly (LL) option (between 0 and 1)
+    trialinfo.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
+    trialinfo.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
     trialinfo.Example = 0;      %Is this an example trial?
 %-----------------------------------------------------------------------------------------------------------------------
+% AllData.trialinfo = struct;
 
 % Get settings:
     [exp_settings] = BEC_Settings;
@@ -23,7 +24,7 @@
     end
     HideCursor  
 % Choice screen
-    [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo);
+    [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo);
 % Exit
     sca; %Screen: close all
     ShowCursor

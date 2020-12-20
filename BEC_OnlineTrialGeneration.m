@@ -10,37 +10,49 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
 %                   when left empty, it is assumed this function is being used for a simulation.
 
 %% Get necessary input
+    %simulate: run a simulation on the online trial generation
+        if ~exist('window','var') || ~isempty(window) %If there is no Psychtoolbox window open, this function is not used to sample and present choices to participants, but to run simulations
+            if ~isfield(AllData,'sim') %Create a simulation structure containing parameters of the simulated choice model
+                AllData.sim.kC = 2.5; %Weight on cost
+                AllData.sim.gamma = 0.5; %Power on cost
+                AllData.sim.beta = 10; %Choice temperature
+                AllData.sim.bias = 0.15; %Choice bias
+                AllData.sim.kRew = 3; %Weight on reward
+                AllData.triallist.choicetypes = ones(100,1); %Simulate 100 trials of only one choice type
+            end
+        end
     %exp_settings: containing all the default settings necessary to generate and present a trial
+        %Default settings:
+            %Choice types
+                OTG_settings.choicetypes = [1 2 3 4];
+                OTG_settings.typenames = {'delay','risk','physical_effort','mental_effort'};
+            %Sampling grid
+                OTG_settings.grid.nbins = 5;             % number of cost bins
+                OTG_settings.grid.bincostlevels = 10;    % number of cost levels per bin  
+                OTG_settings.grid.binrewardlevels = 50;  % number of reward levels (only for computing indifference grid)
+                OTG_settings.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
+                OTG_settings.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
+                OTG_settings.grid.binlimits = OTG_settings.grid.costlimits(1) + ([0:OTG_settings.grid.nbins-1; 1:OTG_settings.grid.nbins])'  * (OTG_settings.grid.costlimits(2)-OTG_settings.grid.costlimits(1))/OTG_settings.grid.nbins; % Upper limit and lower limit of each cost bin
+                OTG_settings.grid.gridY = OTG_settings.grid.rewardlimits(1):(OTG_settings.grid.rewardlimits(2)-OTG_settings.grid.rewardlimits(1))/(OTG_settings.grid.binrewardlevels-1):OTG_settings.grid.rewardlimits(2);  % Uncostly option rewards for the indifference grid
+                OTG_settings.grid.gridX = OTG_settings.grid.costlimits(1):(OTG_settings.grid.costlimits(2)-OTG_settings.grid.costlimits(1))/(OTG_settings.grid.bincostlevels*OTG_settings.grid.nbins):OTG_settings.grid.costlimits(2);   % Cost amounts for sampling grid
+            %Parameter settings
+                OTG_settings.prior_beta = 5;        % Assume this prior value for the inverse choice temperature (based on past results) to improve model fit.
+                OTG_settings.burntrials = 2;        % # of trials per bin that must have been sampled before inverting
+                OTG_settings.priorvar = eye(3);     % Prior variance for each parameter
+                OTG_settings.max_iter = 100;        % Max. # of iterations, after which we conclude the algorithm does not converge
+                OTG_settings.maxperbin = 10;        % Max. # of trials in a bin - pick the most recent ones.
+                OTG_settings.min_k = 0.01;          % Minimum value for k when updating bins
         if ~isfield(AllData,'exp_settings')
             %If this function is used in a real experiment, load the settings structure so that
-            %trials can properly be presented on screen using the Psychtoolbox. Otherwise, define
-            %the necessary settings here below.
-                if exist('window','var') && ~isempty(window) %in case the function is used for simulations
+            %trials can properly be presented on screen using the Psychtoolbox. Otherwise, default settings suffise.
+                if exist('window','var') && ~isempty(window)
                     AllData.exp_settings = BEC_settings;
-                    OTG_settings = AllData.OTG_settings;
-                else %Define the default sampling settings here
-                    %Choice types
-                        OTG_settings.choicetypes = [1 2 3 4];
-                        OTG_settings.typenames = {'delay','risk','physical_effort','mental_effort'};
-                    %Sampling grid
-                        OTG_settings.grid.nbins = 5;             % number of cost bins
-                        OTG_settings.grid.bincostlevels = 10;    % number of cost levels per bin  
-                        OTG_settings.grid.binrewardlevels = 50;  % number of reward levels (only for computing indifference grid)
-                        OTG_settings.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
-                        OTG_settings.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
-                        OTG_settings.grid.binlimits = OTG_settings.grid.costlimits(1) + ([0:OTG_settings.grid.nbins-1; 1:OTG_settings.grid.nbins])'  * (OTG_settings.grid.costlimits(2)-OTG_settings.grid.costlimits(1))/OTG_settings.grid.nbins; % Upper limit and lower limit of each cost bin
-                        OTG_settings.grid.gridY = OTG_settings.grid.rewardlimits(1):(OTG_settings.grid.rewardlimits(2)-OTG_settings.grid.rewardlimits(1))/(OTG_settings.grid.binrewardlevels-1):OTG_settings.grid.rewardlimits(2);  % Uncostly option rewards for the indifference grid
-                        OTG_settings.grid.gridX = OTG_settings.grid.costlimits(1):(OTG_settings.grid.costlimits(2)-OTG_settings.grid.costlimits(1))/(OTG_settings.grid.bincostlevels*OTG_settings.grid.nbins):OTG_settings.grid.costlimits(2);   % Cost amounts for sampling grid
-                    %Parameter settings
-                        OTG_settings.prior_beta = 5;        % Assume this prior value for the inverse choice temperature (based on past results) to improve model fit.
-                        OTG_settings.burntrials = 2;        % # of trials per bin that must have been sampled before inverting
-                        OTG_settings.priorvar = eye(3);     % Prior variance for each parameter
-                        OTG_settings.max_iter = 100;        % Max. # of iterations, after which we conclude the algorithm does not converge
-                        OTG_settings.maxperbin = 10;        % Max. # of trials in a bin - pick the most recent ones.
-                        OTG_settings.min_k = 0.01;          % Minimum value for k when updating bins
+                    OTG_settings = AllData.exp_settings.OTG;
+                else %In case the function is used for simulations
+                    AllData.exp_settings.OTG = OTG_settings; %Default sampling settings
                 end
-        else
-            OTG_settings = AllData.OTG_settings;
+        elseif ~isfield(AllData.exp_settings,'OTG')
+            AllData.exp_settings.OTG = OTG_settings;
         end
         grid = OTG_settings.grid;
         typenames = OTG_settings.typenames;
@@ -80,8 +92,8 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
         if type_trialno == 1 %On the first trial, set the posterior equal to the prior
             muPhi = AllData.OTG_prior.(typenames{choicetype}).muPhi; %"muPhi" contains the parameter estimates per cost bin
             AllData.OTG_posterior.(typenames{choicetype}).muPhi = muPhi; %Posterior of the last trial (here: set equal to prior)
-            AllData.OTG_posterior.(typenames{choicetype}).all_muPhi(1,:) = muPhi; %History of posteriors for this choice type (here: set first entry equal to prior)
-            AllData.OTG_posterior.(typenames{choicetype}).P_indiff = Compute_P_indiff(grid,muPhi); %Grid of the probability-of-indifference (computed in subfunction below)
+            AllData.OTG_posterior.(typenames{choicetype}).all_muPhi(choicetrial,:) = muPhi; %History of posteriors for this choice type (here: set posterior parameter estimates from first trial of given choice type equal to prior)
+            AllData.OTG_posterior.(typenames{choicetype}).P_indiff = Compute_P_indiff(grid,muPhi,OTG_settings); %Grid of the probability-of-indifference (computed in subfunction below)
         end
         
 %% Sample and present a choice of the given choice type
@@ -107,25 +119,23 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
                 reward = grid.rewardlimits(1);
             end
     %Present the choice, record decision
-        if ~exist('window','var') || ~isempty(window) %For simulations
-            %Get parameter values (here: set to prior values, but custom values can be entered)
-                muPhi = AllData.OTG_prior.(typenames{choicetype}).muPhi{costbin};
-                k = exp(muPhi(1)); %weight on cost
-                if costbin == 1
-                    bias = exp(muPhi(2)); %bias in favor of uncostly option
-                else
-                    bias = muPhi(2);
-                end
-                beta = exp(muPhi(3)); %choice temperature
+        if isfield(AllData,'sim') %Simulation
+            %Compute option values
+                SSRew = reward; %Reward for the uncostly option (sampled above)
+                LLRew = 1; %Reward for the costly ("larger-later") option: 1 by default
+                SSCost = 0; %Cost for the uncostly option: 0 by default
+                LLCost = cost; %Cost for the costly option (sampled above)
+                V1 = AllData.sim.kRew*SSRew - AllData.sim.kC*SSCost^AllData.sim.gamma + AllData.sim.bias; %Value of option 1 (uncostly option)
+                V2 = AllData.sim.kRew*LLRew - AllData.sim.kC*LLCost^AllData.sim.gamma; %Value of option 2 (costly option)
+                DV = AllData.sim.beta*(V1 - V2); %Decision value: (option 1) - (option 2)
             %Simulate the decision
-                DV = reward + bias - 1 + k * cost; %Decision value: (option 1) - (option 2)
-                P_U = sigmoid(DV*beta); %Probability of choosing the uncostly option (see sigmoid function below)
+                P_U = sigmoid(DV); %Probability of choosing the uncostly option (see sigmoid function below)
                 y = sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
             %Enter the simulated choice in trialinfo
-                AllData.trialinfo(choicetrial).choicetype = choicetype;
-                AllData.trialinfo(choicetrial).SSReward = reward;
-                AllData.trialinfo(choicetrial).Cost = cost;
-                AllData.trialinfo(choicetrial).choiceSS = y;
+                AllData.trialinfo(choicetrial).choicetype = choicetype; %numeric choicetype (1:4)
+                AllData.trialinfo(choicetrial).SSReward = reward; %reward of the uncostly ("SS": smaller & sooner) option
+                AllData.trialinfo(choicetrial).Cost = cost; %cost of the costly option
+                AllData.trialinfo(choicetrial).choiceSS = y; %choice: 1 = uncostly (smaller&sooner) option; 0 = costly option
         else %Present the sampled choice to the participant on the BECHAMEL choice screen
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
@@ -169,7 +179,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
                     y = y(end-(n-1):end);
                 end
             %Run Gauss-Newton algorithm for the given bin 
-                [mu,converged] = Run_GaussNewton(mu0, S0, X1, X2, n, y);
+                [mu,converged] = Run_GaussNewton(mu0, S0, X1, X2, n, y, costbin, OTG_settings);
                 disp(['Trial ' num2str(choicetrial) ' -- Converged: ' num2str(converged)])
             %If the model converged:
                 if converged
@@ -253,10 +263,13 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
                         AllData.OTG_posterior.(typenames{choicetype}).all_muPhi(choicetrial,:) = AllData.OTG_posterior.(typenames{choicetype}).muPhi;                    
                 end %if converged
             %Compute the indifference grid (subfunction)
-                P_indiff = Compute_P_indiff(grid,muPhi);
+                P_indiff = Compute_P_indiff(grid,AllData.OTG_posterior.(typenames{choicetype}).muPhi,OTG_settings);
                 AllData.OTG_posterior.(typenames{choicetype}).P_indiff = P_indiff;
         end 
-        
+    %Visualize (in the case of simulations)
+        if isfield(AllData,'sim')
+            BEC_Visualize_OTG(AllData,choicetrial)
+        end
 end %function
 
 %% Subfunctions
@@ -312,11 +325,11 @@ function [AllData] = GetPriorEstimates(AllData,type_name,grid)
                 AllData.OTG_prior.(type_name).P_indiff = AllData.calibration.(type_name).P_indiff; %Grid of the probability-of-indifference
     else
         %Get priors from population average
-            %...
+            AllData.OTG_prior.(type_name).muPhi = [{[0 -5 log(5)]'} repmat({[0 0 log(5)]'},1,4)];
     end
 end
 
-function [mu,converged] = Run_GaussNewton(mu0, S0, X1, X2, n, y)
+function [mu,converged] = Run_GaussNewton(mu0, S0, X1, X2, n, y, costbin, OTG_settings)
     mu = mu0; %Start with prior estimates
     stop = 0; %This will stop the looping
     iter = 0; %Iteration count
@@ -361,7 +374,7 @@ function [mu,converged] = Run_GaussNewton(mu0, S0, X1, X2, n, y)
     end %while
 end %function
 
-function [P_indiff] = Compute_P_indiff(grid,muPhi)
+function [P_indiff] = Compute_P_indiff(grid,muPhi,OTG_settings)
 %Compute the probability-of-indifference "P_indiff" for the full sampling grid. At each point of the
 %grid, there is a value that expresses the probability (between 0 and 1) that that point is at
 %indifference. A point of the grid represents a combination between a cost of the costly option
@@ -374,7 +387,11 @@ function [P_indiff] = Compute_P_indiff(grid,muPhi)
     P_U = NaN(1,length(u_ind)); %Probability of choosing the uncostly option, to be calculated below
     for i_bin = 1:grid.nbins %Loop through cost bins
         i_u = u_ind(2,:)>grid.binlimits(i_bin,1) & u_ind(2,:)<=grid.binlimits(i_bin,2); %Indices of the grid points of the current bin
-        mu_i = muPhi{i_bin}; %Parameter estimates of the current bin
+        if isa(muPhi,'cell')
+            mu_i = muPhi{i_bin}; %Parameter estimates of the current bin
+        else
+            mu_i = muPhi(:,i_bin);
+        end
         k = exp(mu_i(1)); %Weight on cost
         if i_bin == 1
             bias = exp(mu_i(2)); %Bias in favor of the uncostly option (constrained to be positive in bin 1)
@@ -406,7 +423,6 @@ function [X] = sampleFromArbitraryP(p,gridX,N) % --- from VBA toolbox by Daunize
 %   - N: the number of samples to be sampled
 % OUT:
 %   - X: NX1 vector of samples
-    try N; catch, N=1; end %#ok<VUNUS>
     p = vec(p);
 
     if size(gridX,1)==1
