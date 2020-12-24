@@ -218,6 +218,14 @@ function [t_onset] = DrawChoiceScreen(exp_settings,drawchoice,window)
             text_reward_right = exp_settings.choicescreen.costbox_right; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y;
             confirm_left = text_reward_left.*screensize;
             confirm_right = text_reward_right.*screensize;
+        end       
+    %Adjustment of the confirmation box for risk
+        if strcmp(drawchoice.choicetype,'risk')
+            if ~isempty(drawchoice.losslefttext)
+                confirm_left(1,:) = confirm_left(1,:) + diff(confirm_left(1,[2 4]),[],2)/4 * [0 1 0 1];
+            else
+                confirm_right(1,:) = confirm_right(1,:) + diff(confirm_right(1,[2 4]),[],2)/4 * [0 1 0 1];
+            end
         end        
     %Background
         Screen('FillRect',window,exp_settings.backgrounds.choice);
@@ -476,6 +484,12 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
         confirm_left = text_reward_left.*screensize;
         confirm_right = text_reward_right.*screensize;
     end
+%Adjustment of the confirmation box for risk
+    if ~isempty(drawchoice.losslefttext)
+        confirm_left(1,:) = confirm_left(1,:) + diff(confirm_left(1,[2 4]),[],2)/4 * [0 1 0 1];
+    else
+        confirm_right(1,:) = confirm_right(1,:) + diff(confirm_right(1,[2 4]),[],2)/4 * [0 1 0 1];
+    end
 %Draw two wheels of fortune
     %Prepare to animate the lottery (in example trials)
         if ~isempty(drawchoice.confirmation) && drawchoice.example == 1 
@@ -611,7 +625,7 @@ function [t_onset] = DrawRiskCost(window,exp_settings,drawchoice)
         %Flip
             Screen('Flip',window);
             if animation
-                WaitSecs(max(waittime)); 
+                pause(max(waittime)); 
                 t_onset = NaN;
             else
                 t_onset = clock;

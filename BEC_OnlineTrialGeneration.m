@@ -11,7 +11,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
 
 %% Get necessary input
     %simulate: run a simulation of the online trial generation procedure
-        if ~exist('window','var') || ~isempty(window) %If there is no Psychtoolbox window open, this function is used to run simulations
+        if ~exist('window','var') || isempty(window) %If there is no Psychtoolbox window open, this function is used to run simulations
             if ~isfield(AllData,'sim') %Create the simulation structure if it does not exist yet
                 AllData = SimulationSettings(AllData);
             end
@@ -21,7 +21,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
             %If this function is used in a real experiment, load the settings structure so that trials 
                 %can properly be presented on screen using the Psychtoolbox.
                 if exist('window','var') && ~isempty(window)
-                    AllData.exp_settings = BEC_settings;
+                    AllData.exp_settings = BEC_Settings;
                 else %Otherwise, the function is used for simulations; enter these default settings only:
                     OTG_settings = Get_OTG_Settings;
                     AllData.exp_settings.OTG = OTG_settings; %Default sampling settings
@@ -90,7 +90,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
-            [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
+            [trialoutput,exitflag] = BEC_ShowChoice(window,AllData.exp_settings,trialinput);
             if exitflag % ESCAPE was pressed, terminate experiment
                 return
             else %Record the participant's decision

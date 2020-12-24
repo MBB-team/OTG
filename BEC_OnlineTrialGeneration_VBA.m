@@ -11,7 +11,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
 
 %% Get necessary input
     %simulate: run a simulation on the online trial generation
-        if ~exist('window','var') || ~isempty(window) %If there is no Psychtoolbox window open, this function is not used to sample and present choices to participants, but to run simulations
+        if ~exist('window','var') || isempty(window) %If there is no Psychtoolbox window open, this function is not used to sample and present choices to participants, but to run simulations
             if ~isfield(AllData,'sim') 
                 %Create a simulation structure containing parameters of the simulated choice model
                 %This is a more sophisticated choice model that is usually only used to fit choices
@@ -35,7 +35,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
             %If this function is used in a real experiment, load the settings structure so that trials 
                 %can properly be presented on screen using the Psychtoolbox.
                 if exist('window','var') && ~isempty(window)
-                    AllData.exp_settings = BEC_settings; %Full settings structure
+                    AllData.exp_settings = BEC_Settings; %Full settings structure
                 else %In case the function is used for simulations; enter these default settings only:
                     %Choice types
                         OTG_settings.choicetypes = [1 2 3 4];
@@ -192,7 +192,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
-            [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
+            [trialoutput,exitflag] = BEC_ShowChoice(window,AllData.exp_settings,trialinput);
             if exitflag % ESCAPE was pressed, terminate experiment
                 return
             else %Record the participant's decision
