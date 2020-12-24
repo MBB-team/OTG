@@ -104,11 +104,7 @@ function [exp_settings] = BEC_Settings
     % Example choice trials 
         exp_settings.exampletrials = [...
             [0 2 3 5 6 8 7.5 9 10 12 13 14.75]./15; %Rewards for the uncostly option
-            [0.7 0.5 0.8 0.3 0.6 0.1 0.9 0.4 0.7 0.2 0.5 0.3]]; %Corresponding costs for the costly option
-    % Calibration trials
-        exp_settings.calibration_ntrials = 60; %Number of trials per choice type in the calibration
-        exp_settings.calibration_burntrials = [59/60  0     55/60  2/30;
-                                               46/50  5/50  1      1/50]; 
+            [0.7 0.5 0.8 0.3 0.6 0.1 0.9 0.4 0.7 0.2 0.5 0.3]]; %Corresponding costs for the costly option 
     % Online trial generation
         %Choice types
             exp_settings.OTG.choicetypes = exp_settings.trialgen_choice.which_choicetypes;
@@ -116,21 +112,44 @@ function [exp_settings] = BEC_Settings
         %Sampling grid
             exp_settings.OTG.grid.nbins = 5;             % # bins
             exp_settings.OTG.grid.bincostlevels = 10;    % # cost levels per bin  
-            exp_settings.OTG.grid.binrewardlevels = 60;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
+            exp_settings.OTG.grid.binrewardlevels = 50;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
             exp_settings.OTG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
             exp_settings.OTG.grid.rewardlimits = [0.1/30 29.9/30]; % [min max] reward for uncostly option
             exp_settings.OTG.grid.binlimits = exp_settings.OTG.grid.costlimits(1) + ([0:exp_settings.OTG.grid.nbins-1;1:exp_settings.OTG.grid.nbins])'  * (exp_settings.OTG.grid.costlimits(2)-exp_settings.OTG.grid.costlimits(1))/exp_settings.OTG.grid.nbins; % Upper limit and lower limit of each cost bin
             exp_settings.OTG.grid.gridY = exp_settings.OTG.grid.rewardlimits(1):(exp_settings.OTG.grid.rewardlimits(2)-exp_settings.OTG.grid.rewardlimits(1))/(exp_settings.OTG.grid.binrewardlevels-1):exp_settings.OTG.grid.rewardlimits(2);  % Uncostly option rewards for the indifference grid
             exp_settings.OTG.grid.gridX = exp_settings.OTG.grid.costlimits(1):(exp_settings.OTG.grid.costlimits(2)-exp_settings.OTG.grid.costlimits(1))/(exp_settings.OTG.grid.bincostlevels*exp_settings.OTG.grid.nbins):exp_settings.OTG.grid.costlimits(2);   % Cost amounts for sampling grid
         %Parameter settings
-            exp_settings.OTG.prior_beta = 5;        % Assume this value for the inverse choice temperature (based on past results) to improve model fit.
-            exp_settings.OTG.prior_bias = -3;       % Note: this is log(prior) [used in calibration only]
+            exp_settings.OTG.fixed_beta = 5;       % Assume this fixed value for the inverse choice temperature (based on past results) to improve model fit.
+            exp_settings.OTG.priorvar = 2*eye(exp_settings.OTG.grid.nbins+1);   % Prior variance for each parameter
+        %Calibration settings
+            exp_settings.OTG.prior_bias_cal = -3;   % Note: this is log(prior) [used in calibration only]
             exp_settings.OTG.prior_var_cal = 2;     % Note: applies to all parameters [used in calibration only]
-            exp_settings.OTG.burntrials = 2;        % # of trials per bin that must have been sampled before inverting
-            exp_settings.OTG.priorvar = eye(3);     % Prior variance for each parameter [used in main experiment only]
-            exp_settings.OTG.max_iter = 100;        % Max. # of iterations, after which we conclude the algorithm does not converge
-            exp_settings.OTG.maxperbin = 10;        % Max. # of trials in a bin - pick the most recent ones.
-            exp_settings.OTG.min_k = 0.01;          % Minimum value for k when updating bins
+            exp_settings.OTG.ntrials_cal = 60;      %Number of trials per choice type in the calibration
+            exp_settings.OTG.burntrials_cal = [59/60  0     55/60  2/30;
+                                               46/50  5/50  1      1/50];
+        %Algorithm settings
+            exp_settings.OTG.max_n_inv = 20;        % Max. # of trials entered in model inversion algorithm
+            exp_settings.OTG.max_iter = 200;        % [G-N] Max. # of iterations, after which we conclude the algorithm does not converge
+            exp_settings.OTG.conv_crit = 1e-2;      % [G-N] Max. # of iterations for the model inversion algorithm, after which it is forced to stop
+            exp_settings.OTG.burntrials = 3;        % [G-N] # of trials that must have been sampled before inverting the model
+            exp_settings.OTG.adjust_rew_nonconverge = [0.2 0.4 0.6 0.8 1]; % Adjustment to the indifference reward: helps the algorithm get out when it is stuck on a wrong indifference estimate
+        %VBA: Dimensions
+            exp_settings.OTG.dim.n_theta = 0;
+            exp_settings.OTG.dim.n = 0;
+            exp_settings.OTG.dim.p = 1;    
+            exp_settings.OTG.dim.n_phi = 6;
+        %VBA: Options
+            exp_settings.OTG.options.binomial = 1;
+            exp_settings.OTG.options.verbose = 0;
+            exp_settings.OTG.options.DisplayWin = 0;
+            exp_settings.OTG.options.inG.ind.bias = 1;
+            exp_settings.OTG.options.inG.ind.k1 = 2;
+            exp_settings.OTG.options.inG.ind.k2 = 3;
+            exp_settings.OTG.options.inG.ind.k3 = 4;
+            exp_settings.OTG.options.inG.ind.k4 = 5;
+            exp_settings.OTG.options.inG.ind.k5 = 6;
+            exp_settings.OTG.options.inG.beta = exp_settings.OTG.fixed_beta; %Inv. choice temp. for observation function
+            exp_settings.OTG.options.inG.grid = exp_settings.OTG.grid; %Grid is entered in observation function too
     
 %% Trial Generation Settings (per experiment type)
     % Trial generation settings: emotions experiment

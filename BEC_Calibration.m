@@ -4,34 +4,40 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
 % Note: entirely coded for 5 cost bins
 
 %% Configuration
-    ntrials = exp_settings.calibration_ntrials;       
-    [options,dim,grid] = GetDefaultSettings(exp_settings); %NB: options are updated each trial
-    inv_options = options; %options for parameter estimation only (invariable)!
-    calinfo.options = options;
-    calinfo.grid = grid;
+    burntrials = exp_settings.OTG.burntrials_cal; %Predefined "burn trials" (the first trials, for the model (and participant) to know the "boundaries"
+    grid = exp_settings.OTG.grid; %Sampling grid 
+    dim = exp_settings.OTG.dim; %Model dimensions (VBA)
+    options = exp_settings.OTG.options; %Model options (VBA)
+        options.priors.SigmaPhi = exp_settings.OTG.prior_var_cal*eye(dim.n_phi); %Prior for parameter variance
+        options.priors.muPhi(1) = exp_settings.OTG.prior_bias_cal; %Prior for choice bias
+        options.priors.muPhi(2:dim.n_phi) = log(1/diff(grid.rewardlimits)); %Priors for weights on cost      
+    calinfo.options = options; %output
+    calinfo.grid = grid; %output
     all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %All rewards
     all_cost = repmat(grid.gridX(2:end),grid.binrewardlevels,1); %All costs
     u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,[numel(all_cost) 1])]'; %Full grid
         
 %% Loop through trials
-    for trial = 1:ntrials           
+    for trial = 1:exp_settings.OTG.ntrials_cal           
         %Prepare the trial
-            if trial <= size(grid.burntrials,2) %First: burn trials
-                reward = grid.burntrials(1,trial);
-                cost = grid.burntrials(2,trial);
+            if trial <= size(burntrials,2) %First: burn trials
+                reward = burntrials(1,trial);
+                cost = burntrials(2,trial);
             else %Update after previous trial and sample new trial
-                %Priors (after first trial)
-                    if trial > 1
-                        options.priors = calinfo.posterior;
+                %Parameter values
+                    if trial == 1
+                        muPhi = options.priors.muPhi;
+                    else
+                        muPhi = calinfo.posterior.muPhi;
                     end
                 %Update indifference estimates across cost bins
                     for i_bin = 1:grid.nbins
                         %Get this bin's indifference line's two parameters
                             %Weight on cost
-                                k = exp(options.priors.muPhi(options.inG.ind.bias+i_bin));                                
+                                k = exp(muPhi(options.inG.ind.bias+i_bin));                                
                             %Choice bias
                                 R2 = 1; %(invariable)
-                                if i_bin == 1; bias = exp(options.priors.muPhi(options.inG.ind.bias));
+                                if i_bin == 1; bias = exp(muPhi(options.inG.ind.bias));
                                 else; bias = R2 - k*C_i - R_i;
                                 end
                                 calinfo.bin_bias(i_bin,trial) = bias;
@@ -40,7 +46,7 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
                             R_i = R2 - k*C_i - bias; %Indifference reward level
                     end
                 %Compute the probability of being at indifference, scaled from zero to one
-                    P_SS = ObservationFunction([],options.priors.muPhi,u_ind,options.inG);
+                    P_SS = ObservationFunction([],muPhi,u_ind,options.inG);
                     P_indiff = (0.5-abs(P_SS'-0.5))./0.5; 
                     calinfo.P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
                 %Sample this upcoming trial's cost level
@@ -49,7 +55,7 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
                     cost = sampleFromArbitraryP(PDF',grid.gridX(2:end)',1);
                 %Compute the selected cost level's reward (at indifference)
                     bin = find(cost>grid.binlimits(:,1) & cost<=grid.binlimits(:,2)); %equal-sized bins, all larger than zero.
-                    reward = 1 - exp(options.priors.muPhi(options.inG.ind.bias+bin))*cost - calinfo.bin_bias(bin,trial);
+                    reward = 1 - exp(muPhi(options.inG.ind.bias+bin))*cost - calinfo.bin_bias(bin,trial);
                     if reward > max(grid.gridY)
                         reward = max(grid.gridY);
                     elseif reward < min(grid.gridY)
@@ -67,15 +73,11 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
             calinfo.y(trial) = trialoutput.choiceSS;
         %Invert model with all inputs and choices
             dim.n_t = trial;
-            posterior = VBA_NLStateSpaceModel(calinfo.y,calinfo.u,[],@ObservationFunction,dim,inv_options);
+            posterior = VBA_NLStateSpaceModel(calinfo.y,calinfo.u,[],@ObservationFunction,dim,options);
             calinfo.muPhi(:,trial) = posterior.muPhi;
             calinfo.SigmaPhi(:,trial) = diag(posterior.SigmaPhi); 
             calinfo.posterior = posterior;
     end %for trial     
-    %Output: the probability of being at indifference, scaled from zero to one
-        P_SS = ObservationFunction([],posterior.muPhi,u_ind,options.inG);
-        P_indiff = (0.5-abs(P_SS'-0.5))./0.5; 
-        calinfo.P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
     %Visualize calibration process and save figure
         if exist('save_figure','var') && ~isempty(save_figure)
             set(0,'DefaultFigureVisible','off');
@@ -89,34 +91,6 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
         end
 
 end %function
-
-%% Subfunction: Get default settings
-function [options,dim,grid] = GetDefaultSettings(exp_settings)
-    %Get sampling grid
-        grid = exp_settings.OTG.grid;
-    %Dimensions
-        dim.n_theta = 0;
-        dim.n = 0;
-        dim.p = 1;    
-        dim.n_phi = 6;
-    %Options
-        options.binomial = 1;
-        options.verbose = 0;
-        options.DisplayWin = 0;
-        options.inG.ind.bias = 1;
-        options.inG.ind.k1 = 2;
-        options.inG.ind.k2 = 3;
-        options.inG.ind.k3 = 4;
-        options.inG.ind.k4 = 5;
-        options.inG.ind.k5 = 6;
-        options.inG.beta = exp_settings.OTG.prior_beta; %Assume this (fixed) value for inverse choice temperature
-        options.priors.SigmaPhi = exp_settings.OTG.prior_var_cal*eye(dim.n_phi);
-        options.priors.muPhi(1) = exp_settings.OTG.prior_bias; %Prior for choice bias
-        options.priors.muPhi(2:dim.n_phi) = log(1/diff(grid.rewardlimits)); %Priors for weights on cost
-    %Sampling grid
-        grid.burntrials = exp_settings.calibration_burntrials;
-        options.inG.grid = grid; %Store in options structure too
-end
 
 %% Subfunction: Observation function
 function [Z] = ObservationFunction(~,P,u,in)
@@ -155,21 +129,21 @@ function [Z] = ObservationFunction(~,P,u,in)
 end
 
 %% Subfunction: Make and update figure
-function [hf] = CalibrationFigure(trialinfo,grid)
+function [hf] = CalibrationFigure(calinfo,grid)
     %Setup figure
         hf = figure('color',[1 1 1],'units','normalized','outerposition',[0 0 1 1]); % set(hf,'Position',[100 300 1500 700]);       
     %Parameter values
-        muPhi_k = exp(trialinfo.muPhi(2:end,:));
-        all_bias = trialinfo.bin_bias;
+        muPhi_k = exp(calinfo.muPhi(2:end,:));
+        all_bias = calinfo.bin_bias;
     %Generated trials and probability of indifference
         ha1 = subplot(3,grid.nbins,1:3*grid.nbins,'parent',hf); hold on
         %P(indifference)
-            Im = imagesc(ha1,grid.gridX([2 end]),grid.gridY([1 end]),trialinfo.P_indiff);
+            Im = imagesc(ha1,grid.gridX([2 end]),grid.gridY([1 end]),calinfo.P_indiff);
             Im.AlphaData = 0.75;
             colorbar; caxis([0 1]); %Somehow this removes the im from the rest of the bins.
         %Choices
-            scatter(ha1,trialinfo.u(2,trialinfo.y==1),trialinfo.u(1,trialinfo.y==1),40,'r','filled');
-            scatter(ha1,trialinfo.u(2,trialinfo.y==0),trialinfo.u(1,trialinfo.y==0),40,'b','filled');
+            scatter(ha1,calinfo.u(2,calinfo.y==1),calinfo.u(1,calinfo.y==1),40,'r','filled');
+            scatter(ha1,calinfo.u(2,calinfo.y==0),calinfo.u(1,calinfo.y==0),40,'b','filled');
         %Plot estimated indifference lines
             for bin = 1:grid.nbins
                 X_bin = linspace(grid.binlimits(bin,1),grid.binlimits(bin,2),grid.bincostlevels);
