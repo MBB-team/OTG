@@ -40,8 +40,10 @@
         [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
         HideCursor  
     %Make a triallist
-        AllData.triallist = BEC_MakeTriallist_Mood(exp_settings); %Triallist for main experiment
-        AllData.triallist.calibration_per_type = exp_settings.trialgen_choice.which_choicetypes(randperm(exp_settings.trialgen_choice.n_choicetypes)); %Order in which the different choice types' instructions/examples/calibration will be presented
+        if ~isfield(AllData,'triallist')
+            AllData.triallist = BEC_MakeTriallist_Mood(exp_settings); %Triallist for main experiment
+            AllData.triallist.calibration_per_type = exp_settings.trialgen_choice.which_choicetypes(randperm(exp_settings.trialgen_choice.n_choicetypes)); %Order in which the different choice types' instructions/examples/calibration will be presented
+        end
     %Save
         save([AllData.savedir filesep 'AllData'],'AllData'); 
         disp('Dataset saved. Experiment will start now.')            
@@ -54,9 +56,9 @@
                 exitflag = BEC_InstructionScreens(window,exp_settings,exp_settings.instructions_moods.introduction);
                 if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                 AllData.Instructions.Progress = 1;
+                AllData.timings.ChoiceInstructions = clock;
             end
         %Loop through choice types
-            AllData.timings.ChoiceInstructions = clock;
             loop_choicetypes = AllData.triallist.calibration_per_type(AllData.Instructions.Progress:end); %This is so that the ppt does not have to redo choicetype that they have already done.
             for i_type = loop_choicetypes
                 exampletrial.choicetype = i_type;  %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
@@ -80,18 +82,11 @@
                     AllData.timings.(['Calibration_' exp_settings.trialgen_choice.typenames{i_type}]) = clock; %Timing
                     [AllData.calibration.(exp_settings.trialgen_choice.typenames{i_type}),exitflag] = BEC_Calibration(exp_settings,i_type,window,AllData.savedir);
                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+                    AllData.timings.(['Calibration_duration_' exp_settings.trialgen_choice.typenames{i_type}]) = etime(clock,...
+                        AllData.timings.(['Calibration_' exp_settings.trialgen_choice.typenames{i_type}]));
                 %Update instruction progress
                     AllData.Instructions.Progress = AllData.Instructions.Progress + 1;
             end %for i_type
-        %E-mail the results of the four calibrations
-            title = ['Calibration results for participant ' AllData.initials]; 
-            appendix = {[AllData.savedir filesep 'Calibration_delay.png'];
-                        [AllData.savedir filesep 'Calibration_risk.png'];
-                        [AllData.savedir filesep 'Calibration_physical_effort.png'];
-                        [AllData.savedir filesep 'Calibration_mental_effort.png']};
-            try RH_SendMail(title,[],appendix); 
-            catch; disp('Sending e-mail failed'); 
-            end
     end %if startpoint
     
 %% [2] Quiz and Rating Examples
@@ -144,7 +139,7 @@ if startpoint == 0 || startpoint == 3
             AllData.timings.StartMainExperiment = clock;
             AllData.quiztrialinfo = struct;
             AllData.Ratings = NaN(exp_settings.trialgen_moods.QuizTrials,1);    
-%             if AllData.pupil; AllData.eye_calibration = []; end
+            if AllData.pupil; AllData.eye_calibration = []; end
         end    
         save([AllData.savedir filesep 'AllData'],'AllData'); 
     %Pupil setup
@@ -241,11 +236,11 @@ if startpoint == 0 || startpoint == 3
 %                     Trial_PupilData = [Trial_PupilData; PupilData];
                 end
             %Online trial generation
-                for choicetrial = 1:4 %(question-1)*exp_settings.trialgen_moods.choices_per_question + (1:exp_settings.trialgen_moods.choices_per_question)
+                for choicetrial = 1:2
                     [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window);
                     if exitflag; BEC_ExitExperiment(AllData); return; end
                 end
-            %Rating (if before choices) 
+            %Rating (if after choices) 
                 if strcmp(AllData.triallist.rating(question),'after')
                     AllData.timings.rating_timestamp(question,:) = clock;
                     [AllData.Ratings(question),AllData.timings.rating_duration(question,1)] = BEC_RateMood(window,AllData);
@@ -268,7 +263,7 @@ end
             exitflag = BEC_InstructionScreens(window,exp_settings,exp_settings.instructions_moods.end_of_experiment); %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment            
         %Reward calculation
-            [AllData] = BEC_RewardTrialSelection(window,AllData);
+%             [AllData] = BEC_RewardTrialSelection(window,AllData);
         %Terminate the experiment
             RH_WaitForKeyPress({exp_settings.keys.proceedkey});
             BEC_ExitExperiment(AllData)
