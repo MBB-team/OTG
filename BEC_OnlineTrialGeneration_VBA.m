@@ -134,7 +134,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
     %Sample cost level of the costly option using P_indiff
         P_indiff = AllData.OTG_posterior.(typenames{choicetype}).P_indiff; %Grid with probability of indifference for each cost/reward combination
         PDF = sum(P_indiff); PDF = PDF/sum(PDF); %Make probability density function
-        cost = sampleFromArbitraryP(PDF',grid.gridX(2:end)',1); %Sample a cost level (see subfunction below)
+        cost = BEC_sampleFromArbitraryP(PDF',grid.gridX(2:end)',1); %Sample a cost level (see subfunction below)
         costbin = find(cost>grid.binlimits(:,1) & cost<=grid.binlimits(:,2)); %get cost bin number
     %Get parameter values: b and k
         muPhi = AllData.OTG_posterior.(typenames{choicetype}).muPhi; %get the most recent estimate of parameter values
@@ -182,7 +182,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 DV = AllData.sim.beta*(V1 - V2); %Decision value: (option 1) - (option 2)
             %Simulate the decision
                 P_U = sigmoid(DV); %Probability of choosing the uncostly option (see sigmoid function below)
-                y = sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
+                y = BEC_sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
             %Enter the simulated choice in trialinfo
                 AllData.trialinfo(choicetrial).choicetype = choicetype; %numeric choicetype (1:4)
                 AllData.trialinfo(choicetrial).SSReward = reward; %reward of the uncostly ("SS": smaller & sooner) option

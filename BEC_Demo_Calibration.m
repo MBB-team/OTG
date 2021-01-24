@@ -96,7 +96,7 @@ function [trialinfo,exitflag] = BEC_CalibrationDemo(exp_settings,choicetype,wind
                 %Sample this upcoming trial's cost level
                     PDF = sum(trialinfo.P_indiff);
                     PDF = PDF/sum(PDF);
-                    cost = sampleFromArbitraryP(PDF',grid.gridX(2:end)',1);
+                    cost = BEC_sampleFromArbitraryP(PDF',grid.gridX(2:end)',1);
                 %Compute the selected cost level's reward (at indifference)
                     bin = find(cost>grid.binlimits(:,1) & cost<=grid.binlimits(:,2)); %equal-sized bins, all larger than zero.
                     reward = 1 - exp(options.priors.muPhi(options.inG.ind.bias+bin))*cost - trialinfo.bin_bias(bin,trial);

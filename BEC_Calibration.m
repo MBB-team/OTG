@@ -15,7 +15,7 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
     calinfo.grid = grid; %output
     all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %All rewards
     all_cost = repmat(grid.gridX(2:end),grid.binrewardlevels,1); %All costs
-    u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,[numel(all_cost) 1])]'; %Full grid
+    u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,F[numel(all_cost) 1])]'; %Full grid
         
 %% Loop through trials
     for trial = 1:exp_settings.OTG.ntrials_cal           
@@ -52,7 +52,7 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
                 %Sample this upcoming trial's cost level
                     PDF = sum(calinfo.P_indiff);
                     PDF = PDF/sum(PDF);
-                    cost = sampleFromArbitraryP(PDF',grid.gridX(2:end)',1);
+                    cost = BEC_sampleFromArbitraryP(PDF',grid.gridX(2:end)',1);
                 %Compute the selected cost level's reward (at indifference)
                     bin = find(cost>grid.binlimits(:,1) & cost<=grid.binlimits(:,2)); %equal-sized bins, all larger than zero.
                     reward = 1 - exp(muPhi(options.inG.ind.bias+bin))*cost - calinfo.bin_bias(bin,trial);
