@@ -15,7 +15,7 @@ function [calinfo,exitflag] = BEC_Calibration(exp_settings,choicetype,window,sav
     calinfo.grid = grid; %output
     all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %All rewards
     all_cost = repmat(grid.gridX(2:end),grid.binrewardlevels,1); %All costs
-    u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,F[numel(all_cost) 1])]'; %Full grid
+    u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,[numel(all_cost) 1])]'; %Full grid
         
 %% Loop through trials
     for trial = 1:exp_settings.OTG.ntrials_cal           

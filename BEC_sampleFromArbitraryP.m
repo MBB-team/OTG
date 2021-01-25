@@ -12,7 +12,11 @@ function [X] = BEC_sampleFromArbitraryP(p,gridX,N)
 %   - X: NX1 vector of samples
 
 try; N; catch, N=1; end
-p = vec(p);
+try
+    p = VBA_vec(p);
+catch %for compatibility with older versions of VBA
+    p = vec(p);
+end
 
 if size(gridX,1)==1
     gridX = vec(gridX);

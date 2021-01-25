@@ -18,9 +18,9 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 %post-hoc, and here it is used to generate the choices. The purpose of the
                 %model-fitting algorithm here is to approach this choice function as closely as
                 %possible.
-                    AllData.sim.visualize = 0; %Visualize the simulation ([1:yes / 0:no])
+                    AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])
                     AllData.sim.kC = 2.5; %Weight on cost
-                    AllData.sim.gamma = 3; %Power on cost
+                    AllData.sim.gamma = 0.5; %Power on cost
                     AllData.sim.beta = 10; %Choice temperature
                     AllData.sim.bias = 0.2; %Choice bias
                     AllData.sim.kRew = 3; %Weight on reward
@@ -60,7 +60,11 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                         OTG_settings.dim.p = 1;    
                         OTG_settings.dim.n_phi = 6;
                     %VBA: Options
-                        OTG_settings.options.binomial = 1;
+                        try
+                            OTG_settings.options.sources.type = 1;
+                        catch %for compatibility with older VBA versions
+                            OTG_settings.options.binomial = 1;
+                        end
                         OTG_settings.options.verbose = 0;
                         OTG_settings.options.DisplayWin = 0;
                         OTG_settings.options.inG.ind.bias = 1;
@@ -181,7 +185,11 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 V2 = AllData.sim.kRew*LLRew - AllData.sim.kC*LLCost^AllData.sim.gamma; %Value of option 2 (costly option)
                 DV = AllData.sim.beta*(V1 - V2); %Decision value: (option 1) - (option 2)
             %Simulate the decision
-                P_U = sigmoid(DV); %Probability of choosing the uncostly option (see sigmoid function below)
+                try
+                    P_U = VBA_sigmoid(DV); %Probability of choosing the uncostly option
+                catch %for compatibility with older VBA versions
+                    P_U = sigmoid(DV); %Probability of choosing the uncostly option
+                end
                 y = BEC_sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
             %Enter the simulated choice in trialinfo
                 AllData.trialinfo(choicetrial).choicetype = choicetype; %numeric choicetype (1:4)
@@ -285,7 +293,11 @@ function [P_indiff] = Compute_P_indiff(muPhi,OTG_settings)
                 beta = OTG_settings.fixed_beta; %Choice temperature
         %Compute decision value and probability of choosing the uncostly option
             DV = u_ind(1,i_bin) - 1 + b + k .* u_ind(2,i_bin); %Decision value: (option 1) - (option 2)
-            P_U(i_bin) = sigmoid(DV*beta); %P(choose uncostly)
+            try
+                P_U(i_bin) = VBA_sigmoid(DV*beta); %P(choose uncostly)
+            catch %for compatibility with older VBA versions
+                P_U(i_bin) = sigmoid(DV*beta); %P(choose uncostly)
+            end
     end
     %Output: probability-of-indifference (= 1 when P_U is 0.5 and goes to 0 as P_U goes to 0 or 1)
         P_indiff = (0.5-abs(P_U'-0.5))./0.5; %When P_U = 0.5, P_indiff = 1

@@ -1,6 +1,9 @@
 % Demo of the choice calibration procedure
 
 % Setup
+    %What do you want to demonstrate?
+        choicetype = 1; %1:delay/2:risk/3:physical effort/4:mental effort
+        n_example_trials = 3; %example trials (with random costs and rewards) before starting the calibration
     %Get the experiment settings
         exp_settings = BEC_Settings;
     %Start the experiment from the beginning, or at an arbitrary point. This depends on whether AllData exists.
@@ -28,8 +31,8 @@
         demo_rect = [0.4*w 0.2*h w 0.8*h]; %The demo screen will not fill the entire screen        
         [window,winRect] = Screen('OpenWindow',i_screen,exp_settings.backgrounds.default,demo_rect); %0 for Windows Desktop screen, 2 for external monitor
 % Example trials
-    for t = 1:3
-        trialinfo.choicetype = 2;   %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
+    for t = 1:n_example_trials
+        trialinfo.choicetype = choicetype;   %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
         trialinfo.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
         trialinfo.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
         trialinfo.Example = 1;      %Is this an example trial?
@@ -37,8 +40,6 @@
         if exitflag; BEC_ExitExperiment(AllData); end
     end
 % Run calibration
-    choicetype = 1; %1:delay/2:risk/3:physical effort/4:mental effort
-    exp_settings.ATG.ntrials = 20; 
     [AllData.trialinfo,exitflag] = BEC_CalibrationDemo(exp_settings,choicetype,window,AllData.savedir);
     if exitflag; BEC_ExitExperiment(AllData); end
 % Save
@@ -53,7 +54,7 @@ function [trialinfo,exitflag] = BEC_CalibrationDemo(exp_settings,choicetype,wind
 % Note: entirely coded for 5 cost bins
 
 %% Configuration
-    ntrials = exp_settings.ATG.ntrials;        
+    ntrials = exp_settings.OTG.ntrials_cal;       
     [options,dim,grid] = GetDefaultSettings(exp_settings); %NB: options are updated each trial
     inv_options = options; %options for parameter estimation only (invariable)!
     trialinfo.options = options;
@@ -130,12 +131,12 @@ function [trialinfo,exitflag] = BEC_CalibrationDemo(exp_settings,choicetype,wind
         trialinfo.P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
     %Visualize calibration process and save figure
         if exist('save_figure','var') && ~isempty(save_figure)
-%             set(0,'DefaultFigureVisible','off');
+%             set(0,'DefaultFigureVisible','off'); %Uncomment if you do not want to show the calibration procedure
             F = getframe(hf);
             Im = frame2im(F);
             filename = ['Calibration_' exp_settings.trialgen_choice.typenames{choicetype}];
             imwrite(Im,[save_figure filesep filename '.png'])
-%             close
+%             close %Uncomment if you do not want to show the calibration procedure
 %             set(0,'DefaultFigureVisible','on');
         end
 
@@ -144,14 +145,18 @@ end %function
 %% Subfunction: Get default settings
 function [options,dim,grid] = GetDefaultSettings(exp_settings)
     %Get sampling grid
-        grid = exp_settings.ATG.grid;
+        grid = exp_settings.OTG.grid;
     %Dimensions
         dim.n_theta = 0;
         dim.n = 0;
         dim.p = 1;    
         dim.n_phi = 6;
     %Options
-        options.binomial = 1;
+        try
+            options.sources.type = 1;
+        catch %for compatibility with older VBA versions
+            options.binomial = 1;
+        end
         options.verbose = 0;
         options.DisplayWin = 0;
         options.inG.ind.bias = 1;
@@ -160,9 +165,9 @@ function [options,dim,grid] = GetDefaultSettings(exp_settings)
         options.inG.ind.k3 = 4;
         options.inG.ind.k4 = 5;
         options.inG.ind.k5 = 6;
-        options.inG.beta = exp_settings.ATG.fixed_beta; %Assume this (fixed) value for inverse choice temperature
-        options.priors.SigmaPhi = exp_settings.ATG.prior_var*eye(dim.n_phi);
-        options.priors.muPhi(1) = exp_settings.ATG.prior_bias; %Prior for choice bias
+        options.inG.beta = exp_settings.OTG.fixed_beta; %Assume this (fixed) value for inverse choice temperature
+        options.priors.SigmaPhi = exp_settings.OTG.prior_var_cal*eye(dim.n_phi); %Prior for parameter variance
+        options.priors.muPhi(1) = exp_settings.OTG.prior_bias_cal; %Prior for choice bias
         options.priors.muPhi(2:dim.n_phi) = log(1/diff(grid.rewardlimits)); %Priors for weights on cost
     %Sampling grid
         grid.binlimits = grid.costlimits(1) + ([0:grid.nbins-1;1:grid.nbins])'  * (grid.costlimits(2)-grid.costlimits(1))/grid.nbins;

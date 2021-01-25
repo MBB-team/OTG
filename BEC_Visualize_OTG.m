@@ -119,6 +119,8 @@ function BEC_Visualize_OTG(AllData,choicetrial)
             xlabel('LL Cost'); ylabel('SS Reward')
             axis([0 1 0 1])
             legend({'SS choices','LL choices','fitted'},'Location','southoutside','Orientation','Horizontal')
+        %Draw now
+            drawnow
 end
 
 function [P_indiff] = Compute_P_indiff(muPhi,OTG_settings)
@@ -138,7 +140,11 @@ function [P_indiff] = Compute_P_indiff(muPhi,OTG_settings)
         R_i = 1 - k*C_i - b; %Indifference reward level at cost bin edge
         beta = OTG_settings.fixed_beta; %Choice temperature                   
         DV = u_ind(1,i_bin) + b - 1 + k * u_ind(2,i_bin); %Decision value: (option 1) - (option 2)
-        P_U(i_bin) = sigmoid(DV*beta); %P(choose uncostly)
+        try
+            P_U(i_bin) = VBA_sigmoid(DV*beta); %P(choose uncostly)
+        catch %for compatibility with older versions of VBA
+            P_U(i_bin) = sigmoid(DV*beta); %P(choose uncostly)
+        end
     end
     P_indiff = (0.5-abs(P_U'-0.5))./0.5; %When P_U = 0.5, P_indiff = 1
     P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels); %Reshape P_indiff back to the original grid format
