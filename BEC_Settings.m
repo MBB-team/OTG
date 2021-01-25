@@ -135,21 +135,21 @@ function [exp_settings] = BEC_Settings
             exp_settings.OTG.burntrials = 3;        % [G-N] # of trials that must have been sampled before inverting the model
             exp_settings.OTG.adjust_rew_nonconverge = [0.2 0.4 0.6 0.8 1]; % Adjustment to the indifference reward: helps the algorithm get out when it is stuck on a wrong indifference estimate
         %VBA: Dimensions
-            exp_settings.OTG.dim.n_theta = 0;
-            exp_settings.OTG.dim.n = 0;
-            exp_settings.OTG.dim.p = 1;    
-            exp_settings.OTG.dim.n_phi = 6;
+            exp_settings.OTG.dim.n_theta = 0;   % Number of evolution parameters
+            exp_settings.OTG.dim.n = 0;         % Number of hidden states
+            exp_settings.OTG.dim.p = 1;         % Output data dimension (# of observations per time sample)
+            exp_settings.OTG.dim.n_phi = 6;     % Number of observation parameters: 1 intercept (bias) and a slope for each bin
         %VBA: Options
-            exp_settings.OTG.options.binomial = 1;
-            exp_settings.OTG.options.verbose = 0;
-            exp_settings.OTG.options.DisplayWin = 0;
-            exp_settings.OTG.options.inG.ind.bias = 1;
-            exp_settings.OTG.options.inG.ind.k1 = 2;
-            exp_settings.OTG.options.inG.ind.k2 = 3;
-            exp_settings.OTG.options.inG.ind.k3 = 4;
-            exp_settings.OTG.options.inG.ind.k4 = 5;
-            exp_settings.OTG.options.inG.ind.k5 = 6;
-            exp_settings.OTG.options.inG.beta = exp_settings.OTG.fixed_beta; %Inv. choice temp. for observation function
+            exp_settings.OTG.options.sources.type = 1;  % Type 1 for binomial distribution
+            exp_settings.OTG.options.verbose = 0;       % Flag 1 to show VBA's inversion process text updates
+            exp_settings.OTG.options.DisplayWin = 0;    % Flag 1 to show VBA's inversion process visualized    
+            exp_settings.OTG.options.inG.ind.bias = 1;  % Choice bias, or the intercept of the indifference curve in the first bin (parameter #1)
+            exp_settings.OTG.options.inG.ind.k1 = 2;    % Slope of bin 1 (parameter #2)
+            exp_settings.OTG.options.inG.ind.k2 = 3;    % Slope of bin 2 (parameter #3)
+            exp_settings.OTG.options.inG.ind.k3 = 4;    % Slope of bin 3 (parameter #4)    
+            exp_settings.OTG.options.inG.ind.k4 = 5;    % Slope of bin 4 (parameter #5)
+            exp_settings.OTG.options.inG.ind.k5 = 6;    % Slope of bin 5 (parameter #6)
+            exp_settings.OTG.options.inG.beta = exp_settings.OTG.fixed_beta; %Inv. choice temp. for observation function (takes an assumed fixed value)
             exp_settings.OTG.options.inG.grid = exp_settings.OTG.grid; %Grid is entered in observation function too
     
 %% Trial Generation Settings (per experiment type)

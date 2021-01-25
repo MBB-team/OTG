@@ -123,10 +123,10 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         KbReleaseWait;  % wait until all keys are released before start with trial again.                        
         t_onset = BEC_DrawChoiceScreen(exp_settings,drawchoice,window);
         pause(exp_settings.timings.min_resp_time);  % minimum response time to avoid constant button presses by the participant without thinking            
-    %Monitor for response
+    %Monitor for response...
         keyCode(LRQ) = 0; exitflag = 0;
-        while (keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0) ||... % as long no button is pressed keep checking the keyboard
-                etime(clock,t_onset) <= exp_settings.timings.max_resp_time % as long as the timeout time is not reached keep checking the keyboard
+        while (keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0) && ... % as long no button is pressed, AND...
+                etime(clock,t_onset) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
             [~, ~, keyCode] = KbCheck(-1);
         end
 %     %Screenshot

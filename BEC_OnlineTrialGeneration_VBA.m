@@ -60,11 +60,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                         OTG_settings.dim.p = 1;    
                         OTG_settings.dim.n_phi = 6;
                     %VBA: Options
-                        try
-                            OTG_settings.options.sources.type = 1;
-                        catch %for compatibility with older VBA versions
-                            OTG_settings.options.binomial = 1;
-                        end
+                        OTG_settings.options.sources.type = 1;
                         OTG_settings.options.verbose = 0;
                         OTG_settings.options.DisplayWin = 0;
                         OTG_settings.options.inG.ind.bias = 1;

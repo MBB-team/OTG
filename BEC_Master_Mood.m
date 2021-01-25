@@ -80,7 +80,7 @@
                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                 %Calibration
                     AllData.timings.(['Calibration_' exp_settings.trialgen_choice.typenames{i_type}]) = clock; %Timing
-                    [AllData.calibration.(exp_settings.trialgen_choice.typenames{i_type}),exitflag] = BEC_Calibration(exp_settings,i_type,window,AllData.savedir);
+                    [AllData,exitflag] = BEC_Calibration(AllData,i_type,window,1);
                     if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
                     AllData.timings.(['Calibration_duration_' exp_settings.trialgen_choice.typenames{i_type}]) = etime(clock,...
                         AllData.timings.(['Calibration_' exp_settings.trialgen_choice.typenames{i_type}]));
