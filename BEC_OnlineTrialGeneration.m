@@ -39,8 +39,12 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
             choicetrial = size(AllData.trialinfo,2) + 1;
         end
     %choicetype: whether the choice is about delay, risk, physical effort, or mental effort
-        if ~isfield(AllData.triallist,'choicetypes') %Select the choice type to be presented in this trial
-            choicetype = SampleChoiceType(AllData.trialinfo,OTG_settings); %See subfunction below
+        if ~isfield(AllData,'triallist') || ~isfield(AllData.triallist,'choicetypes') %Select the choice type to be presented in this trial
+            if choicetrial == 1 %If this is the first trial, select a choice type at random if no trial list is present
+                choicetype = OTG_settings.choicetypes(randperm(length(OTG_settings.choicetypes),1));
+            else %After the first trial, use the sampling procedure in the subfunction below
+                choicetype = SampleChoiceType(AllData.trialinfo,OTG_settings); %See subfunction below
+            end
         else %If a triallist of choice types is predefined, select the choice type of this trial
             choicetype = AllData.triallist.choicetypes(choicetrial);
         end
@@ -338,7 +342,7 @@ function [cost] = SampleCost(AllData,choicetype)
         PDF = PDF/sum(PDF); %normalize
         cost = sampleFromArbitraryP(PDF',grid.gridX(2:end)',1); %Sample a cost level (see subfunction below)       
     %Visualize the cost sampling procedure
-        if AllData.sim.visualize == 1
+        if isfield(AllData,'sim') && isfield(AllData.sim,'visualize') && AllData.sim.visualize == 1
             gcf;
             subplot(2,2,3); cla; hold on
             X = grid.gridX(2:end);
