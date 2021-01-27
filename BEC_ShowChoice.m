@@ -1,35 +1,35 @@
-function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
+function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
 % Battery of Economic Choices - show the choice screen
 % Inputs:
 %     window                %The Psychtoolbox session window
 %     exp_settings          %The experiment settings structure
-%     trialinfo.trial       %Trial number (only required for the pupil marker)
-%     trialinfo.choicetype  %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
-%     trialinfo.SSReward    %Reward for the uncostly (SS) option (between 0 and 1)
-%     trialinfo.Cost        %Cost level or the costly (LL) option (between 0 and 1)
-%     trialinfo.SideSS      %(optional) set on which side you want the uncostly (SS) option to be (enter string: 'left' or 'right')
-%     trialinfo.Example     %(optional, default 0) flag 1 if this is an example trial (with explanation text) 
-%     trialinfo.Pupil       %(optional, default 0) flag 1 if you want to record pupil data
-%     trialinfo.ITI         %(optional) fixation cross time before choice (default is random value between the set minimum and maximum value from exp_settings)
+%     trialinput.choicetype  %Set number (1:delay/2:risk/3:physical effort/4:mental effort)
+%     trialinput.SSReward    %Reward for the uncostly (SS) option (between 0 and 1)
+%     trialinput.Cost        %Cost level or the costly (LL) option (between 0 and 1)
+%     trialinput.SideSS      %(optional) set on which side you want the uncostly (SS) option to be (enter string: 'left' or 'right')
+%     trialinput.Example     %(optional, default 0) flag 1 if this is an example trial (with explanation text) 
+%     trialinput.Pupil       %(optional, default 0) flag 1 if you want to record pupil data
+%     trialinput.ITI         %(optional) fixation cross time before choice (default is random value between the set minimum and maximum value from exp_settings)
+%     trialinput.trial       %(optional) Trial number (only required for the pupil marker)
 % Output:
-%     trialinfo: updated structure with all the information about the choice trial
+%     trialoutput: updated structure with all the information about the choice trial
 %     exitflag: 0 by default; 1 if the experiment was interrupted
 
 %% Prepare
     %Input defaults
         typenames = {'delay','risk','physical_effort','mental_effort'};
         sidenames = {'left','right'};
-        if ~isfield(trialinfo,'SideSS') || isempty(trialinfo.SideSS)
-            trialinfo.SideSS = sidenames{1+round(rand)};
+        if ~isfield(trialinput,'SideSS') || isempty(trialinput.SideSS)
+            trialinput.SideSS = sidenames{1+round(rand)};
         end
-        if ~isfield(trialinfo,'Example') || isempty(trialinfo.Example)
-            trialinfo.Example = 0;
+        if ~isfield(trialinput,'Example') || isempty(trialinput.Example)
+            trialinput.Example = 0;
         end
-        if ~isfield(trialinfo,'Pupil') || isempty(trialinfo.Pupil)
-            trialinfo.Pupil = 0;
+        if ~isfield(trialinput,'Pupil') || isempty(trialinput.Pupil)
+            trialinput.Pupil = 0;
         end
-        if ~isfield(trialinfo,'ITI') || isempty(trialinfo.ITI)
-            trialinfo.ITI = exp_settings.timings.fixation_choice(1) + rand * (exp_settings.timings.fixation_choice(2)-exp_settings.timings.fixation_choice(1));
+        if ~isfield(trialinput,'ITI') || isempty(trialinput.ITI)
+            trialinput.ITI = exp_settings.timings.fixation_choice(1) + rand * (exp_settings.timings.fixation_choice(2)-exp_settings.timings.fixation_choice(1));
         end
     %Keyboard
         leftKey = KbName('LeftArrow');
@@ -38,20 +38,20 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         LRQ = [leftKey rightKey escapeKey];  % join keys 
     %Trial features
         %Reward for uncostly option
-            SSReward = round(trialinfo.SSReward*exp_settings.MaxReward,1);
+            SSReward = round(trialinput.SSReward*exp_settings.MaxReward,1);
             if SSReward == 1; SSRewardText = sprintf('%.2f euro', round(SSReward, 1));
             else; SSRewardText = sprintf('%.2f euros', round(SSReward, 1));
             end
-            if trialinfo.Example; SSRewardText = ['et recevoir ' SSRewardText]; end
+            if trialinput.Example; SSRewardText = ['et recevoir ' SSRewardText]; end
         %Reward for costly option
             LLRewardText = sprintf('%.2f euros', exp_settings.MaxReward);
-            if strcmp(typenames{trialinfo.choicetype},'risk')
+            if strcmp(typenames{trialinput.choicetype},'risk')
                 LLLossText = ['ou -' sprintf('%.2f euros', exp_settings.RiskLoss)];
             else
                 LLLossText = [];
             end
-            if trialinfo.Example
-                if strcmp(typenames{trialinfo.choicetype},'risk')
+            if trialinput.Example
+                if strcmp(typenames{trialinput.choicetype},'risk')
                     LLRewardText = ['pour gagner ' LLRewardText];
                     LLLossText = ['ou perdre ' sprintf('%.2f euros', exp_settings.RiskLoss)];
                 else
@@ -59,33 +59,33 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
                 end
             end
         %Choicetype-specific features
-            switch typenames{trialinfo.choicetype}
+            switch typenames{trialinput.choicetype}
                 case 'delay'
                     SSCostText = 'ne pas attendre';
-                    LLCost = round(trialinfo.Cost*exp_settings.MaxDelay); %Expressed in # of weeks <=== revise this for months!!!
+                    LLCost = round(trialinput.Cost*exp_settings.MaxDelay); %Expressed in # of weeks <=== revise this for months!!!
                     [LLCost,LLCostText] = ConvertCost(LLCost,1,exp_settings);
                     LLCostText = ['attendre ce délai' newline newline '(' LLCostText ')'];
                 case 'risk'
                     SSCostText = 'ne pas prendre de risque';
-                    LLCost = round(trialinfo.Cost*exp_settings.MaxRisk,1);
+                    LLCost = round(trialinput.Cost*exp_settings.MaxRisk,1);
                     LLCostText = ['prendre ce risque' newline newline '(' num2str(LLCost) '%)'];
                 case 'physical_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = trialinfo.Cost*exp_settings.Max_phys_effort;
+                    LLCost = trialinput.Cost*exp_settings.Max_phys_effort;
                     [~,LLCostText] = ConvertCost(LLCost,3,exp_settings);
                     LLCostText = ['monter ces escaliers' newline newline '(' LLCostText ')'];
                 case 'mental_effort'
                     SSCostText = 'ne pas faire d''effort';
-                    LLCost = trialinfo.Cost*exp_settings.Max_ment_effort;
+                    LLCost = trialinput.Cost*exp_settings.Max_ment_effort;
                     [~,LLCostText] = ConvertCost(LLCost,4,exp_settings);
                     LLCostText = ['copier ces pages' newline newline '(' LLCostText ')'];
             end       
     %Set drawing parameters
-        drawchoice.choicetype = typenames{trialinfo.choicetype};
-        drawchoice.example = trialinfo.Example;
+        drawchoice.choicetype = typenames{trialinput.choicetype};
+        drawchoice.example = trialinput.Example;
         drawchoice.titletext = 'EXEMPLE: Préférez-vous...';
         drawchoice.confirmation = [];
-        switch trialinfo.SideSS %Side definition
+        switch trialinput.SideSS %Side definition
             case 'left'
                 drawchoice.rewardleft = SSReward; 
                 drawchoice.rewardlefttext = SSRewardText;
@@ -113,11 +113,11 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
 %% Present screens       
     %Fixation cross on screen for the specified time
         t_fix_on = clock;
-        exitflag = BEC_Fixation(window,exp_settings,trialinfo.ITI);
+        exitflag = BEC_Fixation(window,exp_settings,trialinput.ITI);
         if exitflag; return; end %Terminate experiment if ESCAPE is pressed at the end of the fixation time
     %Pupil marker
-%         if trialinfo.pupil
-%             S10_Exp_PhysiologyMark(phys,'choice',trialinfo.trial)
+%         if trialinput.pupil
+%             S10_Exp_PhysiologyMark(phys,'choice',trialinput.trial)
 %         end
     %Display choice screen
         KbReleaseWait;  % wait until all keys are released before start with trial again.                        
@@ -162,46 +162,48 @@ function [trialinfo,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo)
         FlushEvents('keyDown');
         
 %% Store all trial information
+    %Make the output structure
+        trialoutput = trialinput;
     %Record decision and RT
         if isnan(resp) % time out
-            trialinfo.choiceSS = NaN;
-        elseif (strcmp(trialinfo.SideSS,'left') && resp == rightKey) || (strcmp(trialinfo.SideSS,'right') && resp == leftKey) % costly option chosen
-            trialinfo.choiceSS = 0;
+            trialoutput.choiceSS = NaN;
+        elseif (strcmp(trialoutput.SideSS,'left') && resp == rightKey) || (strcmp(trialoutput.SideSS,'right') && resp == leftKey) % costly option chosen
+            trialoutput.choiceSS = 0;
         else % uncostly option chosen
-            trialinfo.choiceSS = 1;
+            trialoutput.choiceSS = 1;
         end
-        trialinfo.RT = rt;        
+        trialoutput.RT = rt;        
     %Record the full trial info
-        trialinfo.LLReward = 1; %Reward for the costly option (default)
-        trialinfo.Choicetype = typenames{trialinfo.choicetype}; %name of the choice type
-        switch trialinfo.choicetype
+        trialoutput.LLReward = 1; %Reward for the costly option (default)
+        trialoutput.Choicetype = typenames{trialoutput.choicetype}; %name of the choice type
+        switch trialoutput.choicetype
             case 1 %Delay
-                trialinfo.Delay = trialinfo.Cost;
-                trialinfo.Risk = 0; 
-                trialinfo.PhysicalEffort = 0;
-                trialinfo.MentalEffort = 0;
-                trialinfo.Loss = 0;
+                trialoutput.Delay = trialoutput.Cost;
+                trialoutput.Risk = 0; 
+                trialoutput.PhysicalEffort = 0;
+                trialoutput.MentalEffort = 0;
+                trialoutput.Loss = 0;
             case 2 %Risk
-                trialinfo.Delay = 0;
-                trialinfo.Risk = trialinfo.Cost;
-                trialinfo.PhysicalEffort = 0;
-                trialinfo.MentalEffort = 0;
-                trialinfo.Loss = exp_settings.RiskLoss/exp_settings.MaxReward;
+                trialoutput.Delay = 0;
+                trialoutput.Risk = trialoutput.Cost;
+                trialoutput.PhysicalEffort = 0;
+                trialoutput.MentalEffort = 0;
+                trialoutput.Loss = exp_settings.RiskLoss/exp_settings.MaxReward;
             case 3 %Physical effort
-                trialinfo.Delay = 0;
-                trialinfo.Risk = 0;
-                trialinfo.PhysicalEffort = trialinfo.Cost;
-                trialinfo.MentalEffort = 0;
-                trialinfo.Loss = 0;
+                trialoutput.Delay = 0;
+                trialoutput.Risk = 0;
+                trialoutput.PhysicalEffort = trialoutput.Cost;
+                trialoutput.MentalEffort = 0;
+                trialoutput.Loss = 0;
             case 4 %Mental effort
-                trialinfo.Delay = 0;
-                trialinfo.Risk = 0;
-                trialinfo.PhysicalEffort = 0;
-                trialinfo.MentalEffort = trialinfo.Cost;
-                trialinfo.Loss = 0;
+                trialoutput.Delay = 0;
+                trialoutput.Risk = 0;
+                trialoutput.PhysicalEffort = 0;
+                trialoutput.MentalEffort = trialoutput.Cost;
+                trialoutput.Loss = 0;
         end
-        trialinfo.ITI = etime(t_onset,t_fix_on); %fixation time before choice onset (seconds)
-        trialinfo.timestamp = t_onset; %timestamp of choice presentation on screen (format: [y m d h m s])
+        trialoutput.ITI = etime(t_onset,t_fix_on); %fixation time before choice onset (seconds)
+        trialoutput.timestamp = t_onset; %timestamp of choice presentation on screen (format: [y m d h m s])
 
 end
             

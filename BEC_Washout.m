@@ -4,9 +4,9 @@ function BEC_Washout(window,AllData)
     exp_settings = AllData.exp_settings;
     
 % Eyetracker marker (TO DO!)
-    if AllData.pupil
-        S10_Exp_PhysiologyMark(AllData,'washout')
-    end
+%     if AllData.pupil
+%         S10_Exp_PhysiologyMark(AllData,'washout')
+%     end
 
 % Washout instruction text on screen
     Screen('FillRect',window,exp_settings.backgrounds.default);

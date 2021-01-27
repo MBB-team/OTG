@@ -1,18 +1,19 @@
 function [exp_settings] = BEC_Settings
 % Settings structure for the Battery of Economic CHoices And Mood/Emotion Links experiments
 
-% Setup
+%% Setup
     rng('shuffle')              %Shuffle the random number generator
     exp_settings = struct;      %Predefine output
     expdir = which('BEC_Settings'); expdir = expdir(1:end-15);  %Get the directory where this function is stored
     cd(expdir);                 %Change directory to the directory where this function is situated
 % Keyboard settings
     exp_settings.keys.escapekey = 'escape'; %Do not change this. 'Escape' remains the escape key.
-    exp_settings.keys.proceedkey = 'p'; %Key to be pressed by experimenter in order to proceed.
+    exp_settings.keys.proceedkey = 'p'; %Key to be pressed by experimenter in order to proceed, e.g. when you want to check on the participant before they continue
     exp_settings.keys.quiz_A = 'F'; %Mood quiz - answer A
     exp_settings.keys.quiz_B = 'G'; %Mood quiz - answer B
     exp_settings.keys.quiz_C = 'H'; %Mood quiz - answer C
     exp_settings.keys.quiz_D = 'J'; %Mood quiz - answer D    
+% Note: the left and right arrow keys are the default keys to select the left or right option in binary choices.
     
 %% Directories    
     %Where are the experiment scrips? (default: present working directory)
@@ -27,7 +28,7 @@ function [exp_settings] = BEC_Settings
         
 %% Graphics defaults
     %Fonts
-        exp_settings.font.FixationFontSize = 50;    %Fixation cross
+        exp_settings.font.FixationFontSize = 50;    %Fixation cross between trials is written as a "+" (note: this is not the fixation cross in a choice trial)
         exp_settings.font.TitleFontSize = 32;       %Screen titles
         exp_settings.font.RewardFontSize = 25;      %Reward amounts in the choice screen
         exp_settings.font.CostFontSize = exp_settings.font.RewardFontSize; %Idem for the cost amounts
@@ -38,7 +39,7 @@ function [exp_settings] = BEC_Settings
         exp_settings.font.RatingFontSize = 32;      %Quiz rating font size
         exp_settings.font.FontType = 'Arial';       %Font type (universal)
         exp_settings.font.Wrapat = 75;              %Wrapping (for longer texts of induction screens)
-        exp_settings.font.vSpacing = 2;             %Vertical spacing
+        exp_settings.font.vSpacing = 2;             %Vertical spacing (universal)
     %Colors 
         %Define colors
             exp_settings.colors.black = [0 0 0];
@@ -62,7 +63,7 @@ function [exp_settings] = BEC_Settings
             exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
             exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
     
-%% Choice screen configuration (universal)
+%% Choice screen configuration
     % Cost and reward features
         exp_settings.MaxReward = 30;  % [euros] reward for the costly option
         exp_settings.RiskLoss = 10;   % [euros] possible loss in the lottery
@@ -70,6 +71,11 @@ function [exp_settings] = BEC_Settings
         exp_settings.MaxRisk = 100;   % [percent] maximum risk
         exp_settings.Max_phys_effort = 12; % max # flights of stairs to climb
         exp_settings.Max_ment_effort = 12; % max # pages to copy
+    % Timings
+        exp_settings.timings.min_resp_time = 0.5; %[s] before ppt can respond
+        exp_settings.timings.max_resp_time = Inf; %[s] timeout time, set Inf if there is no timeout. When timeout is reached, the choice and RT will be set to NaN.
+        exp_settings.timings.show_response = 0.25; %[s] visual feedback duration in example choice trials
+        exp_settings.timings.fixation_choice = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during experiment
     % Choice screen visual parameters
         exp_settings.choicescreen.title_y = 1/8;                        %Title y position (choice)
         exp_settings.choicescreen.cost_y = [2/8 3/8];                   %Y-coordinates of the cost above the cost box (example trials only)
@@ -81,27 +87,18 @@ function [exp_settings] = BEC_Settings
         exp_settings.choicescreen.costbox_right = [11/16 1/5 14/16 1/2];%Right cost visualization
         exp_settings.choicescreen.monthrects = [(0:11)./12; zeros(1,12); (1:12)./12; [31 28 31 30 31 30 31 31 30 31 30 31]./50]; %Delay visualization
         exp_settings.choicescreen.flightsteps = 18; %Physical effort visualization: 1 flight of stairs = 18 steps
-        exp_settings.choicescreen.pagelines = 25;   %One page of text is 25 lines
+        exp_settings.choicescreen.pagelines = 25;   %Mental effort visualization: one page of text is contains 25 lines
         exp_settings.choicescreen.linewidth = 1;    %Width of the lines of the cost drawings
         exp_settings.choicescreen.linecolor = exp_settings.colors.white;%Color of the lines of the cost drawings
         exp_settings.choicescreen.fillcolor = exp_settings.colors.red;  %Color of the costs
         exp_settings.choicescreen.probabilitycolor = exp_settings.colors.green;     %Color of the risk arc representing probability to win
         exp_settings.choicescreen.confirmcolor = exp_settings.colors.white;         %Color of the confirmation rectangle around the chosen option
-    % Timings
-        exp_settings.timings.min_resp_time = 0.5; %[s] before ppt can respond
-        exp_settings.timings.max_resp_time = Inf; %[s] timeout time, set Inf if there is no timeout. When timeout is reached, the choice and RT will be set to NaN.
-        exp_settings.timings.show_response = 0.25; %[s] visual feedback duration in example choice trials
-        exp_settings.timings.fixation_choice = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during experiment
     
 %% Choice trial generation settings
     % Choice triallist creation settings       
         exp_settings.trialgen_choice.which_choicetypes = 1:4;     %which choice types to include (1:delay/2:risk/3:physical effort/4:mental effort)
-        exp_settings.trialgen_choice.n_choicetypes = 4;           %amount of choice types
+        exp_settings.trialgen_choice.n_choicetypes = length(exp_settings.trialgen_choice.which_choicetypes); %amount of choice types
         exp_settings.trialgen_choice.typenames = {'delay','risk','physical_effort','mental_effort'};
-        exp_settings.trialgen_choice.cost_bins = 5;                 %divide cost spectrum into bins; make sure each bin is represented
-        exp_settings.trialgen_choice.cost_crit_min = 1;             %minimum # of trials sampled per bin
-        exp_settings.trialgen_choice.cost_crit_max = 27;            %maximum # of trials sampled per bin
-        exp_settings.trialgen_choice.ind_bins = [20 10 5 3 2 0 0 0 0 0]; %also divide P_indiff into bins; these are the amounts of trials to be sampled from each bin    
     % Example choice trials 
         exp_settings.exampletrials = [...
             [0 2 3 5 6 8 7.5 9 10 12 13 14.75]./15; %Rewards for the uncostly option
@@ -111,7 +108,7 @@ function [exp_settings] = BEC_Settings
             exp_settings.OTG.choicetypes = exp_settings.trialgen_choice.which_choicetypes;
             exp_settings.OTG.typenames = exp_settings.trialgen_choice.typenames;
         %Sampling grid
-            exp_settings.OTG.grid.nbins = 5;             % # bins
+            exp_settings.OTG.grid.nbins = 5;             % # bins (current default is 5 -- please do not change)
             exp_settings.OTG.grid.bincostlevels = 10;    % # cost levels per bin  
             exp_settings.OTG.grid.binrewardlevels = 50;  % # reward levels (= 2*exp_settings.MaxReward so that the step size is 0.50 euros)
             exp_settings.OTG.grid.costlimits = [0 1];    % [min max] cost (note: bin 1's first value is nonzero)
@@ -126,14 +123,14 @@ function [exp_settings] = BEC_Settings
             exp_settings.OTG.prior_bias_cal = -3;   % Note: this is log(prior) [used in calibration only]
             exp_settings.OTG.prior_var_cal = 2;     % Note: applies to all parameters [used in calibration only]
             exp_settings.OTG.ntrials_cal = 60;      %Number of trials per choice type in the calibration
-            exp_settings.OTG.burntrials_cal = [59/60  0     55/60  2/30;
-                                               46/50  5/50  1      1/50];
+            exp_settings.OTG.burntrials_cal = [59/60  0     55/60  2/30;  %Present these "burn trials" at the beginning of the calibration, for the participant (and the algorithm) to start with some 'easy' choices that are rather extreme.
+                                               46/50  5/50  1      1/50]; %(Note that presenting these burn trials is optional)
         %Algorithm settings
             exp_settings.OTG.max_n_inv = 20;        % Max. # of trials entered in model inversion algorithm
             exp_settings.OTG.max_iter = 200;        % [G-N] Max. # of iterations, after which we conclude the algorithm does not converge
             exp_settings.OTG.conv_crit = 1e-2;      % [G-N] Max. # of iterations for the model inversion algorithm, after which it is forced to stop
             exp_settings.OTG.burntrials = 3;        % [G-N] # of trials that must have been sampled before inverting the model
-            exp_settings.OTG.adjust_rew_nonconverge = [0.2 0.4 0.6 0.8 1]; % Adjustment to the indifference reward: helps the algorithm get out when it is stuck on a wrong indifference estimate
+            exp_settings.OTG.adjust_rew_nonconverge = [0.2 0.4 0.6 0.8 1]; % [G-N] Adjustment to the indifference reward: helps the algorithm get out when it is stuck on a wrong indifference estimate
         %VBA: Dimensions
             exp_settings.OTG.dim.n_theta = 0;   % Number of evolution parameters
             exp_settings.OTG.dim.n = 0;         % Number of hidden states
@@ -152,7 +149,7 @@ function [exp_settings] = BEC_Settings
             exp_settings.OTG.options.inG.beta = exp_settings.OTG.fixed_beta; %Inv. choice temp. for observation function (takes an assumed fixed value)
             exp_settings.OTG.options.inG.grid = exp_settings.OTG.grid; %Grid is entered in observation function too
     
-%% Trial Generation Settings (per experiment type)
+%% Trial generation settings for emotions or moods studies
     % Trial generation settings: emotions experiment
         exp_settings.trialgen_emotions.emotionnames = {'Happy','Sad','Neutral'};
         exp_settings.trialgen_emotions.n_inductions = 60;   %total number of inductions
@@ -178,50 +175,6 @@ function [exp_settings] = BEC_Settings
         exp_settings.trialgen_moods.Rating_label_min = 'de mauvaise humeur';
         exp_settings.trialgen_moods.Rating_label_max = 'de bonne humeur';
 
-%% Participant reward calculation settings
-    exp_settings.Pay.Base = 20;     %euros base pay
-    exp_settings.Pay.LLRew = 30;    %euros for LL option
-    exp_settings.Pay.delaycriterion = 0.50;     %Max. delay of costly option
-    exp_settings.Pay.effortcriterion = 0.50;    %Max. effort of costly option
-    exp_settings.Pay.riskcriterion = 0.75;  %Max. risk of costly option
-    exp_settings.Pay.min_total = 20; %Min. total reward
-    exp_settings.Pay.max_total = 35; %Max. total reward
-    exp_settings.Pay.SSCriterion = 0.10; %For very low amounts of SS choices: allow maximum to be higher
-    
-%% Experiment instructions (per experiment type)
-% Emotions experiment
-%     exp_settings.instructions_emotions.start_emotion_instructions = 1:4;
-%     exp_settings.instructions_emotions.end_emotion_instructions = 5;
-%     exp_settings.instructions_emotions.instr_effort = 6:9;
-%     exp_settings.instructions_emotions.instr_effort_end = 10;
-%     exp_settings.instructions_emotions.cal_effort = 11;    
-%     exp_settings.instructions_emotions.instr_delay = 12:14;
-%     exp_settings.instructions_emotions.instr_delay_end = 15;
-%     exp_settings.instructions_emotions.cal_delay = 16;    
-%     exp_settings.instructions_emotions.instr_risk = 17:19;
-%     exp_settings.instructions_emotions.instr_risk_end = 20;
-%     exp_settings.instructions_emotions.cal_risk = 21;    
-%     exp_settings.instructions_emotions.phase_2 = 22:23;
-%     exp_settings.instructions_emotions.eyetracker = 24;
-%     exp_settings.instructions_emotions.start_main_experiment = 25:26;
-%     exp_settings.instructions_emotions.break = 27;
-%     exp_settings.instructions_emotions.rate_music = 28:29;
-%     exp_settings.instructions_emotions.rewardtrial = 30;    
-
-% Moods experiment
-    exp_settings.instructions_moods.introduction = 1:2;
-    exp_settings.instructions_moods.delay_instructions = 3:5;
-    exp_settings.instructions_moods.delay_start_calibration = 6:7;
-    exp_settings.instructions_moods.risk_instructions = 8:10;
-    exp_settings.instructions_moods.risk_start_calibration = 11:12;
-    exp_settings.instructions_moods.mental_effort_instructions = 13:15;
-    exp_settings.instructions_moods.mental_effort_start_calibration = 16:17;
-    exp_settings.instructions_moods.physical_effort_instructions = 18:20;
-    exp_settings.instructions_moods.physical_effort_start_calibration = 21:22;
-    exp_settings.instructions_moods.start_phase_2 = 23:26; %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
-    exp_settings.instructions_moods.end_of_instructions = 27;
-    exp_settings.instructions_moods.end_of_experiment = 28;
-    
 %% Mood stimuli
     % Timings
         exp_settings.timings.delay_answers = 0; %[s] delay between question presentation and answers presentation
@@ -244,6 +197,19 @@ function [exp_settings] = BEC_Settings
         exp_settings.QuizTraining = listTrainingQuizz.listTrainingQuizz;
         questionAccuracy = load([exp_settings.stimdir filesep 'questionAccuracy.mat']); 
         exp_settings.QuizAccuracy = questionAccuracy.questionAccuracy;  % Quiz accuracy
+    % Instruction slides
+        exp_settings.instructions_moods.introduction = 1:2;
+        exp_settings.instructions_moods.delay_instructions = 3:5;
+        exp_settings.instructions_moods.delay_start_calibration = 6:7;
+        exp_settings.instructions_moods.risk_instructions = 8:10;
+        exp_settings.instructions_moods.risk_start_calibration = 11:12;
+        exp_settings.instructions_moods.mental_effort_instructions = 13:15;
+        exp_settings.instructions_moods.mental_effort_start_calibration = 16:17;
+        exp_settings.instructions_moods.physical_effort_instructions = 18:20;
+        exp_settings.instructions_moods.physical_effort_start_calibration = 21:22;
+        exp_settings.instructions_moods.start_phase_2 = 23:26; %Contains: break, Phase 2 screen, instructions for quiz questions and ratings.
+        exp_settings.instructions_moods.end_of_instructions = 27;
+        exp_settings.instructions_moods.end_of_experiment = 28;
 
 %% Emotion stimuli
     % Timings
@@ -270,6 +236,10 @@ function [exp_settings] = BEC_Settings
             'JS Bach - Erbarme Dich';
             'Rheinberger - Suite';
             'Badelt - Blood Ritual'};
+    % Instruction slides (example)
+%     exp_settings.instructions_emotions.start_emotion_instructions = 1:4;
+%     exp_settings.instructions_emotions.end_emotion_instructions = 5;
+%     exp_settings.instructions_emotions.instr_effort = 6:9;
     % Vignettes (1-20)     
         exp_settings.Emostimuli.HappyVignettes_m = {'Tu t''inscris à une compétition sans trop y croire, mais tu finis à la première place.';
     'Tu pars en vacances. À ton arrivée l''endroit semble paradisiaque. ';

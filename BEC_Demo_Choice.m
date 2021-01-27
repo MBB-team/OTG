@@ -2,10 +2,10 @@
 % Opens a screen and presents one choice, to be set below.
 
 %Set the choice trial settings-----------------------------------------------------------------------------------------
-    trialinfo.choicetype = 2;   %Define choice type by number (1:delay/2:risk/3:physical effort/4:mental effort)
-    trialinfo.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
-    trialinfo.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
-    trialinfo.Example = 1;      %Is this an example trial? (1:Yes - with extra text / 0:No - minimal text on screen)
+    trialinput.choicetype = 2;   %Define choice type by number (1:delay/2:risk/3:physical effort/4:mental effort)
+    trialinput.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
+    trialinput.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
+    trialinput.Example = 1;      %Is this an example trial? (1:Yes - with extra text / 0:No - minimal text on screen)
 %-----------------------------------------------------------------------------------------------------------------------
 
 % Get settings structure:
@@ -22,7 +22,7 @@
     end
     HideCursor  
 % Choice screen
-    [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinfo);
+    [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
 % Exit
     sca; %Screen: close all
     ShowCursor

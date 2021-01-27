@@ -1,5 +1,7 @@
 function [t_onset] = BEC_DrawPhysicalEffortCost(window,exp_settings,drawchoice)
 % Draw the staircases that visualize the physical effort cost from the BECHAMEL toolbox.
+% This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
+% idiosyncracies of Psychtoolbox.
 
 %Settings for drawing staircases:
     nrows = floor(sqrt(exp_settings.Max_phys_effort));  %Number of rows of pages

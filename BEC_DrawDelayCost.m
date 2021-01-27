@@ -1,5 +1,7 @@
 function [t_onset] = BEC_DrawDelayCost(window,exp_settings,drawchoice)
 % Visualize the calendars of the delay cost visualization of the BECHAMEL toolbox.
+% This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
+% idiosyncracies of Psychtoolbox.
 
 %Identify the rectangle ("box") inside of which the costs will be drawn
     [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];

@@ -1,8 +1,15 @@
-% Demo of the choice calibration procedure
+%% BEC_Demo_Calibration
+% Demonstration of the choice calibration procedure. Just below, select which type of cost you want to show, how many
+% example trials you want to show first, and how many calibration trials you want to perform.
+% This script then calls BEC_Calibration, the function that is used to calibrate a participant's individual preferences.
+% It does so by trying to approximate the participant's indifference curve using an online trial generation procedure. 
+% A figure is produced that visualizes this iterative procedure with every choice you make. The colors in the grid
+% present the likelihood of being at indifference: yellow means a high probability of being at indifference, blue values
+% are further removed from the indifference curve.
 
 % Setup
     %What do you want to demonstrate?
-        choicetype = 1; %1:delay/2:risk/3:physical effort/4:mental effort
+        choicetype = 4; %1:delay/2:risk/3:physical effort/4:mental effort
         n_example_trials = 3; %example trials (with random costs and rewards) before starting the calibration
         n_calibration_trials = 20; %calibration trials for demo
     %Get the experiment settings
