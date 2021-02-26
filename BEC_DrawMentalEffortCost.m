@@ -1,4 +1,4 @@
-function [t_onset] = BEC_DrawMentalEffortCost(window,exp_settings,drawchoice)
+function [timings] = BEC_DrawMentalEffortCost(window,exp_settings,drawchoice)
 % Draw the pages that visualize the mental effort cost from the BECHAMEL toolbox.
 % This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
 % idiosyncracies of Psychtoolbox.
@@ -29,10 +29,13 @@ function [t_onset] = BEC_DrawMentalEffortCost(window,exp_settings,drawchoice)
         Y = rect_leftbox(4)-rect_leftbox(2);    %Total height of the cost box
         X = rect_leftbox(3)-rect_leftbox(1);    %Total width of the cost box
         h = density*Y/nrows;                    %height of a page
-        y_gap = (1-density)*Y/(nrows-1);        %vertical space between two pages
         line_gap = h*(1-2*margin)/(nlines-1);   %vertical space between two lines
         w = h * page_AR;                        %width of a page
         x_gap = (X-ncols*w)/(ncols-1);          %horizontal space between two pages
+        y_gap = (1-density)*Y/(nrows-1);        %vertical space between two pages
+            if y_gap > x_gap; y_gap = x_gap;    %Correct gap sizes
+            elseif y_gap < x_gap; x_gap = y_gap;
+            end
         pages = NaN(4,exp_settings.Max_ment_effort);
         lines = NaN(4,nlines*exp_settings.Max_ment_effort);
         for i_page = 1:size(pages,2) %Loop through all pages
@@ -97,6 +100,6 @@ function [t_onset] = BEC_DrawMentalEffortCost(window,exp_settings,drawchoice)
             Screen('FrameRect',window,exp_settings.choicescreen.linecolor,rects_right_lines,exp_settings.choicescreen.linewidth);
     
 %Flip
-    t_onset = clock;
-    Screen('Flip', window); 
+    timestamp = Screen('Flip', window); 
+    timings = BEC_Timekeeping(drawchoice.event,drawchoice.plugins,timestamp);
 end

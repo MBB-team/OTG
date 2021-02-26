@@ -1,35 +1,26 @@
-function [t_onset] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
+function [timings] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
 % Visualize the wheel-of-fortune, the visualization of the risk cost from the BECHAMEL toolbox.
 % This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
 % idiosyncracies of Psychtoolbox.
+% Note that it works slightly differently compared to the other choice types, in the sense that there is an animation in
+% case the screen is in "Example" mode. So, all the screen's texts and rects, in addition to the cost, must also be
+% redrawn. They are defined in the preceding function "DrawChoiceScreen".
 
-%Identify the rectangle ("box") inside of which the costs will be drawn
+%Identify the main rects (defined before)
     [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
     if drawchoice.example
         rect_leftbox = exp_settings.choicescreen.costbox_left_example .* screensize;
         rect_rightbox = exp_settings.choicescreen.costbox_right_example .* screensize;
-        text_cost_left = exp_settings.choicescreen.costbox_left_example; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
-        text_cost_right = exp_settings.choicescreen.costbox_right_example; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
-        text_reward_left = exp_settings.choicescreen.costbox_left_example; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y_example;
-        text_reward_right = exp_settings.choicescreen.costbox_right_example; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y_example;
-        confirm_left = [text_reward_left; text_cost_left]; confirm_left(:,[1,3]) = confirm_left(:,[1 3]) + [-diff(confirm_left(:,[1 3]),[],2) diff(confirm_left(:,[1 3]),[],2)];
-        confirm_right = [text_reward_right; text_cost_right]; confirm_right(:,[1,3]) = confirm_right(:,[1 3]) + [-diff(confirm_right(:,[1 3]),[],2) diff(confirm_right(:,[1 3]),[],2)];
     else
         rect_leftbox = exp_settings.choicescreen.costbox_left .* screensize;
         rect_rightbox = exp_settings.choicescreen.costbox_right .* screensize;
-        text_cost_left = exp_settings.choicescreen.costbox_left; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
-        text_cost_right = exp_settings.choicescreen.costbox_right; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
-        text_reward_left = exp_settings.choicescreen.costbox_left; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y;
-        text_reward_right = exp_settings.choicescreen.costbox_right; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y;
-        confirm_left = text_reward_left.*screensize;
-        confirm_right = text_reward_right.*screensize;
     end
-%Adjustment of the confirmation box for risk
-    if ~isempty(drawchoice.losslefttext)
-        confirm_left(1,:) = confirm_left(1,:) + diff(confirm_left(1,[2 4]),[],2)/4 * [0 1 0 1];
-    else
-        confirm_right(1,:) = confirm_right(1,:) + diff(confirm_right(1,[2 4]),[],2)/4 * [0 1 0 1];
-    end
+    text_cost_left = drawchoice.rects.text_cost_left;
+    text_cost_right = drawchoice.rects.text_cost_right;
+    text_reward_left = drawchoice.rects.text_reward_left;
+    text_reward_right = drawchoice.rects.text_reward_right;
+    confirm_left = drawchoice.rects.confirm_left;
+    confirm_right = drawchoice.rects.confirm_right;
 %Draw two wheels of fortune
     %Prepare to animate the lottery (in example trials)
         if ~isempty(drawchoice.confirmation) && drawchoice.example == 1 
@@ -62,7 +53,7 @@ function [t_onset] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
         end
     %Loop through the angles of the wheel (for animation; otherwise: fixed)
         anglecount = 1; 
-        if animation && length(loopangles) > 1; waittime = [0.03 0.03]; end
+        if animation && length(loopangles) > 1; waittime = [0 0]; end %waittime = [0.05 0.05] to slow down the animation
         while anglecount <= length(loopangles)
             angle = loopangles(anglecount);
             for side = 1:2
@@ -102,13 +93,13 @@ function [t_onset] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
                         end
                     %Draw cost and reward text
                         Screen('TextSize',window,exp_settings.font.RewardFontSize); %Same as CostFontSize
-                        %Reward
-                            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_left.*screensize); %Left
-                            [~,~,textbounds] = DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_right.*screensize); %Right
-                        %Loss (risk only)
-                            DrawFormattedText(window, drawchoice.losslefttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_left.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Left
-                            DrawFormattedText(window, drawchoice.lossrighttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_right.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Right
-                        %Cost (example only)
+                            losscolor = [num2str(exp_settings.font.LossFontColor(1)/255) ',' num2str(exp_settings.font.LossFontColor(2)/255) ',' num2str(exp_settings.font.LossFontColor(3)/255)];
+                            RewardText_left = [drawchoice.rewardlefttext '\n<color=' losscolor '>' drawchoice.losslefttext];
+                            RewardText_right = [drawchoice.rewardrighttext '\n<color=' losscolor '>' drawchoice.lossrighttext];
+                            
+                            DrawFormattedText2(RewardText_left,'win',window,'sx',mean(text_reward_left([1,3])).*Xsize,'xalign','center','xlayout','center','sy',mean(text_reward_left([2,4])).*Ysize,'yalign','center','baseColor',exp_settings.font.ChoiceFontColor);
+                            DrawFormattedText2(RewardText_right,'win',window,'sx',mean(text_reward_right([1,3])).*Xsize,'xalign','center','xlayout','center','sy',mean(text_reward_right([2,4])).*Ysize,'yalign','center','baseColor',exp_settings.font.ChoiceFontColor);
+                    %Cost (example only)
                             if drawchoice.example == 1
                                 DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_left.*screensize);
                                 DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_right.*screensize);
@@ -122,14 +113,14 @@ function [t_onset] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
                             Screen('FrameRect',window,exp_settings.colors.white,confirm_rect,3); %Note, confirm_rect has already been converted to pixels!
                         end
                     %Center question mark or fixation cross    
-                        Screen('TextSize',window,exp_settings.font.RewardFontSize); 
+                        Screen('TextSize',window,exp_settings.font.FixationFontSize); 
                         if drawchoice.example == 1
                             DrawFormattedText(window, 'ou', 'center', 'center', exp_settings.font.ChoiceFontColor);
                         else
-                            if isempty(drawchoice.confirmation)
-                                DrawFormattedText(window, '?', 'center', 'center', exp_settings.font.ChoiceFontColor);
+                            if isempty(drawchoice.confirmation) %Before confirming, write "+" until minimum response time, and "?" once the choice may be entered.
+                                DrawFormattedText(window, drawchoice.centerscreen, 'center', 'center', exp_settings.colors.white);
                             else
-                                DrawFormattedText(window, '+', 'center', 'center', exp_settings.font.ChoiceFontColor);
+                                DrawFormattedText(window, '+', 'center', 'center', exp_settings.colors.white);
                             end
                         end
                 %Text outcome
@@ -150,7 +141,7 @@ function [t_onset] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
                             if SSReward == 1; SSRewardText = sprintf('%.2f euro', round(SSReward, 1));
                             else; SSRewardText = sprintf('%.2f euros', round(SSReward, 1));
                             end
-                            conf_text = ['Vous avez choisi l''option certaine. Vous recevrez ' SSRewardText ' .'];
+                            conf_text = ['Vous avez choisi l''option certaine. Vous recevrez ' SSRewardText '.'];
                             outcome_color = exp_settings.colors.white;
                             waittime(side) = 3;
                         else
@@ -163,13 +154,16 @@ function [t_onset] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
                     end
             end %for side
         %Flip
-            Screen('Flip',window);
+            timestamp = Screen('Flip',window);
             if animation
                 pause(max(waittime)); 
-                t_onset = NaN;
             else
-                t_onset = clock;
+                timings = BEC_Timekeeping(drawchoice.event,drawchoice.plugins,timestamp);
             end
             anglecount = anglecount+1;
         end %while anglecount
+    %Timing after animation
+        if animation
+            timings = BEC_Timekeeping(drawchoice.event,drawchoice.plugins,timestamp);
+        end
 end

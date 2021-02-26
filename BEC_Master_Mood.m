@@ -178,12 +178,6 @@ if startpoint == 0 || startpoint == 3
                     %Announcement
                         exitflag = BEC_InstructionScreens(window,exp_settings,'break');
                         if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
-                    %Monitor keypress to proceed
-                        proceed_Key = KbName(exp_settings.keys.proceedkey); escape_Key = KbName(exp_settings.keys.escapekey);
-                        keyCode([proceed_Key escape_Key]) = 0; 
-                        while keyCode(proceed_Key) == 0 && keyCode(escape_Key) == 0 % as long no button is pressed keep checking the keyboard
-                            [~, ~, keyCode] = KbCheck(-1);
-                        end
                     %Relaunch pupil (recalibrate pupil by default) or bail out
                         if keyCode(escape_Key)
                             BEC_ExitExperiment(AllData); return;
@@ -265,6 +259,5 @@ end
         %Reward calculation
 %             [AllData] = BEC_RewardTrialSelection(window,AllData);
         %Terminate the experiment
-            RH_WaitForKeyPress({exp_settings.keys.proceedkey});
             BEC_ExitExperiment(AllData)
     end

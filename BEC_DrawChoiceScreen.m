@@ -1,4 +1,4 @@
-function [t_onset] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
+function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
 % Auxiliary function to BEC_ShowChoice.
 % Draws the choice screen, as defined in the structure "drawchoice", in Psychtoolbox. "window" is the open PTB window,
 % exp_settings is the experimental settings structure. This function returns the exact onset time of the choice on
@@ -8,14 +8,14 @@ function [t_onset] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
 
     %Setup
         [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
-        Screen('TextFont',window,'Arial');
+        Screen('TextFont',window,exp_settings.font.FontType);
         if drawchoice.example == 1
             text_cost_left = exp_settings.choicescreen.costbox_left_example; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
             text_cost_right = exp_settings.choicescreen.costbox_right_example; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
             text_reward_left = exp_settings.choicescreen.costbox_left_example; text_reward_left([2,4]) = exp_settings.choicescreen.reward_y_example;
             text_reward_right = exp_settings.choicescreen.costbox_right_example; text_reward_right([2,4]) = exp_settings.choicescreen.reward_y_example;
-            confirm_left = [text_reward_left; text_cost_left]; confirm_left(:,[1,3]) = confirm_left(:,[1 3]) + [-diff(confirm_left(:,[1 3]),[],2) diff(confirm_left(:,[1 3]),[],2)];
-            confirm_right = [text_reward_right; text_cost_right]; confirm_right(:,[1,3]) = confirm_right(:,[1 3]) + [-diff(confirm_right(:,[1 3]),[],2) diff(confirm_right(:,[1 3]),[],2)];
+            confirm_left = [text_reward_left; text_cost_left]; confirm_left(:,[1,3]) = confirm_left(:,[1 3]) + [-diff(confirm_left(:,[1 3]),[],2) diff(confirm_left(:,[1 3]),[],2)]/2;
+            confirm_right = [text_reward_right; text_cost_right]; confirm_right(:,[1,3]) = confirm_right(:,[1 3]) + [-diff(confirm_right(:,[1 3]),[],2) diff(confirm_right(:,[1 3]),[],2)]/2;
         else
             text_cost_left = exp_settings.choicescreen.costbox_left; text_cost_left([2,4]) = exp_settings.choicescreen.cost_y;
             text_cost_right = exp_settings.choicescreen.costbox_right; text_cost_right([2,4]) = exp_settings.choicescreen.cost_y;
@@ -24,14 +24,6 @@ function [t_onset] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
             confirm_left = text_reward_left.*screensize;
             confirm_right = text_reward_right.*screensize;
         end       
-    %Adjustment of the confirmation box for risk
-        if strcmp(drawchoice.choicetype,'risk')
-            if ~isempty(drawchoice.losslefttext)
-                confirm_left(1,:) = confirm_left(1,:) + diff(confirm_left(1,[2 4]),[],2)/4 * [0 1 0 1];
-            else
-                confirm_right(1,:) = confirm_right(1,:) + diff(confirm_right(1,[2 4]),[],2)/4 * [0 1 0 1];
-            end
-        end        
     %Background
         Screen('FillRect',window,exp_settings.backgrounds.choice);
     %Title
@@ -42,18 +34,30 @@ function [t_onset] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
     %Draw cost and reward text
         Screen('TextSize',window,exp_settings.font.RewardFontSize); %Same as CostFontSize
         %Reward
-            DrawFormattedText(window, drawchoice.rewardlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_left.*screensize); %Left
-            [~,~,textbounds] = DrawFormattedText(window, drawchoice.rewardrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_reward_right.*screensize); %Right
-        %Loss (risk only)
-            if strcmp(drawchoice.choicetype,'risk')
-                DrawFormattedText(window, drawchoice.losslefttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_left.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Left
-                DrawFormattedText(window, drawchoice.lossrighttext, 'center', 'center', exp_settings.font.LossFontColor, [], [], [], [], [], text_reward_right.*screensize + [0 1 0 1] * diff(textbounds([2 4])) * 2); %Right
+            if strcmp(drawchoice.choicetype,'risk') %In the case of risk: add loss
+                losscolor = [num2str(exp_settings.font.LossFontColor(1)/255) ',' num2str(exp_settings.font.LossFontColor(2)/255) ',' num2str(exp_settings.font.LossFontColor(3)/255)];
+                RewardText_left = [drawchoice.rewardlefttext '\n<color=' losscolor '>' drawchoice.losslefttext];
+                RewardText_right = [drawchoice.rewardrighttext '\n<color=' losscolor '>' drawchoice.lossrighttext];
+            else
+                RewardText_left = drawchoice.rewardlefttext; 
+                RewardText_right = drawchoice.rewardrighttext;
             end
+            DrawFormattedText2(RewardText_left,'win',window,'sx',mean(text_reward_left([1,3])).*Xsize,'xalign','center','xlayout','center','sy',mean(text_reward_left([2,4])).*Ysize,'yalign','center','baseColor',exp_settings.font.ChoiceFontColor);
+            DrawFormattedText2(RewardText_right,'win',window,'sx',mean(text_reward_right([1,3])).*Xsize,'xalign','center','xlayout','center','sy',mean(text_reward_right([2,4])).*Ysize,'yalign','center','baseColor',exp_settings.font.ChoiceFontColor);
         %Cost (example only)
             if drawchoice.example == 1
                 DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_left.*screensize);
                 DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_right.*screensize);
             end
+    %In example trials: draw arrow keys
+        if drawchoice.example
+            leftkeyrect = [mean(text_cost_left([1,3]))*Xsize-drawchoice.size_leftkey(1)/4 exp_settings.choicescreen.arrowbuttons_y*Ysize-drawchoice.size_leftkey(2)/4 ...
+                mean(text_cost_left([1,3]))*Xsize+drawchoice.size_leftkey(1)/4 exp_settings.choicescreen.arrowbuttons_y*Ysize+drawchoice.size_leftkey(2)/4];
+                Screen('DrawTexture', window, drawchoice.tex_leftkey, [], leftkeyrect);
+            rightkeyrect = [mean(text_cost_right([1,3]))*Xsize-drawchoice.size_rightkey(1)/4 exp_settings.choicescreen.arrowbuttons_y*Ysize-drawchoice.size_rightkey(2)/4 ...
+                mean(text_cost_right([1,3]))*Xsize+drawchoice.size_rightkey(1)/4 exp_settings.choicescreen.arrowbuttons_y*Ysize+drawchoice.size_rightkey(2)/4];
+                Screen('DrawTexture', window, drawchoice.tex_rightkey, [], rightkeyrect);
+        end
     %Confirmation rectangle
         if ~isempty(drawchoice.confirmation)
             if strcmp(drawchoice.confirmation,'left'); confirm_rect = confirm_left;
@@ -63,12 +67,12 @@ function [t_onset] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
             Screen('FrameRect',window,exp_settings.colors.white,confirm_rect,3); %Note, confirm_rect has already been converted to pixels!
         end
     %Center question mark or fixation cross    
-        Screen('TextSize',window,exp_settings.font.RewardFontSize); 
+        Screen('TextSize',window,exp_settings.font.FixationFontSize); 
         if drawchoice.example == 1
             DrawFormattedText(window, 'ou', 'center', 'center', exp_settings.colors.white);
         else
-            if isempty(drawchoice.confirmation)
-                DrawFormattedText(window, '?', 'center', 'center', exp_settings.colors.white);
+            if isempty(drawchoice.confirmation) %Before confirming, write "+" until minimum response time, and "?" once the choice may be entered.
+                DrawFormattedText(window, drawchoice.centerscreen, 'center', 'center', exp_settings.colors.white);
             else
                 DrawFormattedText(window, '+', 'center', 'center', exp_settings.colors.white);
             end
@@ -76,12 +80,18 @@ function [t_onset] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
     %Cost visualizations            
         switch drawchoice.choicetype
             case 'delay'        
-                t_onset = BEC_DrawDelayCost(window,exp_settings,drawchoice);
+                timings = BEC_DrawDelayCost(window,exp_settings,drawchoice);
             case 'risk'
-                t_onset = BEC_DrawRiskCost(window,exp_settings,drawchoice);
+                drawchoice.rects.text_cost_left = text_cost_left;
+                drawchoice.rects.text_cost_right = text_cost_right;
+                drawchoice.rects.text_reward_left = text_reward_left;
+                drawchoice.rects.text_reward_right = text_reward_right;
+                drawchoice.rects.confirm_left = confirm_left;
+                drawchoice.rects.confirm_right = confirm_right;
+                timings = BEC_DrawRiskCost(window,exp_settings,drawchoice);
             case 'physical_effort'
-                t_onset = BEC_DrawPhysicalEffortCost(window,exp_settings,drawchoice);
+                timings = BEC_DrawPhysicalEffortCost(window,exp_settings,drawchoice);
             case 'mental_effort'
-                t_onset = BEC_DrawMentalEffortCost(window,exp_settings,drawchoice);
+                timings = BEC_DrawMentalEffortCost(window,exp_settings,drawchoice);
         end %switch choicetype
 end %function

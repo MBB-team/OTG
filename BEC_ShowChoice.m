@@ -8,9 +8,9 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
 %     trialinput.Cost        %Cost level or the costly (LL) option (between 0 and 1)
 %     trialinput.SideSS      %(optional) set on which side you want the uncostly (SS) option to be (enter string: 'left' or 'right')
 %     trialinput.Example     %(optional, default 0) flag 1 if this is an example trial (with explanation text) 
-%     trialinput.Pupil       %(optional, default 0) flag 1 if you want to record pupil data
 %     trialinput.ITI         %(optional) fixation cross time before choice (default is random value between the set minimum and maximum value from exp_settings)
 %     trialinput.trial       %(optional) Trial number (only required for the pupil marker)
+%     trialinput.plugins     %(optional, default empty struct) indicate any interacting devices, e.g. touchscreen or eyetracker
 % Output:
 %     trialoutput: updated structure with all the information about the choice trial
 %     exitflag: 0 by default; 1 if the experiment was interrupted
@@ -62,7 +62,7 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
             switch typenames{trialinput.choicetype}
                 case 'delay'
                     SSCostText = 'ne pas attendre';
-                    LLCost = round(trialinput.Cost*exp_settings.MaxDelay); %Expressed in # of weeks <=== revise this for months!!!
+                    LLCost = trialinput.Cost*exp_settings.MaxDelay; %Expressed in # of weeks <=== revise this for months!!!
                     [LLCost,LLCostText] = ConvertCost(LLCost,1,exp_settings);
                     LLCostText = ['attendre ce délai' newline newline '(' LLCostText ')'];
                 case 'risk'
@@ -79,12 +79,14 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
                     LLCost = trialinput.Cost*exp_settings.Max_ment_effort;
                     [~,LLCostText] = ConvertCost(LLCost,4,exp_settings);
                     LLCostText = ['copier ces pages' newline newline '(' LLCostText ')'];
-            end       
+            end      
     %Set drawing parameters
         drawchoice.choicetype = typenames{trialinput.choicetype};
         drawchoice.example = trialinput.Example;
         drawchoice.titletext = 'EXEMPLE: Préférez-vous...';
         drawchoice.confirmation = [];
+        drawchoice.centerscreen = '+';
+        drawchoice.plugins = trialinput.plugins;
         switch trialinput.SideSS %Side definition
             case 'left'
                 drawchoice.rewardleft = SSReward; 
@@ -109,46 +111,59 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
                 drawchoice.costright = 0; 
                 drawchoice.costrighttext = SSCostText;
         end
+    %In example trials: load arrow key images (takes <0.01s)
+        if trialinput.Example
+            im_leftkey = imread([exp_settings.stimdir filesep 'leftkey.png']);
+            im_rightkey = imread([exp_settings.stimdir filesep 'rightkey.png']);
+            drawchoice.tex_leftkey = Screen('MakeTexture',window,im_leftkey);
+            drawchoice.size_leftkey = size(im_leftkey);
+            drawchoice.tex_rightkey = Screen('MakeTexture',window,im_rightkey);
+            drawchoice.size_rightkey = size(im_rightkey);
+        end
 
 %% Present screens       
-    %Fixation cross on screen for the specified time
-        t_fix_on = clock;
-        exitflag = BEC_Fixation(window,exp_settings,trialinput.ITI);
-        if exitflag; return; end %Terminate experiment if ESCAPE is pressed at the end of the fixation time
-    %Pupil marker
-%         if trialinput.pupil
-%             S10_Exp_PhysiologyMark(phys,'choice',trialinput.trial)
-%         end
-    %Display choice screen
-        KbReleaseWait;  % wait until all keys are released before start with trial again.                        
-        t_onset = BEC_DrawChoiceScreen(exp_settings,drawchoice,window);
-        pause(exp_settings.timings.min_resp_time);  % minimum response time to avoid constant button presses by the participant without thinking            
-    %Monitor for response...
+    %1.Fixation cross
+        timings = BEC_Timekeeping('Choice_fixation',trialinput.plugins); %Get timings
+        [exitflag,timestamp] = BEC_Fixation(window,exp_settings,trialinput.ITI);
+        if exitflag; return; end
+        timings.seconds = timestamp; %The exact onset time, in GetSecs
+    %2.Display choice screen, wait for minimum response time
+        KbReleaseWait;  % wait until all keys are released before start with trial again.   
+        drawchoice.event = 'Choice_screenonset';
+        timings = [timings BEC_DrawChoiceScreen(exp_settings,drawchoice,window)];
+        pause(exp_settings.timings.min_resp_time);  % minimum response time to avoid constant button presses by the participant without thinking
+    %3.Display choice screen and monitor for response
+        drawchoice.centerscreen = '?';
+        drawchoice.event = 'Choice_decisiononset';
+        timings = [timings BEC_DrawChoiceScreen(exp_settings,drawchoice,window)];
+    %4.Monitor for response...
         keyCode(LRQ) = 0; exitflag = 0;
         while (keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0) && ... % as long no button is pressed, AND...
-                etime(clock,t_onset) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
+                (GetSecs-timings(2).seconds) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
             [~, ~, keyCode] = KbCheck(-1);
         end
-%     %Screenshot
+        timings = [timings BEC_Timekeeping('Choice_decisiontime',trialinput.plugins,GetSecs)]; 
+        rt = timings(4).seconds-timings(2).seconds; %Response time
+    %Screenshot
 %         imageArray=Screen('GetImage', window);
 %         imwrite(imageArray, 'choiceExample.png');
-    %Record response and display confirmation screen
+    %5.Record response and display confirmation screen
         if keyCode(leftKey)
-            resp = leftKey; 
-            rt = etime(clock,t_onset); 
+            resp = leftKey;  
             exitflag = 0;
             if ~isempty(window)
                 drawchoice.confirmation = 'left';
-                BEC_DrawChoiceScreen(exp_settings,drawchoice,window);                                    
+                drawchoice.event = 'Choice_confirmation';
+                timings = [timings BEC_DrawChoiceScreen(exp_settings,drawchoice,window)];                                
             end
             WaitSecs(exp_settings.timings.show_response);  % show response before proceeding
         elseif keyCode(rightKey)
             resp = rightKey; 
-            rt = etime(clock,t_onset); 
             exitflag = 0;
             if ~isempty(window)
                 drawchoice.confirmation = 'right';
-                BEC_DrawChoiceScreen(exp_settings,drawchoice,window);                                      
+                drawchoice.event = 'Choice_confirmation';
+                timings = [timings BEC_DrawChoiceScreen(exp_settings,drawchoice,window)];                                     
             end
             WaitSecs(exp_settings.timings.show_response);  % show response before proceeding
         elseif keyCode(escapeKey) 
@@ -202,8 +217,8 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
                 trialoutput.MentalEffort = trialoutput.Cost;
                 trialoutput.Loss = 0;
         end
-        trialoutput.ITI = etime(t_onset,t_fix_on); %fixation time before choice onset (seconds)
-        trialoutput.timestamp = t_onset; %timestamp of choice presentation on screen (format: [y m d h m s])
+        trialoutput.ITI = timings(2).seconds-timings(1).seconds; %fixation time before choice onset (seconds)
+        trialoutput.timings = timings; %timestamp of choice presentation on screen (format: [y m d h m s])
 
 end
             
@@ -215,46 +230,39 @@ switch choicetype
     case 1 %DELAY
         % output: LLCost: [#months #days_in_last_month], required to fill in the calendar.
         %         LLCostText: in text, the amount of "months,weeks,days" of waiting time
-        %Convert in years/months/days
-            total_days = LLCost*7;
-            cal_days = [31 28 31 30 31 30 31 31 30 31 30 31]; %The days in 12 months
-            cum_days = cumsum(cal_days); %The cumulative amount of days up to 1 year
-            total_months = find(total_days>cum_days,1,'last');
-            if isempty(total_months); total_months = 0; end                    
-            if total_months == 0
-                n_weeks = floor(total_days/7);
-                if n_weeks > 0
-                    n_days = rem(total_days,7);
-                else
-                    n_days = total_days; 
-                end
-                delta_days = total_days;
-            else
-                n_weeks = floor((total_days - cum_days(total_months))/7);
-                n_days = rem(total_days - cum_days(total_months),7);
-                delta_days = total_days - cum_days(total_months);
-            end
-            LLCostText = [];
-            if total_months >= 1
-                LLCostText = [LLCostText num2str(total_months) ' mois']; 
-                if any([n_weeks n_days]>=1); LLCostText = [LLCostText ', ']; end
-            end
-            if n_weeks >= 1
-                if n_weeks == 1; LLCostText = [LLCostText num2str(n_weeks) ' semaine'];
-                elseif n_weeks > 1; LLCostText = [LLCostText num2str(n_weeks) ' semaines'];
-                end
-                if n_days>=1; LLCostText = [LLCostText ', ']; end
-            end
-            if n_days >= 1
-                if n_days == 1; LLCostText = [LLCostText num2str(n_days) ' jour']; 
-                elseif n_days > 1; LLCostText = [LLCostText num2str(n_days) ' jours']; 
-                end
-            end
-            if LLCost == 52
-                LLCostText = '1 an';
-                total_months = 12; delta_days = 0;
-            end
-            LLCost = [total_months delta_days]; %Note: this is required for drawing the calendar!
+        % Recode LLCost for drawing calendar
+             total_months = floor(LLCost); %Amount of full months
+             total_years = floor(LLCost/12); %Amount of full years
+             monthly_days = repmat([31 28 31 30 31 30 31 31 30 31 30 31],1,total_years+1); %The #days of all months
+             total_days = floor((LLCost-total_months)*(monthly_days(total_months+1))); %The #days of the last month
+             LLCost = [total_months total_days]; %Note: this is required for drawing the calendar!
+        % Generate textual delay
+             n_weeks = floor(total_days/7); % #full weeks in the last month
+             n_days = total_days-n_weeks*7; % #days in the last week of the month
+             LLCostText = [];
+             if rem(LLCost,12) == 0 %Special case: cost is the exact multiple of a number of years
+                 if total_years >= 1
+                    if total_years == 1; LLCostText = '1 an';
+                    elseif total_years > 1; LLCostText = [num2str(total_years) 'ans'];
+                    end
+                 end
+             else %Generate number of months/weeks/days
+                 if total_months >= 1
+                    LLCostText = [LLCostText num2str(total_months) ' mois']; 
+                    if any([n_weeks n_days]>=1); LLCostText = [LLCostText ', ']; end
+                 end
+                 if n_weeks >= 1
+                    if n_weeks == 1; LLCostText = [LLCostText num2str(n_weeks) ' semaine'];
+                    elseif n_weeks > 1; LLCostText = [LLCostText num2str(n_weeks) ' semaines'];
+                    end
+                    if n_days>=1; LLCostText = [LLCostText ', ']; end
+                 end
+                 if n_days >= 1
+                    if n_days == 1; LLCostText = [LLCostText num2str(n_days) ' jour']; 
+                    elseif n_days > 1; LLCostText = [LLCostText num2str(n_days) ' jours']; 
+                    end
+                 end
+             end
     case 3 %PHYSICAL EFFORT
         nfloors = floor(LLCost);
         nsteps = round((LLCost-floor(LLCost))*exp_settings.choicescreen.flightsteps);

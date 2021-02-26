@@ -1,13 +1,14 @@
-function [exitflag] = BEC_InstructionScreens(window,exp_settings,which_instruction)
+function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instruction)
 % Enter the slides to put on screen. Wait for the space bar or right arrow 
 % to be pressed in order to move on to the next slide, or left arrow to return to previous slide.
 
 %Prepare
+    exp_settings = AllData.exp_settings;
     if isa(which_instruction,'char') %When the instruction topic is entered as a string
         try
-            slides = exp_settings.instructions_moods.(which_instruction); %Get slides
-        catch
             slides = exp_settings.instructions_emotions.(which_instruction); %Get slides
+        catch
+            slides = exp_settings.instructions_moods.(which_instruction); %Get slides
         end
     else %When the slide numbers are directly entered
         slides = which_instruction;
@@ -36,7 +37,12 @@ function [exitflag] = BEC_InstructionScreens(window,exp_settings,which_instructi
             end
             tex_instruction = Screen('MakeTexture',window,im_instruction);
             Screen('DrawTexture', window, tex_instruction, [], sliderect);
-            Screen('Flip', window);
+            timestamp = Screen('Flip', window);
+            if slide == 1
+                timings = BEC_Timekeeping('InstructionScreen',AllData.plugins,timestamp);
+            else
+                timings = [timings BEC_Timekeeping('InstructionScreen',AllData.plugins,timestamp)]; %#ok<AGROW>
+            end
         %Monitor responses
             valid = 0;
             while ~valid

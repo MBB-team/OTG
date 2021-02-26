@@ -1,5 +1,10 @@
 function [exp_settings] = BEC_Settings
 % Settings structure for the Battery of Economic CHoices And Mood/Emotion Links experiments
+% The settings that can be altered here are mostly general-purpose settings that have no impact on performance when
+% altered. For more detailed settings of certain functions (e.g. BEC_RateEmotion), see these functions directly.
+% The notable exception to this is that all settings related to decision-making (the appearance of the choice screen,
+% the features of the choice trials being generated, and the settings of the online trial generation procedure, are set
+% here.
 
 %% Setup
     rng('shuffle')              %Shuffle the random number generator
@@ -7,13 +12,16 @@ function [exp_settings] = BEC_Settings
     expdir = which('BEC_Settings'); expdir = expdir(1:end-15);  %Get the directory where this function is stored
     cd(expdir);                 %Change directory to the directory where this function is situated
 % Keyboard settings
-    exp_settings.keys.escapekey = 'escape'; %Do not change this. 'Escape' remains the escape key.
-    exp_settings.keys.proceedkey = 'p'; %Key to be pressed by experimenter in order to proceed, e.g. when you want to check on the participant before they continue
-    exp_settings.keys.quiz_A = 'F'; %Mood quiz - answer A
-    exp_settings.keys.quiz_B = 'G'; %Mood quiz - answer B
-    exp_settings.keys.quiz_C = 'H'; %Mood quiz - answer C
-    exp_settings.keys.quiz_D = 'J'; %Mood quiz - answer D    
-% Note: the left and right arrow keys are the default keys to select the left or right option in binary choices.
+    %General:
+        % ESCAPE is the key to terminate the experiment. This key can be used at various points throughout the
+        % experiment and cannot be changed here. Same is the case for the keys used in decision-making: left and right
+        % arrow keys by default. For browsing trough instuction slides, the arrow keys are used as well, or the space
+        % bar.
+    %Mood quiz answer keys:
+        exp_settings.keys.quiz_A = 'F'; %Mood quiz - answer A
+        exp_settings.keys.quiz_B = 'G'; %Mood quiz - answer B
+        exp_settings.keys.quiz_C = 'H'; %Mood quiz - answer C
+        exp_settings.keys.quiz_D = 'J'; %Mood quiz - answer D    
     
 %% Directories    
     %Where are the experiment scrips? (default: present working directory)
@@ -28,15 +36,15 @@ function [exp_settings] = BEC_Settings
         
 %% Graphics defaults
     %Fonts
-        exp_settings.font.FixationFontSize = 50;    %Fixation cross between trials is written as a "+" (note: this is not the fixation cross in a choice trial)
+        exp_settings.font.FixationFontSize = 40;    %Fixation cross between trials is written as a "+" (note: this is not the fixation cross in a choice trial)
         exp_settings.font.TitleFontSize = 32;       %Screen titles
-        exp_settings.font.RewardFontSize = 25;      %Reward amounts in the choice screen
+        exp_settings.font.RewardFontSize = 35;      %Reward amounts in the choice screen
         exp_settings.font.CostFontSize = exp_settings.font.RewardFontSize; %Idem for the cost amounts
-        exp_settings.font.EmoFontSize = 22;         %Emotion induction text
+        exp_settings.font.EmoFontSize = 36;         %Emotion induction text
         exp_settings.font.QuestionFontSize = 18;    %Quiz question text
         exp_settings.font.AnswerFontSize = 18;      %Quiz answers
         exp_settings.font.FeedbackFontSize = 32;    %Quiz feedback screen
-        exp_settings.font.RatingFontSize = 32;      %Quiz rating font size
+        exp_settings.font.RatingFontSize = 36;      %Rating screen font size (note: this is the base font size, two other font sizes are used in this function => see settings there)
         exp_settings.font.FontType = 'Arial';       %Font type (universal)
         exp_settings.font.Wrapat = 75;              %Wrapping (for longer texts of induction screens)
         exp_settings.font.vSpacing = 2;             %Vertical spacing (universal)
@@ -62,30 +70,30 @@ function [exp_settings] = BEC_Settings
             exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen       
             exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
             exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
-    
+            
 %% Choice screen configuration
     % Cost and reward features
         exp_settings.MaxReward = 30;  % [euros] reward for the costly option
         exp_settings.RiskLoss = 10;   % [euros] possible loss in the lottery
-        exp_settings.MaxDelay = 52;   % [weeks] maximum delay
+        exp_settings.MaxDelay = 12;   % [months] maximum delay
         exp_settings.MaxRisk = 100;   % [percent] maximum risk
         exp_settings.Max_phys_effort = 12; % max # flights of stairs to climb
         exp_settings.Max_ment_effort = 12; % max # pages to copy
     % Timings
-        exp_settings.timings.min_resp_time = 0.5; %[s] before ppt can respond
+        exp_settings.timings.min_resp_time = 1; %[s] before ppt can respond
         exp_settings.timings.max_resp_time = Inf; %[s] timeout time, set Inf if there is no timeout. When timeout is reached, the choice and RT will be set to NaN.
         exp_settings.timings.show_response = 0.25; %[s] visual feedback duration in example choice trials
-        exp_settings.timings.fixation_choice = [0.5 0.75]; %[s] minimum and maximum jittered fixation time during experiment
+        exp_settings.timings.fixation_choice = [1 1]; %[s] minimum and maximum jittered fixation time during experiment
     % Choice screen visual parameters
         exp_settings.choicescreen.title_y = 1/8;                        %Title y position (choice)
         exp_settings.choicescreen.cost_y = [2/8 3/8];                   %Y-coordinates of the cost above the cost box (example trials only)
-        exp_settings.choicescreen.reward_y_example = [13/16 15/16];     %Y-coordinates of the reward below the cost box (example trials only)
-        exp_settings.choicescreen.reward_y = [9/16 11/16];              %Y-coordinates of the reward below the cost box
-        exp_settings.choicescreen.costbox_left_example = [3/16 1/2 5/16 3/4];      %Left cost visualization
-        exp_settings.choicescreen.costbox_right_example = [11/16 1/2 13/16 3/4];   %Right cost visualization
-        exp_settings.choicescreen.costbox_left = [2/16 1/5 5/16 1/2];   %Left cost visualization
-        exp_settings.choicescreen.costbox_right = [11/16 1/5 14/16 1/2];%Right cost visualization
-        exp_settings.choicescreen.monthrects = [(0:11)./12; zeros(1,12); (1:12)./12; [31 28 31 30 31 30 31 31 30 31 30 31]./50]; %Delay visualization
+        exp_settings.choicescreen.reward_y_example = [12/16 14/16];     %Y-coordinates of the reward below the cost box (example trials only)
+        exp_settings.choicescreen.reward_y = [10/16 12/16];              %Y-coordinates of the reward below the cost box
+        exp_settings.choicescreen.costbox_left_example = [3/16 2/5 6/16 3/4];      %Left cost visualization
+        exp_settings.choicescreen.costbox_right_example = [10/16 2/5 13/16 3/4];   %Right cost visualization
+        exp_settings.choicescreen.costbox_left = [3/16 1/5 6.5/16 6/10];   %Left cost visualization
+        exp_settings.choicescreen.costbox_right = [9.5/16 1/5 13/16 6/10];%Right cost visualization
+        exp_settings.choicescreen.arrowbuttons_y = 15/16; %Vertical position of the arrow key images in the example choice screen
         exp_settings.choicescreen.flightsteps = 18; %Physical effort visualization: 1 flight of stairs = 18 steps
         exp_settings.choicescreen.pagelines = 25;   %Mental effort visualization: one page of text is contains 25 lines
         exp_settings.choicescreen.linewidth = 1;    %Width of the lines of the cost drawings
@@ -152,13 +160,13 @@ function [exp_settings] = BEC_Settings
 %% Trial generation settings for emotions or moods studies
     % Trial generation settings: emotions experiment
         exp_settings.trialgen_emotions.emotionnames = {'Happy','Sad','Neutral'};
-        exp_settings.trialgen_emotions.n_inductions = 60;   %total number of inductions
+        exp_settings.trialgen_emotions.n_inductions = 30;   %total number of inductions
         exp_settings.trialgen_emotions.i_break = 31;        %break at the beginning of this trial
         exp_settings.trialgen_emotions.n_emotions = 3;      %number of different emotions
-        exp_settings.trialgen_emotions.n_music_stim = 5;    %number of different music stimuli
+        exp_settings.trialgen_emotions.n_music_stim = 6;    %number of different music stimuli
         exp_settings.trialgen_emotions.i_music_emo = 1:2;   %indices of emotions that have music (happiness and sadness)
         exp_settings.trialgen_emotions.i_neutral = 3;       %index of the neutral condition
-        exp_settings.trialgen_emotions.inductions_per_emo = 20;     %number of inductions per emotion condition
+        exp_settings.trialgen_emotions.inductions_per_emo = 15; %number of inductions per emotion condition
         exp_settings.trialgen_emotions.choices_per_induction = 6;   %number of choices following each induction
     % Trial generation settings: moods experiment
         exp_settings.trialgen_moods.QuizExamples = 5;       %number of example quiz trials
@@ -171,10 +179,37 @@ function [exp_settings] = BEC_Settings
         exp_settings.trialgen_moods.SessionQuizBias.negative = [0.25 0.125 0   0.125 0.25];    % pct of the wrong answers that are biased to (incorrectly) display positive feedback (negative condition)
         exp_settings.trialgen_moods.SessionBiasTrials = [3 6 6 6 3];   % The number of consecutive trials corresponding to the mood biases
         exp_settings.trialgen_moods.Ratingconditions = {'before','after','none'};
-        exp_settings.trialgen_moods.Ratingquestion = 'Comment je me sens?';
-        exp_settings.trialgen_moods.Rating_label_min = 'de mauvaise humeur';
-        exp_settings.trialgen_moods.Rating_label_max = 'de bonne humeur';
-
+        
+%% Rating screen settings
+% Note: the rating labels are entered twice, with m/f declinations if applicable
+    %Emotions
+        exp_settings.ratings.emotions.Ratingquestion = 'Dans quelle mesure avez-vous ressenti chacune des émotions ci-dessous?';
+        exp_settings.ratings.emotions.Rating_label_min = {'Pas du tout','Pas du tout'};
+        exp_settings.ratings.emotions.Rating_label_max = {'Au maximum','Au maximum'};
+        exp_settings.ratings.emotions.Ratingdimensions = {'Joie','Tristesse','Curiosité'};
+        exp_settings.ratings.emotions.Rating_quantity_min = '0';
+        exp_settings.ratings.emotions.Rating_quantity_max = '10';
+    %Mood - generic
+        exp_settings.ratings.mood.Ratingquestion = 'Comment je me sens?';
+        exp_settings.ratings.mood.Rating_label_min = {'de mauvaise humeur','de mauvaise humeur'};
+        exp_settings.ratings.mood.Rating_label_max = {'de bonne humeur','de bonne humeur'};
+    %Fatigue
+        exp_settings.ratings.fatigue.Ratingquestion = 'Comment vous sentez-vous?';
+        exp_settings.ratings.fatigue.Rating_label_min = {'très fatigué','très fatiguée'};
+        exp_settings.ratings.fatigue.Rating_label_max = {'plein d''énergie','pleine d''énergie'};
+    %Stess
+        exp_settings.ratings.stress.Ratingquestion = 'Comment vous sentez-vous?';
+        exp_settings.ratings.stress.Rating_label_min = {'stressé','stressée'};
+        exp_settings.ratings.stress.Rating_label_max = {'plein d''énergie','pleine d''énergie'};
+    %happiness
+        exp_settings.ratings.happiness.Ratingquestion = 'Comment vous sentez-vous?';
+        exp_settings.ratings.happiness.Rating_label_min = {'triste','triste'};
+        exp_settings.ratings.happiness.Rating_label_max = {'heureux','heureuse'};
+    %Pain
+        exp_settings.ratings.pain.Ratingquestion = 'Comment vous sentez-vous?';
+        exp_settings.ratings.pain.Rating_label_min = {'douleur maximale','douleur maximale'};
+        exp_settings.ratings.pain.Rating_label_max = {'aucune douleur','aucune douleur'};
+    
 %% Mood stimuli
     % Timings
         exp_settings.timings.delay_answers = 0; %[s] delay between question presentation and answers presentation
@@ -214,143 +249,119 @@ function [exp_settings] = BEC_Settings
 %% Emotion stimuli
     % Timings
         exp_settings.timings.inductiontime = 10;            %[s] duration of the emotion induction screen (vignette)
-        exp_settings.timings.fix_pre_induction = [1.5 2];   %[s] min, max time of the jittered fixation before induction
-        exp_settings.timings.fix_post_induction = 2;        %[s] fixed fixation time after emotion induction screen
-        exp_settings.timings.washout = 8;                   %[s] resting time after rating
+        exp_settings.timings.fix_pre_induction = [1 1];   %[s] min, max time of the jittered fixation before induction
+        exp_settings.timings.fix_post_induction = 1;        %[s] fixed fixation time after emotion induction screen
+        exp_settings.timings.washout = 7;                   %[s] resting time after rating
     % Indices
         exp_settings.Emostimuli.i_happiness = 1;
         exp_settings.Emostimuli.i_sadness = 2;
         exp_settings.Emostimuli.i_neutral = 3;
     % Examples at the beginning of the experiment (for example vignettes, see below)
-        exp_settings.Emostimuli.ExampleEmotions = [1 2 3 1 2 3]; %Cf. indices above
-        exp_settings.Emostimuli.ExampleHappyMusic = 'Happy_ex';
-        exp_settings.Emostimuli.ExampleSadMusic = 'Sad_ex';
-    % Music (1-5)
+        exp_settings.Emostimuli.ExampleEmotions = [1 2 1 2 3 3 1 2 3 1 2 3 1 2]; %Cf. indices above
+        exp_settings.Emostimuli.ExampleMusic = [7 7 8 8 NaN NaN 7 7 NaN 8 8 NaN 7 7]; %Music piece number, i.e. 'Happy_07/8' e.g.
+    % Music (1-6)
         exp_settings.Emostimuli.HappyMusic = {'Händel - Arrival of the Queen';
             'JS Bach - Brandenburg Concerto 2';
             'Newman - Matilda writes her name';
             'Quantz - Flute Concerto';
-            'Mozart - Piano sonata 16'};
+            'Mozart - Piano sonata 16';
+            'Hooper - Dumbledore''s Army'};
         exp_settings.Emostimuli.SadMusic = {'Barber - Adagio for Strings';
             'Chopin - Nocturne no. 20';
             'JS Bach - Erbarme Dich';
             'Rheinberger - Suite';
-            'Badelt - Blood Ritual'};
+            'Badelt - Blood Ritual';
+            'Hilmarsson - The Black Dog and the Scottish Play'};
     % Instruction slides (example)
-%     exp_settings.instructions_emotions.start_emotion_instructions = 1:4;
-%     exp_settings.instructions_emotions.end_emotion_instructions = 5;
-%     exp_settings.instructions_emotions.instr_effort = 6:9;
-    % Vignettes (1-20)     
+        exp_settings.instructions_emotions.emotion_instructions = 1;
+        exp_settings.instructions_emotions.neutral_instructions = 2;
+        exp_settings.instructions_emotions.another_example = 3;
+        exp_settings.instructions_emotions.choice_instructions = 4;
+        exp_settings.instructions_emotions.delay_instructions = 5;
+        exp_settings.instructions_emotions.risk_instructions = 6;
+        exp_settings.instructions_emotions.effort_instructions = 7;
+        exp_settings.instructions_emotions.start_main_experiment = 8;
+        exp_settings.instructions_emotions.end_of_experiment = 9;
+    % Vignettes (1-12)     
         exp_settings.Emostimuli.HappyVignettes_m = {'Tu t''inscris à une compétition sans trop y croire, mais tu finis à la première place.';
     'Tu pars en vacances. À ton arrivée l''endroit semble paradisiaque. ';
     'Tu achètes un ticket de loterie et gagnes immédiatement 100 euros.';
     'C''est ton anniversaire et tes amis t''ont préparé une incroyable soirée surprise.';
     'Tu viens de commencer un nouveau travail, et il s''avère encore mieux que prévu.';
-    'Tu passes une journée à la montagne, l''air est pur et frais, le ciel est ensoleillé, et tu te baignes dans un lac magnifique.';
     'Tu apprends qu''un ami, qui a été malade pendant très longtemps, est maintenant parfaitement guéri.';
-    'À la fin du semestre tu valides un cours avec la meilleure note.';
-    'Ton chef te complimente sur la qualité de ton travail et te dit que tu as beaucoup de talent.';
-    'Tu sors de cours ou du boulot en avance. Le temps est superbe et tu vas prendre une glace avec des amis.';
     'Tu vas au restaurant avec un ami. Le repas, l''ambiance et la conversation sont absolument parfaits.';
     'Tout ton entourage est très admiratif lorsque tu leur montres les résultats du projet sur lequel tu as investi beaucoup d''effort.';
     'Tu es en voiture et ta chanson préférée passe à la radio.';
     'Tu rends visite à des cousins, et leur tout jeune enfant court vers toi tout excité tellement il est heureux de te voir.';
-    'Tu rencontres par hasard quelqu''un que tu apprécies. Vous allez prendre un café et vous vous entendez très bien. Tu découvres que vous pensez de la même manière et que vous vous intéressez aux mêmes choses.';
-    'Tu essaies une nouvelle recette et le résultat est fantastique. L''amie pour qui tu cuisinais est très impressionnée.';
-    'En rentrant à la maison après une longue marche dans le froid, tu te régales d''une boisson chaude au coin du feu.';
-    'Tu découvres sur ton bureau un mot d''une de tes collègues te disant combien elle est heureuse de travailler avec toi.';
-    'Tu joues à un quizz  avec des amis. Ton équipe gagne parce que tu as trouvé énormément de bonnes réponses.';
-    'Tes parents ont acheté un chiot très mignon qui ne se lasse jamais de jouer avec toi.'};
+    'Tu essaies une nouvelle recette et le résultat est fantastique. Les proches pour qui tu cuisinais sont très impressionnés.';
+    'En rentrant à la maison après une longue marche dans le froid, tu te régales d''une boisson chaude au coin du feu.'};
         exp_settings.Emostimuli.HappyVignettes_f = {'Tu t''inscris à une compétition sans trop y croire, mais tu finis à la première place.';
     'Tu pars en vacances. À ton arrivée l''endroit semble paradisiaque. ';
     'Tu achètes un ticket de loterie et gagnes immédiatement 100 euros.';
     'C''est ton anniversaire et tes amis t''ont préparé une incroyable soirée surprise.';
     'Tu viens de commencer un nouveau travail, et il s''avère encore mieux que prévu.';
-    'Tu passes une journée à la montagne, l''air est pur et frais, le ciel est ensoleillé, et tu te baignes dans un lac magnifique.';
     'Tu apprends qu''un ami, qui a été malade pendant très longtemps, est maintenant parfaitement guéri.';
-    'À la fin du semestre tu valides un cours avec la meilleure note.';
-    'Ton chef te complimente sur la qualité de ton travail et te dit que tu as beaucoup de talent.';
-    'Tu sors de cours ou du boulot en avance. Le temps est superbe et tu vas prendre une glace avec des amis.';
     'Tu vas au restaurant avec un ami. Le repas, l''ambiance et la conversation sont absolument parfaits.';
     'Tout ton entourage est très admiratif lorsque tu leur montres les résultats du projet sur lequel tu as investi beaucoup d''effort.';
     'Tu es en voiture et ta chanson préférée passe à la radio.';
     'Tu rends visite à des cousins, et leur tout jeune enfant court vers toi tout excité tellement il est heureux de te voir.';
-    'Tu rencontres par hasard quelqu''un que tu apprécies. Vous allez prendre un café et vous vous entendez très bien. Tu découvres que vous pensez de la même manière et que vous vous intéressez aux mêmes choses.';
-    'Tu essaies une nouvelle recette et le résultat est fantastique. L''amie pour qui tu cuisinais est très impressionnée.';
-    'En rentrant à la maison après une longue marche dans le froid, tu te régales d''une boisson chaude au coin du feu.';
-    'Tu découvres sur ton bureau un mot d''une de tes collègues te disant combien elle est heureuse de travailler avec toi.';
-    'Tu joues à un quizz  avec des amis. Ton équipe gagne parce que tu as trouvé énormément de bonnes réponses.';
-    'Tes parents ont acheté un chiot très mignon qui ne se lasse jamais de jouer avec toi.'};
+    'Tu essaies une nouvelle recette et le résultat est fantastique. Les proches pour qui tu cuisinais sont très impressionnés.';
+    'En rentrant à la maison après une longue marche dans le froid, tu te régales d''une boisson chaude au coin du feu.'};
         exp_settings.Emostimuli.SadVignettes_m = {'Ton animal de compagnie que tu adorais vient de mourir.';
-    'Tu apprends qu''un professeur de lycée que tu aimais beaucoup est désormais décédé. ';
+    'Tu as prévu de partir en vacances mais tous les transports sont bloqués et tu dois rester chez toi.';
     'Tu rencontres un SDF dans la rue, et tu t''aperçois que c''est un de tes amis d''enfance que tu avais perdu de vue.';
-    'Une jeune personne de ta famille t''annonce qu''elle a un cancer.';
-    'Tu viens de regarder un film racontant l''histoire d''un enfant en phase terminale d''une maladie, et qui finit par mourir.';
-    'Ta voisine, une vieille dame auparavant très gentille, est désormais atteinte de démence et n''est plus la personne que tu as connue.';
-    'Un parent proche vient de se faire diagnostiquer une tumeur maligne et ne peut plus être soigné ni opéré.';
     'Tu sortais avec quelqu''un et votre relation semblait plutôt prometteuse, quand cette personne t''appelle pour te dire qu''elle ne souhaite plus te voir.';
-    'Alors que tu te promènes dans un parc, un vieux chien affectueux vient à ta rencontre. Son propriétaire te dit qu''il a une tumeur et souffre beaucoup.';
-    'En voyant quelqu''un jouer avec son animal de compagnie, tu repenses à ton vieux compagnon préféré qui lui ressemblait mais qui est mort il y a quelque temps.';
     'Tu hésites à appeler un ami dont tu étais proche, mais tu réalises que cette amitié n''est plus vraiment ce qu''elle était.';
-    'Un ami proche t''avoue qu''il est alcoolique, et la situation semble si désespérée qu''il n''y a rien que tu puisses faire pour l''aider.';
     'Tu t''attaches à une personne rencontrée récemment, mais elle déménage à l''étranger et vous perdez contact.';
     'Tu rends visite à une connaissance dans une maison de retraite. Elle t''apprend que sa famille ne vient jamais la voir.';
     'Ton travail est très monotone, mais tu réalises que tu n''as pas vraiment les compétences nécessaires pour avoir un métier plus intéressant.';
-    'Ton collègue préféré décide de quitter ton lieu de travail.';
     'Tu es seul chez toi un vendredi soir par une très belle nuit. Tu te sens abandonné par tes amis.';
     'En te promenant dans la ville, tu passes devant un monument aux morts. Tu penses à tous ces jeunes hommes et femmes qui ont perdu la vie.';
-    'Un membre de ta famille dont tu es très proche t''annonce qu''il part s''installer définitivement en Australie.';
-    'Aujourd''hui c''était ton anniversaire. Personne au travail ou à l''université ne l''a remarqué.'};
+    'Le temps a été mauvais toute la semaine et il n''y a aucun signe d''amélioration.';
+    'Un enfant que tu aimes t''avoue se faire maltraiter par les autres à l''école.'};
         exp_settings.Emostimuli.SadVignettes_f = {'Ton animal de compagnie que tu adorais vient de mourir.';
-    'Tu apprends qu''un professeur de lycée que tu aimais beaucoup est désormais décédé.';
+    'Tu as prévu de partir en vacances mais tous les transports sont bloqués et tu dois rester chez toi.';
     'Tu rencontres un SDF dans la rue, et tu t''aperçois que c''est un de tes amis d''enfance que tu avais perdu de vue.';
-    'Une jeune personne de ta famille t''annonce qu''elle a un cancer.';
-    'Tu viens de regarder un film racontant l''histoire d''un enfant en phase terminale d''une maladie, et qui finit par mourir.';
-    'Ta voisine, une vieille dame auparavant très gentille, est désormais atteinte de démence et n''est plus la personne que tu as connue.';
-    'Un parent proche vient de se faire diagnostiquer une tumeur maligne et ne peut plus être soigné ni opéré.';
     'Tu sortais avec quelqu''un et votre relation semblait plutôt prometteuse, quand cette personne t''appelle pour te dire qu''elle ne souhaite plus te voir.';
-    'Alors que tu te promènes dans un parc, un vieux chien affectueux vient à ta rencontre. Son propriétaire te dit qu''il a une tumeur et souffre beaucoup.';
-    'En voyant quelqu''un jouer avec son animal de compagnie, tu repenses à ton vieux compagnon préféré qui lui ressemblait mais qui est mort il y a quelque temps.';
     'Tu hésites à appeler un ami dont tu étais proche, mais tu réalises que cette amitié n''est plus vraiment ce qu''elle était.';
-    'Un ami proche t''avoue qu''il est alcoolique, et la situation semble si désespérée qu''il n''y a rien que tu puisses faire pour l''aider.';
     'Tu t''attaches à une personne rencontrée récemment, mais elle déménage à l''étranger et vous perdez contact.';
     'Tu rends visite à une connaissance dans une maison de retraite. Elle t''apprend que sa famille ne vient jamais la voir.';
     'Ton travail est très monotone, mais tu réalises que tu n''as pas vraiment les compétences nécessaires pour avoir un métier plus intéressant.';
-    'Ton collègue préféré décide de quitter ton lieu de travail.';
     'Tu es seule chez toi un vendredi soir par une très belle nuit. Tu te sens abandonnée par tes amis.';
     'En te promenant dans la ville, tu passes devant un monument aux morts. Tu penses à tous ces jeunes hommes et femmes qui ont perdu la vie.';
-    'Un membre de ta famille dont tu es très proche t''annonce qu''il part s''installer définitivement en Australie.';
-    'Aujourd''hui c''était ton anniversaire. Personne au travail ou à l''université ne l''a remarqué.'};
-        exp_settings.Emostimuli.NeutralVignettes = {'Les bouleaux font partie de la famille des bétulacées et du genre Betula.';
-    'Le roman est un genre littéraire, caractérisé essentiellement par une narration fictionnelle.';
-    'Le nom de Bernicie semble dériver du gallois Brynaich ou Bryneich. Il est possible qu''avant l''arrivée des Anglo-Saxons, un royaume breton portant ce nom ait occupé la région.';
-    'Les argiles désignent de très fines particules de matière arrachées aux roches par l''érosion ainsi que les minéraux argileux ou phyllosilicates.';
-    'Une classe marchande se développe dans la première moitié du VIIe siècle av. J.-C. comme le démontrent l''apparition de monnaies grecques vers -680.';
-    'Le taux de natalité est le rapport entre le nombre annuel de naissances et la population totale moyenne sur cette année.';
-    'Gilles Deleuze se réclame de Stirner lorsqu''il critique l''alternative traditionnelle entre le théocentrisme et l''anthropocentrisme.';
-    'Il existe quatre niveaux d''administration dans l''Église de Jésus-Christ des Saints des Derniers Jours.';
-    'L''écriture chinoise est une transcription de la langue chinoise, et des mots qui la composent, mais elle n''est pas pour autant phonétique.';
-    'Les sportifs ouzbeks sont très présents dans les sports de combats comme le judo, la boxe, l''unifight ou encore la lutte gréco-romaine.';
-    'L''éthique téléologique met l''accent sur les buts et les finalités d''une décision.';
-    'La Communauté économique des États de l''Afrique de l''Ouest (CÉDÉAO) est une organisation intergouvernementale ouest-africaine créée le 28 mai 1975. ';
-    'En 1900 l''invention de Linné est redécouverte. Au XXe siècle, les Japonais développent alors la culture perlière et en améliorent les techniques.';
-    'La faculté de médecine d''Harvard est la troisième plus ancienne aux États-Unis, fondée le 19 septembre 1782 par John Warren, Benjamin Waterhouse, et Aaron Dexter.';
-    'Les seuls faits authentiquement connus sur Hésiode sont les événements consignés dans ses poèmes.';
-    'Les créatifs s''interrogent sur le comportement des consommateurs, la modification de leurs styles de vie.';
-    'Max Havelaar est inscrit comme représentant d''intérêts auprès de l''Assemblée nationale.';
-    'Au-delà du goût prononcé de Roald Dahl pour les histoires touchant de près ou de loin à la fornication présente dans tous ses écrits pour adultes, Mon oncle Oswald brille surtout par son humour ravageur et le charisme de son personnage';
-    'Le taoïsme est une quête individuelle de la Panacée, la recette qui rendra immortel.';
-    'Le fixisme est une hypothèse selon laquelle il n''y a ni transformation ni dérive des espèces végétales ou animales, mais aussi aucune modification profonde de l''Univers.'};
+    'Le temps a été mauvais toute la semaine et il n''y a aucun signe d''amélioration.';
+    'Un enfant que tu aimes t''avoue se faire maltraiter par les autres à l''école.'};
+        exp_settings.Emostimuli.NeutralVignettes = {'L''Alouette à queue blanche est un oiseau d''Afrique qui mesure 13 cm pour une masse de 20 à 25 g.';
+    'La Lituanie est un pays d’Europe du Nord situé sur la rive orientale de la mer Baltique.';
+    'Un atome est la plus petite partie d''un corps simple pouvant se combiner chimiquement avec un autre.';
+    'Roald Dahl est un écrivain britannique, auteur de romans et de nouvelles, qui s''adressent aussi bien aux enfants qu''aux adultes.';
+    'En dehors de l''orchestre, le piano et l''orgue sont les seuls instruments solistes pour lesquels des compositeurs ont écrit des symphonies.';
+    'En 2021, le RER d''Île-de-France est composé de cinq lignes et dessert au total 257 points d''arrêt dont 33 à Paris.'};
         exp_settings.Emostimuli.ExampleVignettes_m = {'Après plusieurs jours froids et pluvieux, tu découvres au réveil un magnifique ciel bleu et ensoleillé pour commencer le weekend.';
     'Ton meilleur ami vient de se marier et t''annonce qu''il va déménager à l''étranger.';
-    'Peu après le championnat de Tripoli, la FIDE lance un appel d''offres pour l''organisation du match entre Kasparov et Qosimjonov, mais aucun sponsor n''y répond. En mars 2005, Kasparov annonce qu''il abandonne la compétition de haut niveau.';
     'Au bistrot le serveur est emballé de te reconnaitre et t''offre un café gratuit.';
     'Une collègue ou une camarade dit qu''elle ne veut pas travailler avec toi dans un travail de groupe parce qu''elle te trouve égoïste et arrogant.';
-    'Dès les années 1950, l''US Navy a mis en oeuvre les premiers avions de type AWACS équipés d''un puissant radar installé sur le dos de l''appareil.'};
+    'À l''origine un peuple nomade, les Aztèques se sont installés dans la vallée de Mexico en 1345.';
+    'Le calendrier grégorien, qui compte 365 jours (et un quart), est le calendrier actuellement utilisé par la grande majorité des pays dans le monde.'
+    'Tu découvres sur ton bureau un mot d''une de tes collègues te disant combien elle est heureuse de travailler avec toi.';
+    'Tu apprends qu''un professeur de lycée que tu aimais beaucoup est désormais décédé.';
+    'Le mur de Berlin a été érigé dans la nuit du 12 au 13 août 1961.';
+    'Tu joues à un quizz avec des amis. Ton équipe gagne parce que tu as trouvé énormément de bonnes réponses.';
+    'Aujourd''hui c''était ton anniversaire. Personne au travail ne l''a remarqué.';
+    'Gertrude Stein passa la majeure partie de sa vie en France et fut un catalyseur pour la littérature et l''art moderne.' 
+    'Tes parents ont acheté un chiot très mignon qui ne se lasse jamais de jouer avec toi.';
+    'Tu achètes des billets de loto mais ils se révèlent tous perdants et tu réalises que tu as perdu ton argent.';};
         exp_settings.Emostimuli.ExampleVignettes_f = {'Après plusieurs jours froids et pluvieux, tu découvres au réveil un magnifique ciel bleu et ensoleillé pour commencer le weekend.';
     'Ton meilleur ami vient de se marier et t''annonce qu''il va déménager à l''étranger.';
-    'Peu après le championnat de Tripoli, la FIDE lance un appel d''offres pour l''organisation du match entre Kasparov et Qosimjonov, mais aucun sponsor n''y répond. En mars 2005, Kasparov annonce qu''il abandonne la compétition de haut niveau.';
     'Au bistrot le serveur est emballé de te reconnaitre et t''offre un café gratuit.';
     'Une collègue ou une camarade dit qu''elle ne veut pas travailler avec toi dans un travail de groupe parce qu''elle te trouve égoïste et arrogante.';
-    'Dès les années 1950, l''US Navy a mis en oeuvre les premiers avions de type AWACS équipés d''un puissant radar installé sur le dos de l''appareil.'};        
-
+    'À l''origine un peuple nomade, les Aztèques se sont installés dans la vallée de Mexico en 1345.';
+    'Le calendrier grégorien, qui compte 365 jours (et un quart), est le calendrier actuellement utilisé par la grande majorité des pays dans le monde.';
+    'Tu découvres sur ton bureau un mot d''une de tes collègues te disant combien elle est heureuse de travailler avec toi.';
+    'Tu apprends qu''un professeur de lycée que tu aimais beaucoup est désormais décédé.';
+    'Le mur de Berlin a été érigé dans la nuit du 12 au 13 août 1961.';
+    'Tu joues à un quizz avec des amis. Ton équipe gagne parce que tu as trouvé énormément de bonnes réponses.';
+    'Aujourd''hui c''était ton anniversaire. Personne au travail ne l''a remarqué.';
+    'Gertrude Stein passa la majeure partie de sa vie en France et fut un catalyseur pour la littérature et l''art moderne.' 
+    'Tes parents ont acheté un chiot très mignon qui ne se lasse jamais de jouer avec toi.';
+    'Tu achètes des billets de loto mais ils se révèlent tous perdants et tu réalises que tu as perdu ton argent.';};

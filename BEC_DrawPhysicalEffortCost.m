@@ -1,4 +1,4 @@
-function [t_onset] = BEC_DrawPhysicalEffortCost(window,exp_settings,drawchoice)
+function [timings] = BEC_DrawPhysicalEffortCost(window,exp_settings,drawchoice)
 % Draw the staircases that visualize the physical effort cost from the BECHAMEL toolbox.
 % This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
 % idiosyncracies of Psychtoolbox.
@@ -91,6 +91,6 @@ function [t_onset] = BEC_DrawPhysicalEffortCost(window,exp_settings,drawchoice)
         end
     
 %Flip
-    t_onset = clock;
-    Screen('Flip', window);
+    timestamp = Screen('Flip', window); 
+    timings = BEC_Timekeeping(drawchoice.event,drawchoice.plugins,timestamp);
 end

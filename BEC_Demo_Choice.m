@@ -4,18 +4,20 @@
 % Get settings structure:
     exp_settings = BEC_Settings;
 % Open screen:
-    %PsychDebugWindowConfiguration([],0.75); %DEBUG MODE - to disable, type "clear Screen"
     Screen('Preference', 'SkipSyncTests', 1); %Skip sync tests: yes
     Screen('Preference', 'VisualDebugLevel', 1); %Visual debug level
     Screen('Preference', 'SuppressAllWarnings', 1);
     KbName('UnifyKeyNames'); %unify across platforms
     screens=Screen('Screens');
-    if max(screens)==2; [window,winRect] = Screen('OpenWindow',2,exp_settings.backgrounds.default); %2 for external monitors
-    else; [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
+    if max(screens)==2
+        [window,winRect] = Screen('OpenWindow',1,exp_settings.backgrounds.default); %2 for external monitors
+    else
+        [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
     end
     HideCursor  
+    
 % Choice screen
-    for i=1:10
+    for trial = 1:10
         %Set the choice trial settings-----------------------------------------------------------------------------------------
             trialinput.choicetype = randperm(4,1);   %Define choice type by number (1:delay/2:risk/3:physical effort/4:mental effort)
             trialinput.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
