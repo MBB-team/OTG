@@ -4,8 +4,6 @@
 % iEEG studies.
 
 %% Set up the experiment
-    %Get the experiment settings
-        exp_settings = BEC_Settings;
     %Start the experiment from the beginning, or at an arbitrary point. This depends on whether AllData exists.
         if exist('AllData','var')
             if isfield(AllData,'bookmark')
@@ -24,6 +22,8 @@
                 clear
             end
         end
+    %Get the experiment settings
+        exp_settings = BEC_Settings;
     %Make new dataset if needed (after exp_settings is loaded)
         if ~exist('AllData','var')
             %Create data structure and get experiment settings structure
