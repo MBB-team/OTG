@@ -8,24 +8,24 @@
     exp_settings.font.RatingFontSize = 60; %Larger for the tablet, which has a high PPI
     exp_settings.font.FixationFontSize = 80;
     RatingQuestions = {...
+        'Comment vous sentez-vous ?';
+        'Comment vous sentez-vous ?';
+        'Comment vous sentez-vous ?';
+        'Comment vous sentez-vous ?';
+        'Comment vous sentez-vous ?';
         'Comment était votre sommeil cette nuit ?';
         'Comment estimez-vous votre risque de faire une crise d''épilepsie aujourd''hui ?';
-        'Comment vous sentez-vous ?';
-        'Comment vous sentez-vous ?';
-        'Comment vous sentez-vous ?';
-        'Comment vous sentez-vous ?';
-        'Comment vous sentez-vous ?';
         'Etes-vous gêné par le bruit ou la lumière ?'
         'Avez-vous des difficultés à vous concentrer, à réfléchir ?'
         'Vous sentez-vous bizarre, comme si quelque chose n''allait pas ?'};
     RatingLabels = {...
-        'très mauvais','excellent';
-        'très élevé','très faible';
+        'triste','heureux';
         'très fatigué','plein d''énergie';
         'stressé','détendu';
-        'triste','heureux';
-        'de mauvaise humeur','de bonne humeur';
         'douleur maximale','aucune douleur';
+        'de mauvaise humeur','de bonne humeur';
+        'très mauvais','excellent';
+        'très élevé','très faible';
         'énormément','pas du tout';
         'énormément','pas du tout';
         'énormément','pas du tout'};
