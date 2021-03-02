@@ -10,7 +10,7 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
 %     trialinput.Example     %(optional, default 0) flag 1 if this is an example trial (with explanation text) 
 %     trialinput.ITI         %(optional) fixation cross time before choice (default is random value between the set minimum and maximum value from exp_settings)
 %     trialinput.trial       %(optional) Trial number (only required for the pupil marker)
-%     trialinput.plugins     %(optional, default empty struct) indicate any interacting devices, e.g. touchscreen or eyetracker
+%     trialinput.plugins     %(optional) indicate any interacting devices, e.g. touchscreen or eyetracker
 % Output:
 %     trialoutput: updated structure with all the information about the choice trial
 %     exitflag: 0 by default; 1 if the experiment was interrupted
@@ -86,7 +86,6 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
         drawchoice.titletext = 'EXEMPLE: Préférez-vous...';
         drawchoice.confirmation = [];
         drawchoice.centerscreen = '+';
-        drawchoice.plugins = trialinput.plugins;
         switch trialinput.SideSS %Side definition
             case 'left'
                 drawchoice.rewardleft = SSReward; 
@@ -120,7 +119,12 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
             drawchoice.tex_rightkey = Screen('MakeTexture',window,im_rightkey);
             drawchoice.size_rightkey = size(im_rightkey);
         end
-
+    %Set the plugins (e.g. eyetracker, touchscreen,...)
+        if ~isfield(trialinput,'plugins')
+            trialinput.plugins = [];
+        end
+        drawchoice.plugins = trialinput.plugins;
+        
 %% Present screens       
     %1.Fixation cross
         timings = BEC_Timekeeping('Choice_fixation',trialinput.plugins); %Get timings

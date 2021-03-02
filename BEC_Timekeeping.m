@@ -54,7 +54,7 @@ function [timings] = BEC_Timekeeping(event,plugins,seconds)
 %Send trigger
     if exist('plugins','var')
         %iEEG
-            if isfield(plugins,'iEEG') && plugins.iEEG == 1
+            if isfield(plugins,'Arduino') && plugins.Arduino == 1
                 if ~exist('trigger_iEEG','var') %No trigger for iEEG has been set
                     timings.trigger_iEEG = []; %Output: empty
                 else %A trigger has been set

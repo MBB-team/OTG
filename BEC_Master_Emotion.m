@@ -50,17 +50,17 @@
             end
         %iEEG (device: Arduino)
             AllData.hostname = char(getHostName(java.net.InetAddress.getLocalHost));
-            AllData.plugins.iEEG = input('Record iEEG? (flag 1:yes / 0:no): ');
-            if AllData.plugins.iEEG
+            AllData.plugins.Arduino = input('Record iEEG and connect with Arduino? (flag 1:yes / 0:no): ');
+            if AllData.plugins.Arduino
                 switch AllData.hostname
                     case 'MWS1226' %RLH personal
                         addpath('C:\Users\Roeland\Documents\MATLAB\toolbox\ArduinoPort');
-                        AllData.plugins.iEEG_ComID  = ''; %'' for dummy
+                        Arduino_ComID  = ''; %'' for dummy
                     otherwise %On experiment computer "epimicro"
-                        AllData.plugins.iEEG_ComID  = 'COM4'; % USB port name
+                        Arduino_ComID  = BEC_GetCOMport; % USB port name
                         addpath('C:\MATLAB_toolboxes\ArduinoPort') 
                 end
-                OpenArduinoPort(AllData.plugins.iEEG_ComID)
+                OpenArduinoPort(Arduino_ComID)
                 disp('Connected to Arduino.')
             end
     %Volume setting required?        

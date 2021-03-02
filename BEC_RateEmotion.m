@@ -27,24 +27,24 @@ function [Ratings,timings,exitflag] = BEC_RateEmotion(window,AllData,which_ratin
             Screen(window,'BlendFunction',GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); %for the Alpha transparency values to take effect - in case this has not yet been set when opening the window
             Screen('TextFont',window,exp_settings.font.FontType);
             [screenX, screenY] = Screen('WindowSize', window); %Screen width, height
-            ShowCursor('Hand');
-        %Dimensions
             winrect = [0 0 screenX screenY]; % Screen dimensions in Psychtoolbox rect format
+            ShowCursor('Hand');
+        %Dimensions (custom)
             ratingYrange = [4/12 10/12]; % [Min Max] Y-position, relative to screen height, of the rating axes
             unitsize = 1/12; % This "unit" relative to the screen height is used to vertically space the axes and the various texual elements
-            axeswidth = 700; % Fixed # pixels axis width (X)
-            linethickness = 3; % # pixels axis thickness    
-            whiskerslength = 15; % # pixels length of the whiskers at axis end
-            sliderradius = 10; % # pixels diameter of the round slider
-            sliderhalo = 0.5; % magnification factor for the halo around the active slider
-            alpha = 0.75; % transparency of the halo
-            buttonsize = [100 30]; % # pixels width x height of the OK buttons
+            axeswidth = 0.45 * screenX; % # pixels axis width (X)
             margin = 0.1 * axeswidth; % # pixels gap between items to the left and right of the axes
+            linethickness = 3; % # pixels axis thickness    
+            whiskerslength = 0.015 * screenY; % # pixels length of the whiskers at axis end
+            sliderradius = 0.01*screenY; % # pixels diameter of the round slider
+            sliderhalo = 0.5; % magnification factor for the halo around the active slider
+            buttonsize = [0.06*screenX 0.03*screenY]; % # pixels width x height of the OK buttons
             fontsizefactors = [0.75 1 1.25]; % Font dimensions relative to exp_settings.font.RatingFontSize: [smaller base larger]
-        %Graphics colors
+        %Graphics colors (custom)
+            alpha = 0.75; % transparency of the halo
+            ratingcolor = [0 114 189 alpha*255]; % The theme color for the active rating dimension (4th element is transparency alpha) (BORDEAUX RED: [162  20  47  alpha*255])
             linecolor   = exp_settings.colors.white; % The various lines on screen
             slidercolor = exp_settings.colors.grey; % The round slider is filled with "slidercolor", and has an outline color "linecolor"
-            ratingcolor = [0 114 189 alpha*255]; % The theme color for the active rating dimension (4th element is transparency alpha) (BORDEAUX RED: [162  20  47  alpha*255])
     %Prepare rating axes
         %Relative y-positions
             ndims = length(Ratingdimensions);
@@ -171,12 +171,21 @@ function [Ratings,timings,exitflag] = BEC_RateEmotion(window,AllData,which_ratin
                                     Screen('DrawLine', window, [0 0 0], OKbuttons(1,i_dim)+0.05*buttonsize(1), OKbuttons(2,i_dim)+0.1*buttonsize(2), OKbuttons(1,i_dim)+0.05*buttonsize(1), OKbuttons(4,i_dim)-0.1*buttonsize(2), linethickness/2);
                                 Screen('LineStipple',window,0); %Disable line stipple
                             end
-                        %Record click in the button and store the confirmed rating.
+                        %Record click in the button and store the confirmed rating
+                            %Note: this is different on tablet vs. with an actual mouse
                             mouse_on_OKbutton = x >= OKbuttons(1,i_dim) && x <= OKbuttons(3,i_dim) && y >= OKbuttons(2,i_dim) && y<= OKbuttons(4,i_dim); %Logical
-                            if ~isnan(rating) && mouse_on_OKbutton && any(buttons)
-                                Ratings(i_dim) = rating; %Fill in the rating level
-                                rating = NaN; %Reset current rating estimate, will be filled in once a new button is clicked. "released" remains = 1.                                
-                                timings(1+i_dim) = BEC_Timekeeping('RatingConfirmation',AllData.plugins);
+                            if isfield(AllData,'plugins') && isfield(AllData.plugins,'MSSurface') && AllData.plugins.MSSurface == 1
+                                if ~isnan(rating) && mouse_on_OKbutton
+                                    Ratings(i_dim) = rating; %Fill in the rating level
+                                    rating = NaN; %Reset current rating estimate, will be filled in once a new button is clicked. "released" remains = 1.                                
+                                    timings(1+i_dim) = BEC_Timekeeping('RatingConfirmation',AllData.plugins);
+                                end
+                            else
+                                if ~isnan(rating) && mouse_on_OKbutton && any(buttons)
+                                    Ratings(i_dim) = rating; %Fill in the rating level
+                                    rating = NaN; %Reset current rating estimate, will be filled in once a new button is clicked. "released" remains = 1.                                
+                                    timings(1+i_dim) = BEC_Timekeeping('RatingConfirmation',AllData.plugins);
+                                end
                             end
                 else %All ratings have been confirmed
                     completed = true; %Bail out of the loop

@@ -200,7 +200,7 @@ function [exp_settings] = BEC_Settings
     %Stess
         exp_settings.ratings.stress.Ratingquestion = 'Comment vous sentez-vous?';
         exp_settings.ratings.stress.Rating_label_min = {'stressé','stressée'};
-        exp_settings.ratings.stress.Rating_label_max = {'plein d''énergie','pleine d''énergie'};
+        exp_settings.ratings.stress.Rating_label_max = {'détendu','détendue'};
     %happiness
         exp_settings.ratings.happiness.Ratingquestion = 'Comment vous sentez-vous?';
         exp_settings.ratings.happiness.Rating_label_min = {'triste','triste'};
