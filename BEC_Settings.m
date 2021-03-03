@@ -332,7 +332,7 @@ function [exp_settings] = BEC_Settings
     'Le temps a été mauvais toute la semaine et il n''y a aucun signe d''amélioration.';
     'Un enfant que tu aimes t''avoue se faire maltraiter par les autres à l''école.'};
         exp_settings.Emostimuli.NeutralVignettes = {'L''Alouette à queue blanche est un oiseau d''Afrique qui mesure 13 cm pour une masse de 20 à 25 g.';
-    'La Lituanie est un pays d’Europe du Nord situé sur la rive orientale de la mer Baltique.';
+    'La Lituanie est un pays d''Europe du Nord situé sur la rive orientale de la mer Baltique.';
     'Un atome est la plus petite partie d''un corps simple pouvant se combiner chimiquement avec un autre.';
     'Roald Dahl est un écrivain britannique, auteur de romans et de nouvelles, qui s''adressent aussi bien aux enfants qu''aux adultes.';
     'En dehors de l''orchestre, le piano et l''orgue sont les seuls instruments solistes pour lesquels des compositeurs ont écrit des symphonies.';
