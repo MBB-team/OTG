@@ -58,14 +58,14 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
     %OTG_prior: prior estimates of model parameters, per choice type
         if ~isfield(AllData,'OTG_prior')
             AllData.OTG_prior = struct;
-        end
-        if type_trialno == 1 %Get values from choice calibration if present, or enter population average
-            %Get the participant's calibrated parameters if available
-                if isfield(AllData,['calibration_' typenames{choicetype}])
-                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
-                else %Otherwise, use population averages as priors
-                    AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
-                end
+            if type_trialno == 1 %Get values from choice calibration if present, or enter population average
+                %Get the participant's calibrated parameters if available
+                    if isfield(AllData,['calibration_' typenames{choicetype}])
+                        AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
+                    else %Otherwise, use population averages as priors
+                        AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
+                    end
+            end
         end
     %OTG_posterior: posterior estimates from the online trial generation, per choice type
         if ~isfield(AllData,'OTG_posterior')
@@ -94,6 +94,9 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
+            try trialinput.plugins = AllData.plugins; %When in a lab experiment with eyetracker, tactile screen, BIOPAC, Arduino, etc...
+            catch; trialinput.plugins = []; %In all other cases: leave empty
+            end
             [trialoutput,exitflag] = BEC_ShowChoice(window,AllData.exp_settings,trialinput);
             if exitflag % ESCAPE was pressed, terminate experiment
                 return
@@ -159,7 +162,7 @@ function [u,y] = GetTrialFeatures(AllData)
 % come from the VBA toolbox by Jean Daunizeau and have been kept here for compatibility.
 % Get trial history from given choice type
     OTG_settings = AllData.exp_settings.OTG;
-    trialinfo = struct2table(AllData.trialinfo);
+    trialinfo = struct2table(AllData.trialinfo,'AsArray',true);
     choicetype = AllData.trialinfo(end).choicetype;
     u = [trialinfo.SSReward(trialinfo.choicetype==choicetype)'; %uncostly-option rewards;
          trialinfo.Cost(trialinfo.choicetype==choicetype)']; %costly-option costs

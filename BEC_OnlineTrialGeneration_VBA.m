@@ -107,17 +107,17 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
     %OTG_prior: prior estimates of model parameters, per choice type
         if ~isfield(AllData,'OTG_prior')
             AllData.OTG_prior = struct;
-        end
-        if type_trialno == 1 %Get values from choice calibration if present, or enter population average
-            %Get the participant's calibrated parameters if available
-                if isfield(AllData,['calibration_' typenames{choicetype}])
-                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
-                else %Otherwise, use population averages as priors
-                    AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
-                    AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
-                    AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
-                    AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
-                end
+            if type_trialno == 1 %Get values from choice calibration if present, or enter population average
+                %Get the participant's calibrated parameters if available
+                    if isfield(AllData,['calibration_' typenames{choicetype}])
+                        AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
+                    else %Otherwise, use population averages as priors
+                        AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
+                        AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
+                        AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
+                        AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
+                    end
+            end
         end
     %OTG_posterior: posterior estimates from the online trial generation, per choice type
         if ~isfield(AllData,'OTG_posterior')
@@ -196,6 +196,9 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
             trialinput.Cost = cost;       
+            try trialinput.plugins = AllData.plugins; %When in a lab experiment with eyetracker, tactile screen, BIOPAC, Arduino, etc...
+            catch; trialinput.plugins = []; %In all other cases: leave empty
+            end
             [trialoutput,exitflag] = BEC_ShowChoice(window,AllData.exp_settings,trialinput);
             if exitflag % ESCAPE was pressed, terminate experiment
                 return
@@ -210,7 +213,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
         
 %% Update parameter estimates
     %Get trial history from given choice type        
-        trialinfo = struct2table(AllData.trialinfo);
+        trialinfo = struct2table(AllData.trialinfo,'AsArray',true);
         u = [trialinfo.SSReward(trialinfo.choicetype==choicetype)'; %uncostly-option rewards;
              trialinfo.Cost(trialinfo.choicetype==choicetype)']; %costly-option costs
         y = trialinfo.choiceSS(trialinfo.choicetype==choicetype)'; %choices
