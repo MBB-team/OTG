@@ -9,13 +9,14 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
 %     trialinput.SideSS      %(optional) set on which side you want the uncostly (SS) option to be (enter string: 'left' or 'right')
 %     trialinput.Example     %(optional, default 0) flag 1 if this is an example trial (with explanation text) 
 %     trialinput.ITI         %(optional) fixation cross time before choice (default is random value between the set minimum and maximum value from exp_settings)
-%     trialinput.trial       %(optional) Trial number (only required for the pupil marker)
 %     trialinput.plugins     %(optional) indicate any interacting devices, e.g. touchscreen or eyetracker
 % Output:
 %     trialoutput: updated structure with all the information about the choice trial
 %     exitflag: 0 by default; 1 if the experiment was interrupted
 
 %% Prepare
+    %Set output (in case the user exits before choice is presented)
+        trialoutput = struct;
     %Input defaults
         typenames = {'delay','risk','physical_effort','mental_effort'};
         sidenames = {'left','right'};
@@ -25,11 +26,11 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
         if ~isfield(trialinput,'Example') || isempty(trialinput.Example)
             trialinput.Example = 0;
         end
-        if ~isfield(trialinput,'Pupil') || isempty(trialinput.Pupil)
-            trialinput.Pupil = 0;
-        end
         if ~isfield(trialinput,'ITI') || isempty(trialinput.ITI)
             trialinput.ITI = exp_settings.timings.fixation_choice(1) + rand * (exp_settings.timings.fixation_choice(2)-exp_settings.timings.fixation_choice(1));
+        end
+        if ~isfield(trialinput,'plugins')
+            trialinput.plugins = [];
         end
     %Keyboard
         leftKey = KbName('LeftArrow');
@@ -81,6 +82,7 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
                     LLCostText = ['copier ces pages' newline newline '(' LLCostText ')'];
             end      
     %Set drawing parameters
+        drawchoice.plugins = trialinput.plugins;
         drawchoice.choicetype = typenames{trialinput.choicetype};
         drawchoice.example = trialinput.Example;
         drawchoice.titletext = 'EXEMPLE: Préférez-vous...';
@@ -119,11 +121,6 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
             drawchoice.tex_rightkey = Screen('MakeTexture',window,im_rightkey);
             drawchoice.size_rightkey = size(im_rightkey);
         end
-    %Set the plugins (e.g. eyetracker, touchscreen,...)
-        if ~isfield(trialinput,'plugins')
-            trialinput.plugins = [];
-        end
-        drawchoice.plugins = trialinput.plugins;
         
 %% Present screens       
     %1.Fixation cross
@@ -142,10 +139,14 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
         timings = [timings BEC_DrawChoiceScreen(exp_settings,drawchoice,window)];
     %4.Monitor for response...
         keyCode(LRQ) = 0; exitflag = 0;
-        while (keyCode(leftKey) == 0 && keyCode(rightKey) == 0 && keyCode(escapeKey) == 0) && ... % as long no button is pressed, AND...
-                (GetSecs-timings(2).seconds) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
+        while ~any(keyCode(LRQ)) && ... % as long no button is pressed, AND...
+            (GetSecs-timings(2).seconds) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
             [~, ~, keyCode] = KbCheck(-1);
-        end
+            %Special case: tactile screen
+                if isfield(trialinput.plugins,'MSSurface') && trialinput.plugins.MSSurface == 1 %Record finger press on selected option
+                    keyCode = SelectOptionSurface(window,trialinput,exp_settings,LRQ);           
+                end %if: MS Surface
+        end %while: monitor response
         timings = [timings BEC_Timekeeping('Choice_decisiontime',trialinput.plugins,GetSecs)]; 
         rt = timings(4).seconds-timings(2).seconds; %Response time
     %Screenshot
@@ -311,3 +312,56 @@ switch choicetype
             end
 end %switch choicetype
 end %function
+
+%% Subfunction: monitor responses with MS Surface tactile screen
+function [keyCode] = SelectOptionSurface(window,trialinput,exp_settings,LRQ)
+% Monitor whether a choice option is selected by a finger press or swipe on the MS Windows Surface.
+% A correct response is: one finger taps or swipes over either option, within the x-margins of the costbox, along the
+% full height of the screen. The finger must then be released again.
+% The subfunction outputs a response as if it were a left or right key press. ESCAPE presses with finger do not exist.
+
+%Pre-loop check: finger released from screen
+    [~,~,buttons] = GetMouse;
+    while any(buttons)
+        [~,~,buttons] = GetMouse;
+    end
+%Loop until either option is pressed
+    finger_on_option = false(1,2);
+    confirm_release = false;
+    [screenX, screenY] = Screen('WindowSize',window); %Get screen size
+    SetMouse(screenX/2,screenY/2);
+    while ~(any(finger_on_option) && confirm_release)
+        %Monitor keypresses
+            [~, ~, keyCode] = KbCheck(-1);
+            if any(keyCode(LRQ)) %left/right/quit key is pressed
+                return
+            end
+            [x,~,pressed] = GetMouse;
+        %Check if an option is selected (sensitive area is within the x-limits of the cost box, over the full height of the screen)
+            if trialinput.Example
+                %Check left option
+                    finger_on_option(1) = x >= exp_settings.choicescreen.costbox_left_example(1)*screenX & x <= exp_settings.choicescreen.costbox_left_example(3)*screenX;
+                %Check right option
+                    finger_on_option(2) = x >= exp_settings.choicescreen.costbox_right_example(1)*screenX & x <= exp_settings.choicescreen.costbox_right_example(3)*screenX;
+            else
+                %Check left option
+                    finger_on_option(1) = x >= exp_settings.choicescreen.costbox_left(1)*screenX & x <= exp_settings.choicescreen.costbox_left(3)*screenX;
+                %Check right option
+                    finger_on_option(2) = x >= exp_settings.choicescreen.costbox_right(1)*screenX & x <= exp_settings.choicescreen.costbox_right(3)*screenX;
+            end
+        %Rule out possibility of tapping onto both options
+            if all(finger_on_option)
+                finger_on_option = false(1,2);
+            end
+        %Check if the screen is subsequently released (for confirmation)
+            if any(finger_on_option) && ~any(pressed)
+                confirm_release = true;
+            end
+    end %while
+%Code response as if it was a keypress
+    if finger_on_option(1) %left is selected
+        keyCode(LRQ(1)) = true;
+    elseif finger_on_option(2) %right is selected
+        keyCode(LRQ(2)) = true;
+    end
+end

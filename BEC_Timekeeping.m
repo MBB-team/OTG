@@ -19,6 +19,9 @@ function [timings] = BEC_Timekeeping(event,plugins,seconds)
         %Start and end of experiment
             case {'StartExperiment','EndExperiment'}
                 trigger_iEEG = 88*ones(1,5); %RH's unique trigger stamp to mark the beginning/end of the experiment
+        %Start of main experiment
+            case 'StartMainExperiment'
+                trigger_iEEG = 50*ones(1,3);
         %Instructions
             case 'InstructionScreen'
                 trigger_iEEG = 1;

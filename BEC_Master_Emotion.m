@@ -198,7 +198,7 @@
                 while i_ex <= max_example_choices
                     %Store time and sample example trials
                         if i_ex == 1
-                            AllData.timings.StartInstructions_Delay = clock;
+                            AllData.Timings.StartInstructions_Delay = clock;
                             AllData.Example_Choices.choices_delay = exp_settings.exampletrials(:,randperm(size(exp_settings.exampletrials,2),n_example_choices));
                             AllData.Example_Choices.trialinfo_delay = struct;
                         end
@@ -253,7 +253,7 @@
                 while i_ex <= max_example_choices
                     %Store time and sample example trials
                         if i_ex == 1
-                            AllData.timings.StartInstructions_Risk = clock;
+                            AllData.Timings.StartInstructions_Risk = clock;
                             AllData.Example_Choices.choices_risk = exp_settings.exampletrials(:,randperm(size(exp_settings.exampletrials,2),n_example_choices));
                             AllData.Example_Choices.trialinfo_risk = struct;
                         end
@@ -308,7 +308,7 @@
                 while i_ex <= max_example_choices
                     %Store time and sample example trials
                         if i_ex == 1
-                            AllData.timings.StartInstructions_Effort = clock;
+                            AllData.Timings.StartInstructions_Effort = clock;
                             AllData.Example_Choices.choices_effort = exp_settings.exampletrials(:,randperm(size(exp_settings.exampletrials,2),n_example_choices));
                             AllData.Example_Choices.trialinfo_effort = struct;
                         end
