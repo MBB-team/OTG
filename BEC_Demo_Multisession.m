@@ -59,7 +59,7 @@
 % defined.
 % The experiment can be interrupted at any time by pressing ESCAPE, provided that you have defined AllDat.savedir.
     AllData.start_time = clock;
-    while etime(clock,AllData.start_time) < 40 %Session time: 10 minutes
+    while etime(clock,AllData.start_time) < 600 %Session time: 10 minutes
         AllData = BEC_OnlineTrialGeneration_VBA(AllData,window);
     end
     
