@@ -174,7 +174,7 @@ function [Ratings,timings,exitflag] = BEC_RateEmotion(window,AllData,which_ratin
                         %Record click in the button and store the confirmed rating
                             %Note: this is different on tablet vs. with an actual mouse
                             mouse_on_OKbutton = x >= OKbuttons(1,i_dim) && x <= OKbuttons(3,i_dim) && y >= OKbuttons(2,i_dim) && y<= OKbuttons(4,i_dim); %Logical
-                            if isfield(AllData,'plugins') && isfield(AllData.plugins,'MSSurface') && AllData.plugins.MSSurface == 1
+                            if isfield(AllData,'plugins') && isfield(AllData.plugins,'touchscreen') && AllData.plugins.touchscreen == 1
                                 if ~isnan(rating) && mouse_on_OKbutton
                                     Ratings(i_dim) = rating; %Fill in the rating level
                                     rating = NaN; %Reset current rating estimate, will be filled in once a new button is clicked. "released" remains = 1.                                

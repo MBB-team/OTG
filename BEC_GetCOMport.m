@@ -1,6 +1,8 @@
-function COMport = BEC_GetCOMport
+function [COMport] = BEC_GetCOMport
 % Finds which COM port (e.g. "COM3" or "COM4") is connected to the Arduino.
 % The output COMport is a character.
+
+COMport = ''; %Default output. When entered into "OpenArduinoPort", this will enter dummy mode (useful for testing your experiment)
 
 % Find connected serial devices and clean up the output
     Skey = 'HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\SERIALCOMM';

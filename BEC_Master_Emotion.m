@@ -42,9 +42,10 @@
     %Add all experiment scripts and functions to the path
         addpath(genpath(exp_settings.expdir)) 
     %Plugins
+        %Tactile screen
+            AllData.plugins.touchscreen = input('Experiment on a tactile screen device? (flag 1:yes / 0:no)');
         %Pupil (device: EyeTribe)
-            AllData.plugins.pupil  = 0; %by default: no.
-%             AllData.plugins.pupil = input('Record pupil? (flag 1:yes / 0:no): ');
+            AllData.plugins.pupil = input('Record pupil? (flag 1:yes / 0:no): ');
             if AllData.plugins.pupil && AllData.bookmark == 6 %Main experiment
                 AllData.plugins.pupil_Recalibrate = input('(Re)calibrate eyes? (flag 1:yes / 0:no): ');
             end
@@ -57,7 +58,7 @@
                         addpath('C:\Users\Roeland\Documents\MATLAB\toolbox\ArduinoPort');
                         Arduino_ComID  = ''; %'' for dummy
                     otherwise %On experiment computer "epimicro"
-                        Arduino_ComID  = BEC_GetCOMport; % USB port name
+                        Arduino_ComID  = BEC_GetCOMport; % USB port name, will produce '' when none found
                         addpath('C:\MATLAB_toolboxes\ArduinoPort') 
                 end
                 OpenArduinoPort(Arduino_ComID)

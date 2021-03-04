@@ -1,20 +1,27 @@
 function [timings] = BEC_Timekeeping(event,plugins,seconds)
 % Keeps track of events, their timing, and sends trigger to plugged-in devices
+% Inputs:
+%   event: a string name of the event, from the list defined below
+%   plugins: any plugged-in devices that you want to send triggers to, e.g.: Arduino, EyeTribe, BIOPAC
+%   seconds: (optional) the exact onset time, i.e. a timestamp in GetSecs format, called just before this function
 % Outputs a structure with fields:
 %   timings.event : the name of the event
-%   timings.time : the exact onset time
+%   timings.time : the onset time in the convenient format [year month day hour minute seconds]
+%   timings.seconds : (when "seconds" is specified) the exact onset time, i.e. the timestamp in GetSecs format
 %   (if plugged in) timings.trigger_iEEG : the trigger that was sent to Arduino for iEEG recordings
-%   (if plugged in) timings.trigger_pupil : the {mark,scene} that was sent to EyeTribe for pupil recordings
+%   (if plugged in) timings.trigger_BIOPAC : the trigger(s) that were sent to BIOPAC for physiology recordings
+%   (if plugged in) timings.pupil_mark,timings.pupil_scene : the marker and scene that were sent to EyeTribe for pupil recordings
 
 %Get time in format [year month day hour minute seconds], this is system-dependent but should suffice in most cases
     timings.time = clock;    
 %Store the *exact* amount of seconds since arbitrary system zero at the time of event onset, if high precision is needed
-    if exist('seconds','var') && ~isempty(seconds) %"seconds" can be the output of Screen('Flip',window), for example
+    if exist('seconds','var') %"seconds" can be the output of Screen('Flip',window) or from GetSecs, that you acquire before calling this function
         timings.seconds = seconds;
     else
         timings.seconds = [];
     end
-%Set trigger
+%Set trigger/marker
+    timings.event = event;
     switch event
         %Start and end of experiment
             case {'StartExperiment','EndExperiment'}
@@ -25,39 +32,54 @@ function [timings] = BEC_Timekeeping(event,plugins,seconds)
         %Instructions
             case 'InstructionScreen'
                 trigger_iEEG = 1;
+                pupil_mark = 1;
         %Emotion induction
             case 'Induction_fixation_pre'
                 trigger_iEEG = 2;
+                pupil_mark = 2;
             case 'Induction'
                 trigger_iEEG = 3;
+                pupil_mark = 3;
+                trigger_BIOPAC = 3; %This is the only event where triggers get sent to BIOPAC
             case 'Induction_fixation_post'
                 trigger_iEEG = 4;
+                pupil_mark = 4;
         %Choices
             case 'Choice_fixation'
                 trigger_iEEG = 5;
+                pupil_mark = 5;
             case 'Choice_screenonset' %The screen appears, but you can't make a decision yet
                 trigger_iEEG = 6;
+                pupil_mark = 6;
             case 'Choice_decisiononset' %The "+" turns into a "?", you may now make a decision
                 trigger_iEEG = 7;
+                pupil_mark = 7;
             case 'Choice_decisiontime' %The time stamp of the decision
                 trigger_iEEG = 8;
+                pupil_mark = 8;
             case 'Choice_confirmation' %The confirmation on screen
                 trigger_iEEG = 9;
+                %pupil_mark = 9; % ---- do not send this to the eyetracker; the time gap between 
+                %'Choice_decisiontime' and 'Choice_confirmation' is minimal.
         %Ratings
             case 'RatingScreenOnset'
                 trigger_iEEG = 10;
+                pupil_mark = 10;
             case 'RatingConfirmation'
                 trigger_iEEG = 11;
+                pupil_mark = 11;
             case 'RatingCompleted'
                 trigger_iEEG = 12;
+                pupil_mark = 12;
         %Washout
             case 'Washout'
                 trigger_iEEG = 13;
+                pupil_mark = 13;
     end
-%Send trigger
+%Send trigger/marker
     if exist('plugins','var')
-        %iEEG
-            if isfield(plugins,'Arduino') && plugins.Arduino == 1
+        %iEEG: send triggers to Arduino
+            if isfield(plugins,'Arduino') && plugins.Arduino == 1 %Note: plugins.Arduino is a logical
                 if ~exist('trigger_iEEG','var') %No trigger for iEEG has been set
                     timings.trigger_iEEG = []; %Output: empty
                 else %A trigger has been set
@@ -70,21 +92,34 @@ function [timings] = BEC_Timekeeping(event,plugins,seconds)
                     end %for i
                 end %if ~exist
             end %if isfield
-        %pupil
-            if isfield(plugins,'pupil') && plugins.pupil == 1
-                if ~exist('trigger_pupil','var') %No trigger for iEEG has been set
-                    timings.trigger_pupil = []; %Output: empty
+        %PUPIL: send triggers to EyeTribe
+            if isfield(plugins,'pupil') && plugins.pupil == 1 % Note: plugins.pupil is a logical
+                %Pupil "scene": input to the function, in structure "plugins"
+                    if isfield(plugins,'pupil_scene')
+                        EyeTribeSetCurrentScene(plugins.pupil_scene)
+                        timings.pupil_scene = plugins.pupil_scene; %Record the scene that was set in the timings output structure
+                    else
+                        timings.pupil_scene = []; %Output: empty
+                    end
+                %Pupil mark
+                    if exist('pupil_mark','var') %A marker has been set above
+                        EyeTribeSetCurrentMark(pupil_mark);
+                        timings.pupil_mark = pupil_mark; %Record the marker that was set in the timings output structure
+                    else %No marker for Eyetribe has been set
+                        timings.pupil_mark = [];
+                    end
+            end %if isfield
+        %BIOPAC: 
+            if isfield(plugins,'BIOPAC') && plugins.BIOPAC == 1 %Note: plugins.BIOPAC is a logical
+                if ~exist('trigger_BIOPAC','var') %No trigger for iEEG has been set
+                    timings.trigger_BIOPAC = []; %Output: empty
                 else %A trigger has been set
-                    timings.trigger_pupil = trigger_pupil; %Store the trigger
-                    for i = 1:length(timings.trigger_pupil) %Loop through trigger values in case there are multiple
-    %                     Set EyeTribe...
-    %                     if length(timings.trigger_pupil)>1 %In case of a loop: pause for 50ms
-    %                         pause(0.05)
-    %                     end
-                    end %for i
+                    timings.trigger_BIOPAC = trigger_BIOPAC; %Store the trigger
+                    for i = 1:trigger_BIOPAC
+                        triggerbiopac_V2_01('send'); 
+                        pause(0.010); % Leave a short interval between BIOPAC triggers
+                    end
                 end %if ~exist
             end %if isfield
-    end %if exist plugins
-%Output
-    timings.event = event;
+    end %if exist plugins    
 end

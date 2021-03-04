@@ -143,9 +143,9 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
             (GetSecs-timings(2).seconds) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
             [~, ~, keyCode] = KbCheck(-1);
             %Special case: tactile screen
-                if isfield(trialinput.plugins,'MSSurface') && trialinput.plugins.MSSurface == 1 %Record finger press on selected option
-                    keyCode = SelectOptionSurface(window,trialinput,exp_settings,LRQ);           
-                end %if: MS Surface
+                if isfield(trialinput.plugins,'touchscreen') && trialinput.plugins.touchscreen == 1 %Record finger press on selected option
+                    keyCode = SelectOptionTouchscreen(window,trialinput,exp_settings,LRQ);           
+                end
         end %while: monitor response
         timings = [timings BEC_Timekeeping('Choice_decisiontime',trialinput.plugins,GetSecs)]; 
         rt = timings(4).seconds-timings(2).seconds; %Response time
@@ -314,8 +314,8 @@ end %switch choicetype
 end %function
 
 %% Subfunction: monitor responses with MS Surface tactile screen
-function [keyCode] = SelectOptionSurface(window,trialinput,exp_settings,LRQ)
-% Monitor whether a choice option is selected by a finger press or swipe on the MS Windows Surface.
+function [keyCode] = SelectOptionTouchscreen(window,trialinput,exp_settings,LRQ)
+% Monitor whether a choice option is selected by a finger press or swipe on a touchscreen, such as the Windows Surface or the PRISME tactile screens.
 % A correct response is: one finger taps or swipes over either option, within the x-margins of the costbox, along the
 % full height of the screen. The finger must then be released again.
 % The subfunction outputs a response as if it were a left or right key press. ESCAPE presses with finger do not exist.
