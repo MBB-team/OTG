@@ -43,7 +43,7 @@
         addpath(genpath(exp_settings.expdir)) 
     %Plugins
         %Tactile screen
-            AllData.plugins.touchscreen = input('Experiment on a tactile screen device? (flag 1:yes / 0:no)');
+            AllData.plugins.touchscreen = input('Experiment on a tactile screen device? (flag 1:yes / 0:no): ');
         %Pupil (device: EyeTribe)
             AllData.plugins.pupil = input('Record pupil? (flag 1:yes / 0:no): ');
             if AllData.plugins.pupil && AllData.bookmark == 6 %Main experiment
