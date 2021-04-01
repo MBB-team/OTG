@@ -45,7 +45,7 @@
     Screen('Preference', 'VisualDebugLevel', 1); %Visual debug level
     Screen('Preference', 'SuppressAllWarnings', 1);
     KbName('UnifyKeyNames'); %unify across platforms
-    [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
+    [window,winRect] = Screen('OpenWindow',0,AllData.exp_settings.backgrounds.default); %0 for Windows Desktop screen
     HideCursor  
     
 %% Present choices
