@@ -8,7 +8,7 @@ function [AUC] = BEC_AUC(~, P, ~, in)
 % Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %
 % Original: 2021-03-29
-% Modified: 2021-04-01
+% Modified: 2021-04-03
 
 
 
@@ -61,6 +61,10 @@ for i_trl = 1:length(Cost)
 end
 
 
+
+% Ignore negative subjective values
+% ---------------------------------------------------------------------
+SV = max(SV, 0);
 
 
 % compute the area under the curve (AUC) aka the integral
