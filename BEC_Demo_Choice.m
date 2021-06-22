@@ -28,5 +28,5 @@
     end
 % Exit
     sca; %Screen: close all
-    ShowCursor
+    ShowCursor;
     
