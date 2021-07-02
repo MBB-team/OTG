@@ -40,7 +40,7 @@ eye_calibration = struct;
 
 %% Calibrate
     pause(0.25);
-    EyeTribeCalibratePsy( window, 16, 900 );
+    EyeTribeCalibratePsy( window, 16, 900 ); %Shorter: (window, 9, 500)
     pause(0.5);
     [ eye_calibration.retVal,eye_calibration.result,eye_calibration.deg,eye_calibration.degl,eye_calibration.degr ] = EyeTribePrintCalibrationResult( );
 

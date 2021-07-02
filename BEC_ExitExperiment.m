@@ -11,7 +11,7 @@ function BEC_ExitExperiment(AllData,player)
             end
         end
     %Close the Arduino port
-        if isfield(AllData.plugins,'iEEG') && AllData.plugins.iEEG == 1 
+        if isfield(AllData.plugins,'Arduino') && AllData.plugins.Arduino == 1 
             try
                 CloseArduinoPort
             catch
