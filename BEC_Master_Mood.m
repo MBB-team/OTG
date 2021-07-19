@@ -28,10 +28,16 @@
     %Add all experiment scripts and functions to the path
         addpath(genpath(exp_settings.expdir)) 
     %Pupil settings
-        AllData.pupil = input('Record pupil? (flag 1:yes / 0:no): ');
-        if startpoint == 3 %Main experiment
-            Recalibrate = input('(Re)calibrate eyes? (flag 1:yes / 0:no): ');
-        end      
+        AllData.plugins.pupil = input('Record pupil? (flag 1:yes / 0:no): ');
+        if AllData.plugins.pupil
+            mkdir([exp_settings.datadir filesep savename],'Pupil'); %Create the directory where the data will be stored
+            %addpath('C:\MATLAB_toolboxes\EyeTribeToolbox') %Be sure to add the eyetribe toolbox to the path, wherever it is stored
+            BEC_ConnectEyetribe %Test the connection to the eyetracker
+            EyeTribeStop(); %Pause the eyetracker
+            if startpoint == 3 %Main experiment
+                Recalibrate = input('(Re)calibrate eyes? (flag 1:yes / 0:no): ');
+            end
+        end 
     %Open a screen
         Screen('Preference', 'SkipSyncTests', 1); %Skip sync tests: yes
         Screen('Preference', 'VisualDebugLevel', 3); %Visual debug level
