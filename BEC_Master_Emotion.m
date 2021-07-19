@@ -46,8 +46,14 @@
             AllData.plugins.touchscreen = input('Experiment on a tactile screen device? (flag 1:yes / 0:no): ');
         %Pupil (device: EyeTribe)
             AllData.plugins.pupil = input('Record pupil? (flag 1:yes / 0:no): ');
-            if AllData.plugins.pupil && AllData.bookmark == 6 %Main experiment
-                AllData.plugins.pupil_Recalibrate = input('(Re)calibrate eyes? (flag 1:yes / 0:no): ');
+            if AllData.plugins.pupil
+                mkdir([exp_settings.datadir filesep savename],'Pupil'); %Create the directory where the data will be stored
+                %addpath('C:\MATLAB_toolboxes\EyeTribeToolbox') %Be sure to add the eyetribe toolbox to the path, wherever it is stored
+                BEC_ConnectEyetribe %Test the connection to the eyetracker
+                EyeTribeStop(); %Pause the eyetracker
+                if AllData.bookmark == 6 %Main experiment
+                    AllData.plugins.pupil_Recalibrate = input('(Re)calibrate eyes? (flag 1:yes / 0:no): ');
+                end
             end
         %iEEG (device: Arduino)
             AllData.hostname = char(getHostName(java.net.InetAddress.getLocalHost));
