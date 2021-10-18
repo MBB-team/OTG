@@ -81,6 +81,7 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
         %Store selected trial
             calinfo.u(:,trial) = [reward; cost];
             calinfo.y(trial) = trialoutput.choiceSS;
+            calinfo.RT(trial) = trialoutput.RT;
         %Invert model with all inputs and choices
             dim.n_t = trial;
             posterior = VBA_NLStateSpaceModel(calinfo.y,calinfo.u,[],@ObservationFunction,dim,options);

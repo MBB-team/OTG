@@ -28,7 +28,16 @@
         Screen('Preference', 'VisualDebugLevel', 3); %Visual debug level
         Screen('Preference', 'SuppressAllWarnings', 1);
         KbName('UnifyKeyNames'); %unify across platforms
+    %Test
+        screens=Screen('Screens');
+        if max(screens)==2; i_screen = 1;
+        else; i_screen = 0;
+        end
         [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
+        [w,h] = Screen('WindowSize',i_screen); 
+        demo_rect = [0.4*w 0.2*h w 0.8*h]; %The demo screen will not fill the entire screen        
+    %Screen
+%         [window,winRect] = Screen('OpenWindow',i_screen,exp_settings.backgrounds.default,demo_rect); %0 for Windows Desktop screen, 2 for external monitor
         Screen(window,'BlendFunction',GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); %for the Alpha transparency values to take effect
         HideCursor  
     %First launch settings: create timing event reel, complete the setup
@@ -49,7 +58,7 @@
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
         %Delay examples
-            i_ex = AllData.ExampleChoices;
+            i_ex = 1;
             while i_ex <= exp_settings.max_example_choices
                 %Store time and sample example trials
                     if i_ex == 1
@@ -115,7 +124,7 @@
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
         %Effort examples
-            i_ex = AllData.ExampleChoices;
+            i_ex = 1;
             while i_ex <= exp_settings.max_example_choices
                 %Store time and sample example trials
                     if i_ex == 1
