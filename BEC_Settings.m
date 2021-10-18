@@ -83,7 +83,7 @@ function [exp_settings] = BEC_Settings
         exp_settings.timings.min_resp_time = 1; %[s] before ppt can respond
         exp_settings.timings.max_resp_time = Inf; %[s] timeout time, set Inf if there is no timeout. When timeout is reached, the choice and RT will be set to NaN.
         exp_settings.timings.show_response = 0.25; %[s] visual feedback duration in example choice trials
-        exp_settings.timings.fixation_choice = [0.75 0.25]; %[s] minimum and maximum jittered fixation time during experiment
+        exp_settings.timings.fixation_choice = [0.75 1.25]; %[s] minimum and maximum jittered fixation time during experiment
     % Choice screen visual parameters
         exp_settings.choicescreen.title_y = 1/8;                        %Title y position (choice)
         exp_settings.choicescreen.cost_y = [2/8 3/8];                   %Y-coordinates of the cost above the cost box (example trials only)

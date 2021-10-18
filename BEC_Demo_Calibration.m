@@ -40,6 +40,6 @@
         if exitflag; BEC_ExitExperiment(AllData); end
     end
 % Run calibration
-    [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,2);
+    [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,1);
 % Terminate
     sca
