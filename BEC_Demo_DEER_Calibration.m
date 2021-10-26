@@ -65,7 +65,7 @@
 %% Introduction
     if AllData.bookmark == 1
         instruction_numbers = [101 102];
-        exitflag = BEC_InstructionScreens(window,exp_settings,instruction_numbers);
+        exitflag = BEC_InstructionScreens(window,AllData,instruction_numbers);
         if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
         AllData.Timings.End_of_introduction = clock;
         AllData.bookmark = 2;
@@ -132,7 +132,7 @@
     if AllData.bookmark == 3
         %Show instructions about calibration choice battery
             instruction_numbers = 104;
-            exitflag = BEC_InstructionScreens(window,exp_settings,instruction_numbers);
+            exitflag = BEC_InstructionScreens(window,AllData,instruction_numbers);
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
         %Run calibration
             [AllData,exitflag] = BEC_Calibration(AllData,1,window,1);
@@ -200,7 +200,7 @@
     if AllData.bookmark == 5
         %Show instructions about calibration choice battery
             instruction_numbers = 106;
-            exitflag = BEC_InstructionScreens(window,exp_settings,instruction_numbers);
+            exitflag = BEC_InstructionScreens(window,AllData,instruction_numbers);
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
         %Run calibration
             [AllData,exitflag] = BEC_Calibration(AllData,2,window,1);
@@ -268,7 +268,7 @@
     if AllData.bookmark == 7
         %Show instructions about calibration choice battery
             instruction_numbers = 108;
-            exitflag = BEC_InstructionScreens(window,exp_settings,instruction_numbers);
+            exitflag = BEC_InstructionScreens(window,AllData,instruction_numbers);
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
         %Run calibration
             [AllData,exitflag] = BEC_Calibration(AllData,3,window,1);
@@ -335,7 +335,7 @@
     if AllData.bookmark == 9
         %Show instructions about calibration choice battery
             instruction_numbers = 110;
-            exitflag = BEC_InstructionScreens(window,exp_settings,instruction_numbers);
+            exitflag = BEC_InstructionScreens(window,AllData,instruction_numbers);
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
         %Run calibration
             [AllData,exitflag] = BEC_Calibration(AllData,4,window,1);
@@ -346,7 +346,7 @@
 if AllData.bookmark == 10        
     %End of the experiment
         instruction_numbers = 111;
-        BEC_InstructionScreens(window,exp_settings,instruction_numbers);
+        BEC_InstructionScreens(window,AllData,instruction_numbers);
         AllData.Timings.EndOfExperiment = clock;
         save([AllData.savedir filesep 'AllData'],'AllData');
     %Close
