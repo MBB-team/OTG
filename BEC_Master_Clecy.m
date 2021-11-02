@@ -1,59 +1,73 @@
-% BECHAMEL Master
-% Battery of Economic CHoices And Mood/Emotion Links
-% Master script for experiment with calibration of delay and mental effort discounting tasks.
+function BEC_Master_Clecy(ID,window)
+% Master script for experiment with calibration of delay and mental effort discounting tasks, and follow-up measure.
+% BECHAMEL - Battery of Economic CHoices And Mood/Emotion Links
+% RH - November 2021
+% Input: 
+%   ID - the subject identifier (obligatory -- may be char or double)
+%   window - the PsychToolbox window (optional -- a new window will be opened if not provided)
+% There is no output, but the decision-making (DM) data is saved in the directory 'Experiment data/DM[ID][datestring]'
 
 %% Set up the experiment
-    %Get the experiment settings structure and adjust settings specific to this experiment
-        exp_settings = BEC_Settings;
-        exp_settings.OTG.ntrials_cal = 25; %Number of choice model calibration trials
-        exp_settings.n_example_choices = 10; %Minimum number of example choices per choice type
-        exp_settings.max_example_choices = 15; %Maximum number of example choices per choice type
-    %Make new dataset if needed (after exp_settings is loaded)
-        %Create data structure and get experiment settings structure
-            AllData = struct;
-            AllData.ID = input('Enter patient ID: ','s');
-            AllData.exp_settings = exp_settings; 
-            AllData.bookmark = 0; %Indicate progress during the experiment
-        %Get the settings and directories
-            savename = [AllData.ID '_' datestr(clock,30)]; %Directory name where the dataset will be saved
-            AllData.savedir = [exp_settings.datadir filesep savename]; %Path of the directory where the data will be saved      
-            mkdir(exp_settings.datadir,savename); %Create the directory where the data will be stored
-            disp('Dataset and directory created.')
+
+% Verify if there is an existing dataset; otherwise, create one.
+    if ~ischar(ID); ID = num2str(ID); end %ID must be a string
+    expdir = which('BEC_Master_Clecy'); expdir = expdir(1:end-19);  %Get the directory where this function is stored
+    datadir = [expdir filesep 'Experiment data']; %This is where the data will be saved (in expdir/Experiment data) -- can be modified
+    find_dataset = dir([datadir filesep 'DM' ID '*']);
+    if isempty(find_dataset) %First time doing the experiment (session 1)
+        %Get the experiment settings structure and adjust settings specific to this experiment
+            exp_settings = BEC_Settings;
+            exp_settings.OTG.ntrials_cal = 25; %Number of choice model calibration trials
+            exp_settings.n_example_choices = 10; %Minimum number of example choices per choice type
+            exp_settings.max_example_choices = 15; %Maximum number of example choices per choice type
+            exp_settings.OTG.max_n_inv = 25; %Take all choices into account for model updating
+            exp_settings.timings.fixation_choice = [0.5 0.75]; %Interval within which a fixation time will be drawn
+            exp_settings.expdir = expdir; %Experiment directory
+            exp_settings.datadir = datadir; %Data saving directory
+        %Make new dataset if needed (after exp_settings is loaded)
+            %Create data structure and get experiment settings structure
+                AllData = struct;
+                AllData.ID = ID;
+                AllData.exp_settings = exp_settings; 
+                AllData.bookmark = 0; %Indicate progress during the experiment
+                AllData.plugins.touchscreen = 0; %Plugins: Tactile screen (default: no)
+            %Get the settings and directories
+                savename = ['DM' AllData.ID '_' datestr(clock,30)]; %Directory name where the dataset will be saved
+                AllData.savedir = [exp_settings.datadir filesep savename]; %Path of the directory where the data will be saved      
+                mkdir(exp_settings.datadir,savename); %Create the directory where the data will be stored
+            %First launch settings: create timing event reel, complete the setup
+                AllData.Timings.StartExperiment = clock;
+                AllData.EventReel = BEC_Timekeeping('StartExperiment',AllData.plugins);
+                AllData.bookmark = 1;
+            %Save
+                save([AllData.savedir filesep 'AllData'],'AllData'); 
+                disp('Dataset and directory created. Experiment will start now.')   
+    else %Either session 2 of the experiment, or resume after bailout
+        %Load dataset
+            dataset = load([find_dataset.folder filesep find_dataset.name filesep 'AllData']);
+            AllData = dataset.AllData;
+        %Get the experiment settings structure
+            exp_settings = AllData.exp_settings;
+    end
+    
+% Setup
     %Add all experiment scripts and functions to the path
         addpath(genpath(exp_settings.expdir)) 
-    %Plugins: Tactile screen
-        AllData.plugins.touchscreen = input('Experiment on a tactile screen device? (flag 1:yes / 0:no): ');
-    %Open a screen
+    %Open a screen if not provided
         Screen('Preference', 'SkipSyncTests', 1); %Skip sync tests: yes
         Screen('Preference', 'VisualDebugLevel', 3); %Visual debug level
         Screen('Preference', 'SuppressAllWarnings', 1);
         KbName('UnifyKeyNames'); %unify across platforms
-    %Test
-        screens=Screen('Screens');
-        if max(screens)==2; i_screen = 1;
-        else; i_screen = 0;
+        if ~exist('window','var')
+            window = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
         end
-        [window,winRect] = Screen('OpenWindow',0,exp_settings.backgrounds.default); %0 for Windows Desktop screen
-        [w,h] = Screen('WindowSize',i_screen); 
-        demo_rect = [0.4*w 0.2*h w 0.8*h]; %The demo screen will not fill the entire screen        
-    %Screen
-%         [window,winRect] = Screen('OpenWindow',i_screen,exp_settings.backgrounds.default,demo_rect); %0 for Windows Desktop screen, 2 for external monitor
         Screen(window,'BlendFunction',GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); %for the Alpha transparency values to take effect
         HideCursor  
-    %First launch settings: create timing event reel, complete the setup
-        if AllData.bookmark == 0
-            AllData.Timings.StartExperiment = clock;
-            AllData.EventReel = BEC_Timekeeping('StartExperiment',AllData.plugins);
-            AllData.bookmark = 1;
-        end
-    %Save
-        save([AllData.savedir filesep 'AllData'],'AllData'); 
-        disp('Dataset saved. Experiment will start now.')   
         
 %% Instructions and examples of DELAY
     if AllData.bookmark == 1
-        %Show instructions about choices in general, and about delay
-            instruction_numbers = [4 5];
+        %Show welcome message, and instructions about choices in general, and about delay
+            instruction_numbers = 201:203;
             [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
@@ -110,17 +124,22 @@
 %% Test battery: DELAY
     if AllData.bookmark == 2
         %Show instructions about calibration choice battery
-%             [exitflag,timings] = BEC_InstructionScreens(window,AllData,'effort_instructions');
-%             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            instruction_numbers = 204;
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
         %Run calibration
-            [AllData,exitflag] = BEC_Calibration(AllData,1,window,1);
+            [AllData,exitflag] = BEC_Calibration(AllData,1,window,0);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             AllData.bookmark = 3; %Move on to next section
+            save([AllData.savedir filesep 'AllData'],'AllData');
     end
     
 %% Instructions and examples of MENTAL EFFORT
     if AllData.bookmark == 3
-        %Show instructions about choices in general, and about effort
-            [exitflag,timings] = BEC_InstructionScreens(window,AllData,'effort_instructions');
+        %Show instructions about mental effort
+            instruction_numbers = 205;
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
         %Effort examples
@@ -175,24 +194,84 @@
 %% Test battery: MENTAL EFFORT
     if AllData.bookmark == 4
         %Show instructions about calibration choice battery
-%             [exitflag,timings] = BEC_InstructionScreens(window,AllData,'effort_instructions');
-%             if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            instruction_numbers = 206;
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
         %Run calibration
-            [AllData,exitflag] = BEC_Calibration(AllData,4,window,1);
+            [AllData,exitflag] = BEC_Calibration(AllData,4,window,0);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             AllData.bookmark = 5; %Move on to next section
+            save([AllData.savedir filesep 'AllData'],'AllData');
     end
 
-%% End of experiment
-if AllData.bookmark == 5        
-    %End of the experiment
-        [~,timings] = BEC_InstructionScreens(window,AllData,'end_of_experiment');
-        AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
-        AllData.Timings.EndOfExperiment = clock;
-        save([AllData.savedir filesep 'AllData'],'AllData');
-    %Close
-        BEC_ExitExperiment(AllData);
-        
-end %if bookmark
+%% End of pre-race calibrations
+    if AllData.bookmark == 5        
+        %End of the experiment
+            instruction_numbers = 207;
+            [~,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+            AllData.Timings.EndOfSession1 = clock;
+            AllData.bookmark = 6;
+            save([AllData.savedir filesep 'AllData'],'AllData');
+        %Close
+            BEC_ExitExperiment(AllData);
+            clc; disp('End of pre-race decision-making session. Data saved.')
+            clear; return
+    end %if bookmark
+
+%% Test battery Session 2: DELAY
+    if AllData.bookmark == 6
+        AllData.Timings.StartOfSession2 = clock;
+        %Show instructions about calibration choice battery
+            instruction_numbers = [201 208];
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+        %Run choice battery
+            AllData.exp_settings.OTG.choicetypes = 1; %Define choice type (1: delay)
+            AllData.OTG_prior.delay.muPhi = AllData.calibration.delay.posterior.muPhi;
+            for trial = 1:25
+                [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window);
+                if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            end
+            AllData.bookmark = 7; %Move on to next section
+            save([AllData.savedir filesep 'AllData'],'AllData');
+    end
+    
+%% Test battery Session 2: MENTAL EFFORT
+    if AllData.bookmark == 7
+        %Show instructions about calibration choice battery
+            instruction_numbers = 209;
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+        %Run choice battery
+            AllData.exp_settings.OTG.choicetypes = 4; %Define choice type (4: mental effort)
+            AllData.OTG_prior.mental_effort.muPhi = AllData.calibration.mental_effort.posterior.muPhi;
+            for trial = 1:25
+                [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window);
+                if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            end
+            AllData.bookmark = 8; %Move on to next section
+            save([AllData.savedir filesep 'AllData'],'AllData');
+    end
+    
+%% End of post-race calibrations
+    if AllData.bookmark == 8   
+        %End of the experiment
+            instruction_numbers = 207;
+            [~,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+            AllData.Timings.EndOfSession2 = clock;
+            save([AllData.savedir filesep 'AllData'],'AllData');
+        %Close
+            BEC_ExitExperiment(AllData);
+            clc; disp('End of post-race decision-making session. Data saved.')
+            clear; return
+    end %if bookmark
+
+end %function
     
 %% Subfunction
 function [left_or_right,timings] = Show_Another_Example(window,AllData,which_instruction)

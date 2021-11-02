@@ -153,8 +153,12 @@ function [choicetype] = SampleChoiceType(trialinfo,OTG_settings)
     previous_type = all_choicetypes(end); %The type of the previous choice (if the current choice is the first of a set, it may not sample a type that is the same as the last of a previous set)
 % Sample the choice based on 2 criteria
     sample_types = setdiff(OTG_settings.choicetypes,[recent_types previous_type]); %These are the choice types that may be sampled
-    i_select = randperm(length(sample_types),1); %Randomly select one of the types that may be sampled
-    choicetype = sample_types(i_select); %Sample the choice type - this is the output of the function    
+    if isempty(sample_types) %there is only one type to sample
+        choicetype = OTG_settings.choicetypes;
+    else
+        i_select = randperm(length(sample_types),1); %Randomly select one of the types that may be sampled
+        choicetype = sample_types(i_select); %Sample the choice type - this is the output of the function    
+    end
 end
 
 function [u,y] = GetTrialFeatures(AllData)
