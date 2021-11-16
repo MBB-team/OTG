@@ -362,7 +362,7 @@ function [cost] = SampleCost(AllData,choicetype)
 end
 
 function [reward] = SampleReward(AllData,choicetype,cost)
-%Sample the reward of the uncostly option, based on the indifference value and the sampled cost. The
+    %Sample the reward of the uncostly option, based on the indifference value and the sampled cost. The
 %indifference value is calculated with the parameters of the inverted model.
     %Settings
         OTG_settings = AllData.exp_settings.OTG;
