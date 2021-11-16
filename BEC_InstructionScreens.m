@@ -48,7 +48,7 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
             valid = 0;
             while ~valid
                 %Tactile screen
-                    if isfield(trialinput.plugins,'touchscreen') && trialinput.plugins.touchscreen == 1 %Record finger press on selected option
+                    if isfield(AllData,'plugins') && isfield(AllData.plugins,'touchscreen') && AllData.plugins.touchscreen == 1 %Record swipes
                         [keyCode] = SwipeTouchscreen(window,LRQS);
                         keyIsDown = true;
                 %Keyboard
@@ -114,9 +114,9 @@ function [keyCode] = SwipeTouchscreen(window,LRQS)
                     delta_x = last_x - first_x;
                     if abs(delta_x) > min_dist_pix %valid swipe
                         swiped = true;
-                        if delta_x > 0 %right swipe
+                        if delta_x < 0 %right swipe
                             keyCode(LRQS(2)) = true;
-                        elseif delta_x < 0 %left swipe
+                        elseif delta_x > 0 %left swipe
                             keyCode(LRQS(1)) = true;
                         end
                     else %not a valid swipe => reset
