@@ -47,7 +47,7 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
         %Monitor responses
             valid = 0;
             while ~valid
-                %Tactile screen
+                %Tactile screen AND keyboard
                     if isfield(AllData,'plugins') && isfield(AllData.plugins,'touchscreen') && AllData.plugins.touchscreen == 1 %Record swipes
                         [keyCode] = SwipeTouchscreen(window,LRQS);
                         keyIsDown = true;
@@ -62,15 +62,40 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
                         if keyCode(leftKey) %previous slide
                             slide = slide-1; valid = 1;
                             if slide < 1; slide = 1; end %Can't go further back than first slide.
+                            which_slide = 'previous';
                         elseif keyCode(rightKey) %next slide
                             slide = slide+1; valid = 1;
+                            which_slide = 'next';
                         elseif keyCode(spacebar) %next slide
                             slide = slide+1; valid = 1;
+                            which_slide = 'next';
                         elseif keyCode(escapeKey) %Proceed to exit in master
                             exitflag = 1; valid = 1; slide = 99;
+                            which_slide = 'escape';
                         end
                     end                    
             end %while ~valid
+        %Animate slide transition
+            if any(strcmp(which_slide,{'next','previous'}))
+                offscreen = 0;
+                loop_sliderect = sliderect;
+                iter = 0; n_iter = 10;
+                while ~offscreen
+                    switch which_slide
+                        case 'next'
+                            loop_sliderect = loop_sliderect - (sliderect(3)-sliderect(1))/n_iter*[1 0 1 0];
+                        case 'previous'
+                            loop_sliderect = loop_sliderect + (sliderect(3)-sliderect(1))/n_iter*[1 0 1 0];
+                    end
+                    Screen('DrawTexture', window, tex_instruction, [], loop_sliderect);
+                    Screen('Flip', window);
+                    pause(0.03);
+                    iter = iter+1;
+                    if iter == n_iter
+                        offscreen = 1;
+                    end
+                end
+            end %if strcmp next/previous
     end %while slide
 end
 

@@ -141,10 +141,11 @@ function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
         keyCode(LRQ) = 0; exitflag = 0;
         while ~any(keyCode(LRQ)) && ... % as long no button is pressed, AND...
             (GetSecs-timings(2).seconds) <= exp_settings.timings.max_resp_time % ... as long as the timeout limit is not reached
-            [~, ~, keyCode] = KbCheck(-1);
             %Special case: tactile screen
-                if isfield(trialinput.plugins,'touchscreen') && trialinput.plugins.touchscreen == 1 %Record finger press on selected option
-                    keyCode = SelectOptionTouchscreen(window,trialinput,exp_settings,LRQ);           
+                if isfield(trialinput,'plugins') && isfield(trialinput.plugins,'touchscreen') && trialinput.plugins.touchscreen == 1 %Record finger press on selected option
+                    keyCode = SelectOptionTouchscreen(window,trialinput,exp_settings,LRQ); 
+                else
+                    [~, ~, keyCode] = KbCheck(-1);
                 end
         end %while: monitor response
         timings = [timings BEC_Timekeeping('Choice_decisiontime',trialinput.plugins,GetSecs)]; 

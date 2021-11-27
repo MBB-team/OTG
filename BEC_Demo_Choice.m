@@ -23,6 +23,7 @@
             trialinput.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
             trialinput.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
             trialinput.Example = 0;      %Is this an example trial? (1:Yes - with extra text / 0:No - minimal text on screen)
+            trialinput.plugins.touchscreen = 1;
         %-----------------------------------------------------------------------------------------------------------------------
         [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
     end

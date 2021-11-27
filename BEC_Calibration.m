@@ -75,7 +75,12 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
         %Present the choice, record decision
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
-            trialinput.Cost = cost;       
+            trialinput.Cost = cost;      
+            if isfield(AllData,'plugins') && isfield(AllData.plugins,'touchscreen') && AllData.plugins.touchscreen == 1 %Record finger press on selected option
+                trialinput.plugins.touchscreen = 1;
+            else
+                trialinput.plugins.touchscreen = 0;
+            end
             [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
             if exitflag; return; end
         %Store selected trial

@@ -108,7 +108,7 @@
                     AllData.EventReel = [AllData.EventReel AllData.Example_Choices.trialinfo_delay(i_ex).timings]; %Store the recorded timing structure in a list of all events
                 %Ask if the participant wants to see another example
                     if i_ex >= exp_settings.n_example_choices && i_ex < exp_settings.max_example_choices
-                        [left_or_right,timings] = Show_Another_Example(window,AllData,'another_example');
+                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,'another_example');
                         AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
                         switch left_or_right
                             case 'escape'; BEC_ExitExperiment(AllData); return
@@ -176,7 +176,7 @@
                     AllData.EventReel = [AllData.EventReel AllData.Example_Choices.trialinfo_risk(i_ex).timings]; %Store the recorded timing structure in a list of all events
                 %Ask if the participant wants to see another example
                     if i_ex >= exp_settings.n_example_choices && i_ex < exp_settings.max_example_choices
-                        [left_or_right,timings] = Show_Another_Example(window,AllData,'another_example');
+                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,'another_example');
                         AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
                         switch left_or_right
                             case 'escape'; BEC_ExitExperiment(AllData); return
@@ -244,7 +244,7 @@
                     AllData.EventReel = [AllData.EventReel AllData.Example_Choices.trialinfo_physical_effort(i_ex).timings]; %Store the recorded timing structure in a list of all events
                 %Ask if the participant wants to see another example
                     if i_ex >= exp_settings.n_example_choices && i_ex < exp_settings.max_example_choices
-                        [left_or_right,timings] = Show_Another_Example(window,AllData,'another_example');
+                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,'another_example');
                         AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
                         switch left_or_right
                             case 'escape'; BEC_ExitExperiment(AllData); return
@@ -312,7 +312,7 @@
                     AllData.EventReel = [AllData.EventReel AllData.Example_Choices.trialinfo_mental_effort(i_ex).timings]; %Store the recorded timing structure in a list of all events
                 %Ask if the participant wants to see another example
                     if i_ex >= exp_settings.n_example_choices && i_ex < exp_settings.max_example_choices
-                        [left_or_right,timings] = Show_Another_Example(window,AllData,'another_example');
+                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,'another_example');
                         AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
                         switch left_or_right
                             case 'escape'; BEC_ExitExperiment(AllData); return
@@ -353,53 +353,3 @@ if AllData.bookmark == 10
         BEC_ExitExperiment(AllData);
         
 end %if bookmark
-    
-%% Subfunction
-function [left_or_right,timings] = Show_Another_Example(window,AllData,which_instruction)
-% Subfunction similar to "BEC_InstructionScreens". Puts one slide on screen asking whether the participant wants to see 
-% another example (left) or proceed (right).
-
-    %Prepare
-        exp_settings = AllData.exp_settings;
-        if isa(which_instruction,'char') %When the instruction topic is entered as a string
-            slide = exp_settings.instructions_emotions.(which_instruction); %Get slides
-        else %When the slide numbers are directly entered
-            slide = which_instruction;
-        end
-        Screen('FillRect',window,exp_settings.backgrounds.default);
-    %Valid key names
-        leftKey     = KbName('LeftArrow'); %37
-        rightKey    = KbName('RightArrow'); %39
-        escapeKey   = KbName('ESCAPE'); %27
-    %Scaling of the slide
-        [width, height]=Screen('WindowSize',window);
-        SF = 1;   %Scaling factor w.r.t. full screen
-        sliderect = ((1-SF)/2+[0 0 SF SF]).*[width height width height];            
-    %Instruction slide on screen
-        KbReleaseWait;  % Wait for all keys to be released before drawing
-        try
-            im_instruction = imread([exp_settings.stimdir filesep 'Diapositive' num2str(slide) '.png']);
-        catch
-            im_instruction = imread([exp_settings.stimdir filesep 'Slide' num2str(slide) '.png']);
-        end
-        tex_instruction = Screen('MakeTexture',window,im_instruction);
-        Screen('DrawTexture', window, tex_instruction, [], sliderect);
-        timestamp = Screen('Flip', window);
-        timings = BEC_Timekeeping('InstructionScreen',AllData.plugins,timestamp);
-    %Monitor responses
-        valid = 0;
-        while ~valid
-            [keyIsDown, ~, keyCode, ~] = KbCheck(-1); 
-            %keyIsDown returns 1 while a key is pressed
-            %keyCode is a logical for all keys of the keyboard
-            if keyIsDown %Check if key press is valid
-                if keyCode(leftKey) %previous slide
-                    left_or_right = 'left'; valid = 1;
-                elseif keyCode(rightKey) %next slide
-                    left_or_right = 'right'; valid = 1;
-                elseif keyCode(escapeKey) %Proceed to exit in master
-                    left_or_right = 'escape'; valid = 1;
-                end
-            end
-        end %while ~valid
-end
