@@ -32,7 +32,7 @@
                 AllData.ID = ID;
                 AllData.exp_settings = exp_settings; 
                 AllData.bookmark = 0; %Indicate progress during the experiment
-                AllData.plugins.touchscreen = 0; %Plugins: Tactile screen (default: no)
+                AllData.plugins.touchscreen = 1; %Plugins: Tactile screen (default: no)
             %Get the settings and directories
                 savename = ['DM' AllData.ID '_' datestr(clock,30)]; %Directory name where the dataset will be saved
                 AllData.savedir = [exp_settings.datadir filesep savename]; %Path of the directory where the data will be saved      
