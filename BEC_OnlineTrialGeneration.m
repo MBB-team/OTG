@@ -224,7 +224,7 @@ function [mu,converged,mu_iter] = Run_GaussNewton(mu0, S0, u, y, OTG_settings)
         %Loop through selected trials
             DV = NaN(n,1);
             dDV = NaN(length(mu0),n);
-            dDV(1,:) = exp(b); %dDV/db is the same for all trials
+            dDV(1,:) = b; %dDV/db is the same for all trials
             for trl = 1:n
                 %Find the cost bin that this trial is in
                     bin = find(C(trl)>OTG_settings.grid.binlimits(:,1) & C(trl)<=OTG_settings.grid.binlimits(:,2));
@@ -235,7 +235,7 @@ function [mu,converged,mu_iter] = Run_GaussNewton(mu0, S0, u, y, OTG_settings)
                             dDV(2,trl) = k1*C(trl); %dDV/dk1
                             dDV(3:6,trl) = 0; %dDV/dki for i>1
                         case 2
-                            DV(trl) = R(trl) - 1 + k1*C1 + k2*(C(trl)-C2) + b;
+                            DV(trl) = R(trl) - 1 + k1*C1 + k2*(C(trl)-C1) + b;
                             dDV(2,trl) = k1*C1; %dDV/dk1
                             dDV(3,trl) = k2*(C(trl)-C1); %dDV/dk2
                             dDV(4:6,trl) = 0; %dDV/dki for i>2
@@ -362,7 +362,7 @@ function [cost] = SampleCost(AllData,choicetype)
 end
 
 function [reward] = SampleReward(AllData,choicetype,cost)
-    %Sample the reward of the uncostly option, based on the indifference value and the sampled cost. The
+%Sample the reward of the uncostly option, based on the indifference value and the sampled cost. The
 %indifference value is calculated with the parameters of the inverted model.
     %Settings
         OTG_settings = AllData.exp_settings.OTG;
@@ -406,7 +406,11 @@ function [adjusted_reward] = Adjust_Reward(AllData,reward,choicetype,type_trialn
         typenames = OTG_settings.typenames;
         grid = OTG_settings.grid;
     %Number of recent subsequent non-converged trials:
-        n_not_converge = (type_trialno-1) - find(AllData.OTG_posterior.(typenames{choicetype}).converged,1,'last'); 
+        last_converged = find(AllData.OTG_posterior.(typenames{choicetype}).converged,1,'last');
+        if isempty(last_converged) %No iterations until now could be converged
+            last_converged = 0;
+        end
+        n_not_converge = (type_trialno-1) - last_converged; 
     %Select by how much we want to adjust the proposed reward, away from indifference:
         if n_not_converge > length(OTG_settings.adjust_rew_nonconverge)
             adjustment = OTG_settings.adjust_rew_nonconverge(end);
@@ -471,7 +475,7 @@ function [X] = sampleFromArbitraryP(p,gridX,N) % --- from VBA toolbox by Daunize
         X = zeros(N,k);
         for i=1:N
             below = find(rand<=pcdf);
-            X(i,:) = gridX(below(1),:);
+            X(i,:) = gridX(below(1),:); %Error that can happen: Index exceeds matrix dimensions.
         end
     end    
 end
@@ -493,10 +497,10 @@ function AllData = SimulationSettings(AllData)
 %post-hoc, and here it is used to generate the choices. The purpose of the
 %model-fitting algorithm here is to approach this choice function as closely as
 %possible.
-    AllData.sim.kC = 2.5; %Weight on cost
-    AllData.sim.gamma = 3; %Power on cost
-    AllData.sim.beta = 15; %Choice temperature
-    AllData.sim.bias = 0; %Choice bias
+    AllData.sim.kC = 1.5; %Weight on cost
+    AllData.sim.gamma = 0.3; %Power on cost
+    AllData.sim.beta = 5; %Choice temperature
+    AllData.sim.bias = 0.1; %Choice bias
     AllData.sim.kRew = 3; %Weight on reward
 %For visualization: 
     AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])

@@ -20,9 +20,9 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 %possible.
                     AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])
                     AllData.sim.kC = 2.5; %Weight on cost
-                    AllData.sim.gamma = 0.5; %Power on cost
-                    AllData.sim.beta = 10; %Choice temperature
-                    AllData.sim.bias = 0.2; %Choice bias
+                    AllData.sim.gamma = 3; %Power on cost
+                    AllData.sim.beta = 15; %Choice temperature
+                    AllData.sim.bias = 0; %Choice bias
                     AllData.sim.kRew = 3; %Weight on reward
                 %For visualization of the simulated indifference curve: 
                     AllData.sim.indiff_curve = (AllData.sim.kRew - AllData.sim.kC.*linspace(0,1).^AllData.sim.gamma - AllData.sim.bias)./AllData.sim.kRew;
