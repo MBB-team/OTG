@@ -338,6 +338,19 @@ function [keyCode] = SelectOptionTouchscreen(window,trialinput,exp_settings,LRQ)
                 return
             end
             [x,~,pressed] = GetMouse;
+        %Check escape cross
+            if isfield(AllData.exp_settings,'tactile')
+                escapeCrossSize = exp_settings.tactile.escapeCross_ySize*screenY;
+                escapeCrossRect = [screenX-1.5*escapeCrossSize 0.5*escapeCrossSize screenX-0.5*escapeCrossSize 1.5*escapeCrossSize];
+                press_escape = last_x >= escapeCrossRect(1) & last_x <= escapeCrossRect(3) & last_y >= escapeCrossRect(2) & last_y <= escapeCrossRect(4);
+                if press_escape %Verify that the user REALLY wants to quit; otherwise, proceed.
+                    escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
+                    if escape_experiment
+                        keyCode(LRQ(3)) = true;
+                        return
+                    end
+                end
+            end
         %Check if an option is selected (sensitive area is within the x-limits of the cost box, over the full height of the screen)
             if trialinput.Example
                 %Check left option

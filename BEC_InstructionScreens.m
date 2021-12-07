@@ -22,9 +22,18 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
         escapeKey   = KbName('ESCAPE'); %27
         LRQS = [leftKey rightKey escapeKey spacebar];  % join keys 
     %Scaling of the slides
-        [width, height]=Screen('WindowSize',window);
+        [Xsize, Ysize]=Screen('WindowSize',window);
         SF = 1;   %Scaling factor w.r.t. full screen
-        sliderect = ((1-SF)/2+[0 0 SF SF]).*[width height width height];
+        sliderect = ((1-SF)/2+[0 0 SF SF]).*[Xsize Ysize Xsize Ysize];
+    %Navigation arrows (tactile screens)
+        if isfield(AllData.exp_settings,'tactile') && isfield(AllData.exp_settings.tactile,'navigationArrows') && AllData.exp_settings.tactile.navigationArrows == true
+            tex_leftkey = Screen('MakeTexture',window,AllData.exp_settings.tactile.im_leftkey);
+            tex_rightkey = Screen('MakeTexture',window,AllData.exp_settings.tactile.im_rightkey);
+            navigationArrowSize = AllData.exp_settings.tactile.navigationArrows_ySize*Ysize;
+            navigationArrowRects = [0.5*navigationArrowSize Ysize-1.5*navigationArrowSize 1.5*navigationArrowSize Ysize-0.5*navigationArrowSize; %Left
+                                    Xsize-1.5*navigationArrowSize Ysize-1.5*navigationArrowSize Xsize-0.5*navigationArrowSize Ysize-0.5*navigationArrowSize]'; %Right
+            navigationArrowTex = [tex_leftkey; tex_rightkey];
+        end
             
 %Loop through slides
     slide = 1; %start slide
@@ -38,6 +47,42 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
             end
             tex_instruction = Screen('MakeTexture',window,im_instruction);
             Screen('DrawTexture', window, tex_instruction, [], sliderect);
+        %Tactile screen features
+            if isfield(AllData,'plugins') && isfield(AllData.plugins,'touchscreen') && AllData.plugins.touchscreen == true
+                %Draw escape cross
+                    if isfield(AllData.exp_settings,'tactile')
+                        escapeCrossSize = AllData.exp_settings.tactile.escapeCross_ySize*Ysize;
+                        escapeCrossRect = [Xsize-1.5*escapeCrossSize 0.5*escapeCrossSize Xsize-0.5*escapeCrossSize 1.5*escapeCrossSize];
+                        Screen('FillRect',window,AllData.exp_settings.colors.red,escapeCrossRect);
+                        Screen('TextSize',window,AllData.exp_settings.tactile.escapeCrossFontSize); %Careful to set the text size back to what it was before
+                        DrawFormattedText(window, 'X', 'center', 'center', AllData.exp_settings.colors.white,[],[],[],[],[],escapeCrossRect);
+                    end
+                %Draw navigation arrows    
+                    if isfield(AllData.exp_settings,'tactile') && isfield(AllData.exp_settings.tactile,'navigationArrows') && AllData.exp_settings.tactile.navigationArrows == true
+                        %Decide which arrow to draw
+                            if slide == 1
+                                which_arrow = 'right'; %Can only move on
+                            elseif slide == length(slides) && length(slides) > 1
+                                which_arrow = 'left'; %Can only go back
+                            else %Can go back or forth
+                                which_arrow = 'both';
+                            end
+                        %Draw arrow(s)
+                            switch which_arrow
+                                case 'left'
+                                    arrowrect = navigationArrowRects(:,1);
+                                    arrowtex = navigationArrowTex(1);
+                                case 'right'
+                                    arrowrect = navigationArrowRects(:,2);
+                                    arrowtex = navigationArrowTex(2);
+                                case 'both'
+                                    arrowrect = navigationArrowRects;
+                                    arrowtex = navigationArrowTex;
+                            end
+                            Screen('DrawTextures', window, arrowtex, [], arrowrect);
+                    end
+            end %if touchscreen
+        %Flip
             timestamp = Screen('Flip', window);
             if slide == 1
                 timings = BEC_Timekeeping('InstructionScreen',AllData.plugins,timestamp);
@@ -49,7 +94,7 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
             while ~valid
                 %Tactile screen AND keyboard
                     if isfield(AllData,'plugins') && isfield(AllData.plugins,'touchscreen') && AllData.plugins.touchscreen == 1 %Record swipes
-                        [keyCode] = SwipeTouchscreen(window,LRQS);
+                        [keyCode] = SelectOptionTouchscreen(window,exp_settings,LRQS);
                         keyIsDown = true;
                 %Keyboard
                     else
@@ -97,42 +142,56 @@ function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instru
                 end
             end %if strcmp next/previous
     end %while slide
-end
+end %main function
 
-%% Subfunction: monitor swipes with MS Surface tactile screen
-function [keyCode] = SwipeTouchscreen(window,LRQS)
-% Monitor whether a swipe is being made on a tactile screen
-% The subfunction outputs a response as if it were a left or right key press.
-% To do: - account for key presses if a keyboard is plugged in.
-%        - terminate by pressing [X]   
+%% Subfunction: monitor responses with tactile screen
+function [keyCode] = SelectOptionTouchscreen(window,exp_settings,LRQS)
+% Detect if the participant presses the left button, right button, or exit cross.
+% Alternatively, the participant can swipe the the left or right
 
-%Setting: minimal swipeable distance
-    min_dist_pct = 0.05; %5% of the screen
-    [screenX, ~] = Screen('WindowSize',window); %Get screen size
-    min_dist_pix = min_dist_pct*screenX;
+%Settings
+    %Escape cross
+        [Xsize, Ysize] = Screen('WindowSize',window); %Get screen size
+        escapeCrossSize = exp_settings.tactile.escapeCross_ySize*Ysize;
+        escapeCrossRect = [Xsize-1.5*escapeCrossSize 0.5*escapeCrossSize Xsize-0.5*escapeCrossSize 1.5*escapeCrossSize];
+    %Navigation arrows
+        if isfield(exp_settings,'tactile') && isfield(exp_settings.tactile,'navigationArrows') && exp_settings.tactile.navigationArrows == true
+            navigationArrowSize = exp_settings.tactile.navigationArrows_ySize*Ysize;
+            navigationArrowRects = [0.5*navigationArrowSize Ysize-1.5*navigationArrowSize 1.5*navigationArrowSize Ysize-0.5*escapeCrossSize; %Left
+                                    Xsize-1.5*navigationArrowSize Ysize-1.5*navigationArrowSize Xsize-0.5*navigationArrowSize Ysize-0.5*escapeCrossSize]'; %Right
+        end
+    %Swiping
+        min_dist_pct = 0.05; %5pct of the screen
+        min_dist_pix = min_dist_pct*Xsize;
 
 %Pre-loop check: finger released from screen
     [~,~,buttons] = GetMouse;
     while any(buttons)
         [~,~,buttons] = GetMouse;
     end
-%Loop until swipe is detected
+    swiped = false; %Swipe to left or right
+    buttonpress = false; %Press left/right button, or exit cross
     first_x = [];
     last_x = [];
-    swiped = false;
-    while ~swiped
+    last_y = [];
+    finger_on_option = false(1,2);
+    SetMouse(Xsize/2,Ysize/2);
+    
+%Loop until either option is pressed
+    while ~( buttonpress || swiped )
         %Monitor keypresses, in case keyboard is plugged in
             [~, ~, keyCode] = KbCheck(-1);
             if any(keyCode(LRQS)) %left/right/quit/spacebar key is pressed
                 return
             end
         %Check for swipes
-            [x,~,pressed] = GetMouse;
+            [x,y,pressed] = GetMouse;
             if any(pressed)
                 if isempty(first_x)
                     first_x = x;
                 end
                 last_x = x;
+                last_y = y;
         %Check for release
             else %unpressed
                 if ~isempty(first_x) && ~isempty(last_x) %detect release after initial touch
@@ -144,12 +203,51 @@ function [keyCode] = SwipeTouchscreen(window,LRQS)
                         elseif delta_x > 0 %left swipe
                             keyCode(LRQS(1)) = true;
                         end
-                    else %not a valid swipe => reset
-                        swiped = false;
-                        first_x = [];
-                        last_x = [];
-                    end
-                end
-            end %if pressed
-    end %while               
-end %function
+                    else %not a valid swipe; check for button presses
+                        if isfield(exp_settings,'tactile')
+                            %Check for exit cross press
+                                press_escape = last_x >= escapeCrossRect(1) & last_x <= escapeCrossRect(3) & last_y >= escapeCrossRect(2) & last_y <= escapeCrossRect(4);
+                                if press_escape
+                                    %Verify that the user REALLY wants to quit; otherwise, proceed.
+                                        escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
+                                        if escape_experiment
+                                            keyCode(LRQS(3)) = true;
+                                            buttonpress = true;
+                                        else
+                                            press_escape = false;
+                                        end
+                                end
+                            %Check for navigation arrow presses
+                                if ~press_escape && isfield(exp_settings.tactile,'navigationArrows') && exp_settings.tactile.navigationArrows == true
+                                    %Check left option
+                                        finger_on_option(1) = last_x >= navigationArrowRects(1,1) & last_x <= navigationArrowRects(3,1) & ...
+                                            last_y >= navigationArrowRects(2,1) & last_y <= navigationArrowRects(4,1);
+                                    %Check right option
+                                        finger_on_option(2) = last_x >= navigationArrowRects(1,2) & last_x <= navigationArrowRects(3,2) & ...
+                                            last_y >= navigationArrowRects(2,2) & last_y <= navigationArrowRects(4,2);
+                                    %Rule out possibility of tapping onto both options
+                                        if all(finger_on_option)
+                                            finger_on_option = false(1,2);
+                                        end
+                                    %Check if valid response is given
+                                        if any(finger_on_option)
+                                            buttonpress = true;
+                                            if finger_on_option(1)
+                                                keyCode(LRQS(1)) = true;
+                                            elseif finger_on_option(2)
+                                                keyCode(LRQS(2)) = true;
+                                            end                                            
+                                    %If not: reset
+                                        else                                            
+                                            first_x = [];
+                                            last_x = [];
+                                            last_y = [];
+                                            finger_on_option = false(1,2);
+                                        end %any finger_on_option
+                                end %if isfield exp_settings.tactile.navigationArrows                                
+                        end %if isfield exp_settings.tactile
+                    end %if valid swipe / else: buttons
+                end %if released after press
+            end %if pressed 
+    end %while pressed or swiped
+end %subfunction

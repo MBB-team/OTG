@@ -101,7 +101,7 @@
                     AllData.EventReel = [AllData.EventReel AllData.Example_Choices.trialinfo_delay(i_ex).timings]; %Store the recorded timing structure in a list of all events
                 %Ask if the participant wants to see another example
                     if i_ex >= exp_settings.n_example_choices && i_ex < exp_settings.max_example_choices
-                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,'another_example');
+                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData);
                         AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
                         switch left_or_right
                             case 'escape'; BEC_ExitExperiment(AllData); return
@@ -172,7 +172,7 @@
                     AllData.EventReel = [AllData.EventReel AllData.Example_Choices.trialinfo_effort(i_ex).timings]; %Store the recorded timing structure in a list of all events
                 %Ask if the participant wants to see another example
                     if i_ex >= exp_settings.n_example_choices && i_ex < exp_settings.max_example_choices
-                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,'another_example');
+                        [left_or_right,timings] = BEC_Show_Another_Example(window,AllData);
                         AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
                         switch left_or_right
                             case 'escape'; BEC_ExitExperiment(AllData); return

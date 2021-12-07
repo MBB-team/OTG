@@ -9,7 +9,7 @@ function [exp_settings] = BEC_Settings
 %% Setup
     rng('shuffle')              %Shuffle the random number generator
     exp_settings = struct;      %Predefine output
-    expdir = which('BEC_Settings'); expdir = expdir(1:end-15);  %Get the directory where this function is stored
+    expdir = fileparts(mfilename('fullpath'));  %Get the directory where this function is stored
     cd(expdir);                 %Change directory to the directory where this function is situated
 % Keyboard settings
     %General:
@@ -70,6 +70,15 @@ function [exp_settings] = BEC_Settings
             exp_settings.font.EmoFontColor = exp_settings.colors.white;     %Emotion induction screen       
             exp_settings.font.RatingFontColor = exp_settings.colors.white;  %Rating screen
             exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
+    %Tactile screen
+        exp_settings.tactile.escapeCross_ySize = 1/20; %Size relative to screen height
+        exp_settings.tactile.escapeCrossFontSize = 20; %Size of the "X" to click in order to exit the screen
+        exp_settings.tactile.navigationArrows = false; %Flag if you want to display the navigation arrows and make them active for navigation (default: false)
+        exp_settings.tactile.navigationArrows_ySize = 1/10; %Size relative to screen height    
+        exp_settings.tactile.im_leftkey = imread([exp_settings.stimdir filesep 'leftkey.png']); %Left key image loaded
+        exp_settings.tactile.im_rightkey = imread([exp_settings.stimdir filesep 'rightkey.png']); %Right key image loaded
+        exp_settings.tactile.QuitScreenFontSize = 32;
+        exp_settings.tactile.PatientIDFontSize = 40;            
             
 %% Choice screen configuration
     % Cost and reward features

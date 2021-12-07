@@ -7,6 +7,7 @@ function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
 % The individual cost visualizations of the 4 cost types have their own subfunctions.
 
     %Setup
+        tactile_screen = isfield(drawchoice,'plugins') & isfield(drawchoice.plugins,'touchscreen') & drawchoice.plugins.touchscreen == 1; %Logical: tactile screen or not
         [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
         Screen('TextFont',window,exp_settings.font.FontType);
         if drawchoice.example == 1
@@ -49,8 +50,8 @@ function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
                 DrawFormattedText(window, drawchoice.costlefttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_left.*screensize);
                 DrawFormattedText(window, drawchoice.costrighttext, 'center', 'center', exp_settings.font.ChoiceFontColor, [], [], [], [], [], text_cost_right.*screensize);
             end
-    %In example trials: draw arrow keys
-        if drawchoice.example
+    %In example trials: draw arrow keys (but not on a tactile screen)
+        if drawchoice.example && ~tactile_screen
             leftkeyrect = [mean(text_cost_left([1,3]))*Xsize-drawchoice.size_leftkey(1)/4 exp_settings.choicescreen.arrowbuttons_y*Ysize-drawchoice.size_leftkey(2)/4 ...
                 mean(text_cost_left([1,3]))*Xsize+drawchoice.size_leftkey(1)/4 exp_settings.choicescreen.arrowbuttons_y*Ysize+drawchoice.size_leftkey(2)/4];
                 Screen('DrawTexture', window, drawchoice.tex_leftkey, [], leftkeyrect);
@@ -76,6 +77,14 @@ function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
             else
                 DrawFormattedText(window, '+', 'center', 'center', exp_settings.colors.white);
             end
+        end
+    %On tactile screens: add escape cross
+        if tactile_screen && isfield(exp_settings,'tactile')
+            escapeCrossSize = exp_settings.tactile.escapeCross_ySize*Ysize;
+            escapeCrossRect = [Xsize-1.5*escapeCrossSize 0.5*escapeCrossSize Xsize-0.5*escapeCrossSize 1.5*escapeCrossSize];
+            Screen('FillRect',window,exp_settings.colors.red,escapeCrossRect);
+            Screen('TextSize',window,exp_settings.tactile.escapeCrossFontSize); %Careful to set the text size back to what it was before
+            DrawFormattedText(window, 'X', 'center', 'center', AllData.exp_settings.colors.white,[],[],[],[],[],escapeCrossRect);
         end
     %Cost visualizations            
         switch drawchoice.choicetype
