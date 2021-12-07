@@ -84,7 +84,7 @@ function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
             escapeCrossRect = [Xsize-1.5*escapeCrossSize 0.5*escapeCrossSize Xsize-0.5*escapeCrossSize 1.5*escapeCrossSize];
             Screen('FillRect',window,exp_settings.colors.red,escapeCrossRect);
             Screen('TextSize',window,exp_settings.tactile.escapeCrossFontSize); %Careful to set the text size back to what it was before
-            DrawFormattedText(window, 'X', 'center', 'center', AllData.exp_settings.colors.white,[],[],[],[],[],escapeCrossRect);
+            DrawFormattedText(window, 'X', 'center', 'center', exp_settings.colors.white,[],[],[],[],[],escapeCrossRect);
         end
     %Cost visualizations            
         switch drawchoice.choicetype

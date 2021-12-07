@@ -6,8 +6,14 @@ function [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,which
     %Prepare
         %Settings structure
             exp_settings = AllData.exp_settings;
+        %Tactile or not?
+            if isfield(AllData.exp_settings,'tactile') && isfield(AllData.exp_settings.tactile,'navigationArrows') && AllData.exp_settings.tactile.navigationArrows == true
+                tactile_screen = true;
+            else
+                tactile_screen = false;
+            end
         %Get slide numbers
-            if exist(which_instruction,'var') %If the slide is specified manually
+            if exist('which_instruction','var') %If the slide is specified manually
                 if isa(which_instruction,'char') %When the instruction topic is entered as a string
                     slide = exp_settings.instructions_emotions.(which_instruction); %Get slides
                 else %When the slide numbers are directly entered
@@ -15,12 +21,10 @@ function [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,which
                 end
             else
                 %Default
-                    slide = exp_settings.instructions_emotions.(which_instruction); %Get slides
-                    tactile_screen = false;
+                    slide = exp_settings.instructions_emotions.another_example; %Get slides
                 %Tactile with arrows
-                    if isfield(AllData.exp_settings,'tactile') && isfield(AllData.exp_settings.tactile,'navigationArrows') && AllData.exp_settings.tactile.navigationArrows == true
+                    if tactile_screen
                         slide = 11;
-                        tactile_screen = true;
                     end
             end
         %Valid key names
@@ -143,8 +147,8 @@ function [keyCode] = SelectOptionTouchscreen(window,exp_settings,LRQS)
     swiped = false; %Swipe to left or right
     buttonpress = false; %Press left/right button, or exit cross
     first_x = [];
-    last_x = [];
-    last_y = [];
+    x = [];
+    y = [];
     finger_on_option = false(1,2);
     SetMouse(Xsize/2,Ysize/2);
     
@@ -157,68 +161,59 @@ function [keyCode] = SelectOptionTouchscreen(window,exp_settings,LRQS)
             end
         %Check for swipes
             [x,y,pressed] = GetMouse;
-            if any(pressed)
-                if isempty(first_x)
-                    first_x = x;
-                end
-                last_x = x;
-                last_y = y;
-        %Check for release
-            else %unpressed
-                if ~isempty(first_x) && ~isempty(last_x) %detect release after initial touch
-                    delta_x = last_x - first_x;
-                    if abs(delta_x) > min_dist_pix %valid swipe
-                        swiped = true;
-                        if delta_x < 0 %right swipe
-                            keyCode(LRQS(2)) = true;
-                        elseif delta_x > 0 %left swipe
-                            keyCode(LRQS(1)) = true;
-                        end
-                    else %not a valid swipe; check for button presses
-                        if isfield(exp_settings,'tactile')
-                            %Check for exit cross press
-                                press_escape = last_x >= escapeCrossRect(1) & last_x <= escapeCrossRect(3) & last_y >= escapeCrossRect(2) & last_y <= escapeCrossRect(4);
-                                if press_escape
-                                    %Verify that the user REALLY wants to quit; otherwise, proceed.
-                                        escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
-                                        if escape_experiment
-                                            keyCode(LRQS(3)) = true;
-                                            buttonpress = true;
-                                        else
-                                            press_escape = false;
-                                        end
-                                end
-                            %Check for navigation arrow presses
-                                if ~press_escape && isfield(exp_settings.tactile,'navigationArrows') && exp_settings.tactile.navigationArrows == true
-                                    %Check left option
-                                        finger_on_option(1) = last_x >= navigationArrowRects(1,1) & last_x <= navigationArrowRects(3,1) & ...
-                                            last_y >= navigationArrowRects(2,1) & last_y <= navigationArrowRects(4,1);
-                                    %Check right option
-                                        finger_on_option(2) = last_x >= navigationArrowRects(1,2) & last_x <= navigationArrowRects(3,2) & ...
-                                            last_y >= navigationArrowRects(2,2) & last_y <= navigationArrowRects(4,2);
-                                    %Rule out possibility of tapping onto both options
-                                        if all(finger_on_option)
-                                            finger_on_option = false(1,2);
-                                        end
-                                    %Check if valid response is given
-                                        if any(finger_on_option)
-                                            buttonpress = true;
-                                            if finger_on_option(1)
-                                                keyCode(LRQS(1)) = true;
-                                            elseif finger_on_option(2)
-                                                keyCode(LRQS(2)) = true;
-                                            end                                            
-                                    %If not: reset
-                                        else                                            
-                                            first_x = [];
-                                            last_x = [];
-                                            last_y = [];
-                                            finger_on_option = false(1,2);
-                                        end %any finger_on_option
-                                end %if isfield exp_settings.tactile.navigationArrows                                
-                        end %if isfield exp_settings.tactile
-                    end %if valid swipe / else: buttons
-                end %if released after press
-            end %if pressed 
-    end %while pressed or swiped
+            if any(pressed) && isempty(first_x)
+                first_x = x;
+            end
+        %Monitor button presses
+            if isfield(exp_settings,'tactile')
+                %Check for exit cross press
+                    press_escape = x >= escapeCrossRect(1) & x <= escapeCrossRect(3) & y >= escapeCrossRect(2) & y <= escapeCrossRect(4);
+                    if press_escape
+                        %Verify that the user REALLY wants to quit; otherwise, proceed.
+                            escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
+                            if escape_experiment
+                                keyCode(LRQS(3)) = true;
+                                buttonpress = true;
+                            else
+                                press_escape = false;
+                            end
+                    end
+                %Check for navigation arrow presses
+                    if ~press_escape && isfield(exp_settings.tactile,'navigationArrows') && exp_settings.tactile.navigationArrows == true
+                        %Check left option
+                            finger_on_option(1) = x >= navigationArrowRects(1,1) & x <= navigationArrowRects(3,1) & ...
+                                y >= navigationArrowRects(2,1) & y <= navigationArrowRects(4,1);
+                        %Check right option
+                            finger_on_option(2) = x >= navigationArrowRects(1,2) & x <= navigationArrowRects(3,2) & ...
+                                y >= navigationArrowRects(2,2) & y <= navigationArrowRects(4,2);
+                        %Rule out possibility of tapping onto both options
+                            if all(finger_on_option)
+                                finger_on_option = false(1,2);
+                            end
+                        %Check if valid response is given
+                            if any(finger_on_option)
+                                buttonpress = true;
+                                if finger_on_option(1)
+                                    keyCode(LRQS(1)) = true;
+                                elseif finger_on_option(2)
+                                    keyCode(LRQS(2)) = true;
+                                end                                            
+                    end %if isfield exp_settings.tactile.navigationArrows                                
+            end %if isfield exp_settings.tactile
+        %Check for swipes
+            if ~isempty(first_x) && ~isempty(x) %detect release after initial touch
+                delta_x = x - first_x;
+                if abs(delta_x) > min_dist_pix %valid swipe
+                    swiped = true;
+                    if delta_x < 0 %right swipe
+                        keyCode(LRQS(2)) = true;
+                    elseif delta_x > 0 %left swipe
+                        keyCode(LRQS(1)) = true;
+                    end
+                else %not a valid swipe                               
+                    first_x = [];                                
+                end %any finger_on_option
+            end %if released after press
+        end %isfield
+    end %while
 end %subfunction

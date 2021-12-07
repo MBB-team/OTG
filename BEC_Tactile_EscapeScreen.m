@@ -30,25 +30,15 @@ function [Escape_experiment] = BEC_Tactile_EscapeScreen(exp_settings,window)
 % Monitor response
     SetMouse(winRect2(3)/2,winRect2(4)/2);
     answer = [];
-    last_x = []; last_y = [];
     while isempty(answer)
         [x,y,pressed] = GetMouse(window2);
-        %Check for press
-            if any(pressed)
-                last_x = x;
-                last_y = y;
-        %Check for release
-            else %unpressed
-                if ~isempty(last_x) %detect release after initial touch
-                    if last_x >= buttons(1,1) && last_x <= buttons(3,1) && last_y >= buttons(2,1) && last_y <= buttons(4,1) % "OUI" is pressed
-                        answer = true;
-                    elseif last_x >= buttons(1,2) && last_x <= buttons(3,2) && last_y >= buttons(2,2) && last_y <= buttons(4,2) % "NON" is pressed
-                        answer = false;
-                    else %not a valid response
-                        last_x = []; last_y = [];
-                    end
-                end
+        if ~any(pressed) %detect release after initial touch
+            if x >= buttons(1,1) && x <= buttons(3,1) && y >= buttons(2,1) && y <= buttons(4,1) % "OUI" is pressed
+                answer = true;
+            elseif x >= buttons(1,2) && x <= buttons(3,2) && y >= buttons(2,2) && y <= buttons(4,2) % "NON" is pressed
+                answer = false;
             end
+        end
     end
     
 % Close screen and return answer

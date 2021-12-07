@@ -337,17 +337,19 @@ function [keyCode] = SelectOptionTouchscreen(window,trialinput,exp_settings,LRQ)
             if any(keyCode(LRQ)) %left/right/quit key is pressed
                 return
             end
-            [x,~,pressed] = GetMouse;
+            [x,y,pressed] = GetMouse;
         %Check escape cross
-            if isfield(AllData.exp_settings,'tactile')
+            if isfield(exp_settings,'tactile')
                 escapeCrossSize = exp_settings.tactile.escapeCross_ySize*screenY;
                 escapeCrossRect = [screenX-1.5*escapeCrossSize 0.5*escapeCrossSize screenX-0.5*escapeCrossSize 1.5*escapeCrossSize];
-                press_escape = last_x >= escapeCrossRect(1) & last_x <= escapeCrossRect(3) & last_y >= escapeCrossRect(2) & last_y <= escapeCrossRect(4);
+                press_escape = x >= escapeCrossRect(1) & x <= escapeCrossRect(3) & y >= escapeCrossRect(2) & y <= escapeCrossRect(4);
                 if press_escape %Verify that the user REALLY wants to quit; otherwise, proceed.
                     escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
                     if escape_experiment
                         keyCode(LRQ(3)) = true;
                         return
+                    else
+                        SetMouse(screenX/2,screenY/2);
                     end
                 end
             end

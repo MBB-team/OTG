@@ -17,8 +17,6 @@ function [ID,exitflag] = BEC_Tactile_PatientID(exp_settings,window)
     
 % Loop until response is confirmed
     exitflag = false;
-    last_x = [];
-    last_y = [];
     confirmed = false;
     ID = '';
     while ~confirmed
@@ -46,39 +44,31 @@ function [ID,exitflag] = BEC_Tactile_PatientID(exp_settings,window)
         % Flip
             Screen('Flip',window);
         % Monitor button presses
-            [x,y,pressed] = GetMouse(window);
-            if any(pressed) %Check for press
-                last_x = x;
-                last_y = y;
-            else %Check for release
-                if ~isempty(last_x) %detect release after initial touch
-                    %Escape cross press
-                        press_escape = last_x >= escapeCrossRect(1) & last_x <= escapeCrossRect(3) & last_y >= escapeCrossRect(2) & last_y <= escapeCrossRect(4);
-                        if press_escape
-                            %Verify that the user REALLY wants to quit; otherwise, proceed.
-                                escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
-                                if escape_experiment
-                                    exitflag = true;
-                                    ID = '';
-                                    confirmed = true;
-                                end
-                        end
-                    %Number button presses
-                        i_button_pressed = last_x >= number_button_rects(:,1) & last_x <= number_button_rects(:,3) & last_y >= number_button_rects(:,2) & last_y <= number_button_rects(:,4);
-                        if sum(i_button_pressed) == 1 %Only one button can be pressed
-                           ID = [ID num2str(find(i_button_pressed)-1)]; %#ok<AGROW>
-                        end
-                    %Confirmation/correction button presses
-                        press_confirm = last_x >= bottom_buttons(1,1) & last_x <= bottom_buttons(1,3) & last_y >= bottom_buttons(1,2) & last_y <= bottom_buttons(1,4);
-                        press_correct = last_x >= bottom_buttons(2,1) & last_x <= bottom_buttons(2,3) & last_y >= bottom_buttons(2,2) & last_y <= bottom_buttons(2,4);
-                        if press_confirm && ~press_correct && sum(i_button_pressed) == 0 && ~isempty(ID)
-                            confirmed = true; %Break out of loop
-                        elseif press_correct && ~press_confirm && sum(i_button_pressed) == 0 && ~isempty(ID)
-                            ID = '';
-                        end
-                    %Cleanup
-                        last_x = []; last_y = [];
-                end %if ~isempty(last_x)
-            end %if any pressed
+            %Get finger coordinates
+                [x,y,pressed] = GetMouse(window);
+            %Escape cross press
+                press_escape = x >= escapeCrossRect(1) & x <= escapeCrossRect(3) & y >= escapeCrossRect(2) & y <= escapeCrossRect(4);
+                if press_escape && ~any(pressed) %Verify that the user REALLY wants to quit; otherwise, proceed.
+                    escape_experiment = BEC_Tactile_EscapeScreen(exp_settings,window);
+                    if escape_experiment
+                        exitflag = true;
+                        ID = '';
+                        confirmed = true;
+                    end
+                end
+            %Number button presses
+                i_button_pressed = x >= number_button_rects(:,1) & x <= number_button_rects(:,3) & y >= number_button_rects(:,2) & y <= number_button_rects(:,4);
+                if sum(i_button_pressed) == 1 && ~any(pressed) %Only one button can be pressed
+                   ID = [ID num2str(find(i_button_pressed)-1)]; %#ok<AGROW>
+                   SetMouse(0,0,window); %Hack to prevent the ID from keeping to get updated with the same number in every loop
+                end
+            %Confirmation/correction button presses
+                press_confirm = x >= bottom_buttons(1,1) & x <= bottom_buttons(1,3) & y >= bottom_buttons(1,2) & y <= bottom_buttons(1,4);
+                press_correct = x >= bottom_buttons(2,1) & x <= bottom_buttons(2,3) & y >= bottom_buttons(2,2) & y <= bottom_buttons(2,4);
+                if press_confirm && ~press_correct && sum(i_button_pressed) == 0 && ~isempty(ID) && ~any(pressed)
+                    confirmed = true; %Break out of loop
+                elseif press_correct && ~press_confirm && sum(i_button_pressed) == 0 && ~isempty(ID) && ~any(pressed)
+                    ID = '';
+                end
     end %while ~confirmed
 end %function

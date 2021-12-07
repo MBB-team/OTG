@@ -72,7 +72,7 @@ function [exp_settings] = BEC_Settings
             exp_settings.font.QuizFontColor = exp_settings.colors.white;    %All text on the quiz screen
     %Tactile screen
         exp_settings.tactile.escapeCross_ySize = 1/20; %Size relative to screen height
-        exp_settings.tactile.escapeCrossFontSize = 20; %Size of the "X" to click in order to exit the screen
+        exp_settings.tactile.escapeCrossFontSize = 25; %Size of the "X" to click in order to exit the screen
         exp_settings.tactile.navigationArrows = false; %Flag if you want to display the navigation arrows and make them active for navigation (default: false)
         exp_settings.tactile.navigationArrows_ySize = 1/10; %Size relative to screen height    
         exp_settings.tactile.im_leftkey = imread([exp_settings.stimdir filesep 'leftkey.png']); %Left key image loaded
@@ -235,12 +235,16 @@ function [exp_settings] = BEC_Settings
         exp_settings.Moodstimuli.answers_xmin = 2/5;    %Left margin of answers boxes
         exp_settings.Moodstimuli.feedback_y = [1/6 5/6];%Quiz answer feedback text positions
     % Quiz questions and answers (first answer is the correct one)
-        QR = load([exp_settings.stimdir filesep 'QR_fMRI.mat'], 'QR'); 
-        exp_settings.QuizQuestions = QR.QR; 
-        listTrainingQuizz = load([exp_settings.stimdir filesep 'listTrainingQuizz.mat']); 
-        exp_settings.QuizTraining = listTrainingQuizz.listTrainingQuizz;
-        questionAccuracy = load([exp_settings.stimdir filesep 'questionAccuracy.mat']); 
-        exp_settings.QuizAccuracy = questionAccuracy.questionAccuracy;  % Quiz accuracy
+        try
+            QR = load([exp_settings.stimdir filesep 'QR_fMRI.mat'], 'QR'); 
+            exp_settings.QuizQuestions = QR.QR; 
+            listTrainingQuizz = load([exp_settings.stimdir filesep 'listTrainingQuizz.mat']); 
+            exp_settings.QuizTraining = listTrainingQuizz.listTrainingQuizz;
+            questionAccuracy = load([exp_settings.stimdir filesep 'questionAccuracy.mat']); 
+            exp_settings.QuizAccuracy = questionAccuracy.questionAccuracy;  % Quiz accuracy
+        catch
+            %The quiz stimuli are not present in the Stimuli directory - probably because you don't need it
+        end
     % Instruction slides
         exp_settings.instructions_moods.introduction = 1:2;
         exp_settings.instructions_moods.delay_instructions = 3:5;
