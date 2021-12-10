@@ -14,9 +14,10 @@
         %Get the experiment settings structure and adjust settings specific to this experiment
             exp_settings = BEC_Settings;
             exp_settings.OTG.ntrials_cal = 25; %Number of choice model calibration trials
-            exp_settings.n_example_choices = 10; %Minimum number of example choices per choice type
+            exp_settings.OTG.ntrials_followup = 20; %Number of trials in the follow-up sessions
+            exp_settings.n_example_choices = 3; %Minimum number of example choices per choice type
             exp_settings.max_example_choices = 15; %Maximum number of example choices per choice type
-            exp_settings.OTG.max_n_inv = 25; %Take all choices into account for model updating
+            exp_settings.OTG.max_n_inv = 100; %Take all choices into account for model updating
             exp_settings.timings.fixation_choice = [0.5 0.75]; %Interval within which a fixation time will be drawn
             exp_settings.expdir = expdir; %Experiment directory
             exp_settings.datadir = datadir; %Data saving directory
@@ -44,7 +45,7 @@
             %Save
                 save([AllData.savedir filesep 'AllData'],'AllData'); 
                 disp('Dataset and directory created. Experiment will start now.')   
-    else %Either session 2 of the experiment, or resume after bailout
+    else %Either session 2 or 3 of the experiment, or resume after bailout
         %Load dataset
             dataset = load([find_dataset.folder filesep find_dataset.name filesep 'AllData']);
             AllData = dataset.AllData;
@@ -205,7 +206,7 @@
             save([AllData.savedir filesep 'AllData'],'AllData');
     end
 
-%% End of pre-race calibrations
+%% End of calibrations
     if AllData.bookmark == 5        
         %End of the experiment
             instruction_numbers = 207;
@@ -231,7 +232,7 @@
         %Run choice battery
             AllData.exp_settings.OTG.choicetypes = 1; %Define choice type (1: delay)
             AllData.OTG_prior.delay.muPhi = AllData.calibration.delay.posterior.muPhi;
-            for trial = 1:25
+            for trial = 1:exp_settings.OTG.ntrials_followup
                 [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window);
                 if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             end
@@ -249,7 +250,7 @@
         %Run choice battery
             AllData.exp_settings.OTG.choicetypes = 4; %Define choice type (4: mental effort)
             AllData.OTG_prior.mental_effort.muPhi = AllData.calibration.mental_effort.posterior.muPhi;
-            for trial = 1:25
+            for trial = 1:exp_settings.OTG.ntrials_followup
                 [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window);
                 if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
             end
@@ -264,6 +265,58 @@
             [~,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
             AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
             AllData.Timings.EndOfSession2 = clock;
+            AllData.bookmark = 9;
+            save([AllData.savedir filesep 'AllData'],'AllData');
+        %Close
+            BEC_ExitExperiment(AllData);
+            clc; disp('End of second decision-making session. Data saved.')
+            clear; return
+    end %if bookmark
+    
+%% Test battery Session 3: DELAY
+    if AllData.bookmark == 9
+        AllData.Timings.StartOfSession3 = clock;
+        %Show instructions about calibration choice battery
+            instruction_numbers = [201 208];
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+        %Run choice battery
+            AllData.exp_settings.OTG.choicetypes = 1; %Define choice type (1: delay)
+            AllData.OTG_prior.delay.muPhi = AllData.calibration.delay.posterior.muPhi;
+            for trial = 1:exp_settings.OTG.ntrials_followup
+                [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window);
+                if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            end
+            AllData.bookmark = 10; %Move on to next section
+            save([AllData.savedir filesep 'AllData'],'AllData');
+    end
+    
+%% Test battery Session 3: MENTAL EFFORT
+    if AllData.bookmark == 10
+        %Show instructions about calibration choice battery
+            instruction_numbers = 209;
+            [exitflag,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+        %Run choice battery
+            AllData.exp_settings.OTG.choicetypes = 4; %Define choice type (4: mental effort)
+            AllData.OTG_prior.mental_effort.muPhi = AllData.calibration.mental_effort.posterior.muPhi;
+            for trial = 1:exp_settings.OTG.ntrials_followup
+                [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window);
+                if exitflag; BEC_ExitExperiment(AllData); return; end %Terminate experiment
+            end
+            AllData.bookmark = 11; %Move on to next section
+            save([AllData.savedir filesep 'AllData'],'AllData');
+    end
+    
+%% End of session 3
+    if AllData.bookmark == 11 
+        %End of the experiment
+            instruction_numbers = 207;
+            [~,timings] = BEC_InstructionScreens(window,AllData,instruction_numbers);
+            AllData.EventReel = [AllData.EventReel timings]; %Store the recorded timing structure in a list of all events
+            AllData.Timings.EndOfSession3 = clock;
             save([AllData.savedir filesep 'AllData'],'AllData');
         %Close
             BEC_ExitExperiment(AllData);
