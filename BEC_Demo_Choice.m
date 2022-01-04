@@ -17,13 +17,13 @@
     HideCursor  
     
 % Choice screen
-    for trial = 1:10
+    for trial = 1
         %Set the choice trial settings-----------------------------------------------------------------------------------------
-            trialinput.choicetype = randperm(4,1);   %Define choice type by number (1:delay/2:risk/3:physical effort/4:mental effort)
+            trialinput.choicetype = 2;   %Define choice type by number (1:delay/2:risk/3:physical effort/4:mental effort)
             trialinput.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)
             trialinput.Cost = rand;      %Cost level or the costly (LL) option (between 0 and 1)
-            trialinput.Example = 0;      %Is this an example trial? (1:Yes - with extra text / 0:No - minimal text on screen)
-            trialinput.plugins.touchscreen = 1;
+            trialinput.Example = 1;      %Is this an example trial? (1:Yes - with extra text / 0:No - minimal text on screen)
+            trialinput.plugins.touchscreen = 0;
         %-----------------------------------------------------------------------------------------------------------------------
         [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput);
     end

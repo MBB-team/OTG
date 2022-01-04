@@ -9,8 +9,8 @@ function [timings] = BEC_DrawDelayCost(window,exp_settings,drawchoice)
     days_per_month = [31 28 31 30 31 30 31 31 30 31 30 31]; %The calendar year. Leave untouched.
     cum_days_per_month = cumsum(days_per_month); %Cumulative amount of days
     nrows = floor(sqrt(exp_settings.MaxDelay)); %Number of rows of months
-    ncols = ceil(sqrt(exp_settings.Max_ment_effort)); %Numbers of columns of months
-    if rem(nrows*ncols,exp_settings.Max_ment_effort)>0
+    ncols = ceil(sqrt(exp_settings.MaxDelay)); %Numbers of columns of months
+    if rem(nrows*ncols,exp_settings.MaxDelay)>0
         ncols = ncols+1; %In case the # months does not have a natural root: more columns than rows.
     end
     density = 0.85; %Total area of the calendars w.r.t. the gaps
