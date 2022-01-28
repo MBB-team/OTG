@@ -59,7 +59,7 @@ function BEC_Visualize_OTG(AllData,choicetrial)
         plot(ha1,X,Y0,':','color',[0.5 0.5 0.5],'LineWidth',1.5)
     %Plot simulated choice function, if present
         if isfield(AllData,'sim') && isfield(AllData.sim,'indiff_curve')
-            plot(ha1,linspace(0,1),AllData.sim.indiff_curve,'r:','Linewidth',1.5);
+            plot(ha1,AllData.exp_settings.OTG.grid.gridX,AllData.sim.indiff_curve,'r:','Linewidth',1.5);
             legend({'Fitted','Prior','Simulated'},'Orientation','horizontal','Location','southoutside')
         else
             legend({'Fitted','Prior'})

@@ -63,7 +63,13 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
                     if isfield(AllData,['calibration_' typenames{choicetype}])
                         AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
                     else %Otherwise, use population averages as priors
-                        AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
+                        %Naieve priors
+                            AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
+                        %Population average priors
+%                             AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
+%                             AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
+%                             AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
+%                             AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];                        
                     end
             end
         end
