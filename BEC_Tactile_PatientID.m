@@ -10,6 +10,8 @@ function [ID,exitflag] = BEC_Tactile_PatientID(exp_settings,window)
         number_button_rects(:,2) = [buttonrect(2)*ones(5,1); (buttonrect(4)-diff(buttonrect([1 3]))/9)*ones(5,1)];
         number_button_rects(:,3) = repmat(buttonrect(1) + (1:2:9)'./9 .* diff(buttonrect([1 3])),2,1);
         number_button_rects(:,4) = [buttonrect(2)*ones(5,1) + diff(buttonrect([1 3]))/9; buttonrect(4)*ones(5,1)];
+    number_button_rects(11,:) = [2*number_button_rects(end,1)-number_button_rects(end-1,1), mean([number_button_rects(1,2) number_button_rects(end,2)]), ...
+        2*number_button_rects(end,3)-number_button_rects(end-1,3), mean([number_button_rects(1,4) number_button_rects(end,4)])];
     bottom_buttons = [buttonrect(1) 0.8*Ysize buttonrect(1)+1/3*diff(buttonrect([1 3])) 0.9*Ysize;
                       buttonrect(3)-1/3*diff(buttonrect([1 3])) 0.8*Ysize buttonrect(3) 0.9*Ysize];    
     escapeCrossSize = exp_settings.tactile.escapeCross_ySize*Ysize;
@@ -27,8 +29,12 @@ function [ID,exitflag] = BEC_Tactile_PatientID(exp_settings,window)
             DrawFormattedText(window,ID_text,'center',Ysize/3,exp_settings.colors.white,exp_settings.font.Wrapat,[],[],exp_settings.font.vSpacing,[],[]);
         % Number buttons
             Screen('FrameRect',window,exp_settings.colors.white,number_button_rects',3);
-            for button = 1:10
-                DrawFormattedText(window,num2str(button-1),'center','center',exp_settings.colors.white,[],[],[],[],[],number_button_rects(button,:));
+            for button = 1:11
+                if button < 11 %number buttons
+                    DrawFormattedText(window,num2str(button-1),'center','center',exp_settings.colors.white,[],[],[],[],[],number_button_rects(button,:));
+                else
+                    DrawFormattedText(window,'-','center','center',exp_settings.colors.white,[],[],[],[],[],number_button_rects(button,:));
+                end
             end
         % Confirmation/correction buttons
             if ~isempty(ID)
@@ -59,7 +65,11 @@ function [ID,exitflag] = BEC_Tactile_PatientID(exp_settings,window)
             %Number button presses
                 i_button_pressed = x >= number_button_rects(:,1) & x <= number_button_rects(:,3) & y >= number_button_rects(:,2) & y <= number_button_rects(:,4);
                 if sum(i_button_pressed) == 1 && ~any(pressed) %Only one button can be pressed
-                   ID = [ID num2str(find(i_button_pressed)-1)]; %#ok<AGROW>
+                   if find(i_button_pressed) == 11
+                       ID = [ID '-']; %#ok<AGROW>
+                   else
+                       ID = [ID num2str(find(i_button_pressed)-1)]; %#ok<AGROW>
+                   end
                    SetMouse(0,0,window); %Hack to prevent the ID from keeping to get updated with the same number in every loop
                 end
             %Confirmation/correction button presses
