@@ -53,9 +53,9 @@ function [exp_settings] = BEC_Settings
             exp_settings.colors.black = [0 0 0];
             exp_settings.colors.white = [255 255 255];
             exp_settings.colors.grey = [128 128 128];
-            exp_settings.colors.green = [0, 255, 49]; %[0.4660, 0.6740, 0.1880].*255; 
+            exp_settings.colors.green = [59 199 118]; %update 2022
             exp_settings.colors.orange = [0.8500, 0.3250, 0.0980].*255; 
-            exp_settings.colors.red = [255 49 0];
+            exp_settings.colors.red = [218 37 37]; %update 2022
         %Background colors
             exp_settings.backgrounds.default = exp_settings.colors.black;   %Default background
             exp_settings.backgrounds.fixation = exp_settings.colors.black;  %Fixation screen
