@@ -10,12 +10,6 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
 %                   when left empty, it is assumed this function is being used for a simulation.
 
 %% Get necessary input
-    %simulate: run a simulation of the online trial generation procedure
-        if ~exist('window','var') || isempty(window) %If there is no Psychtoolbox window open, this function is used to run simulations
-            if ~isfield(AllData,'sim') %Create the simulation structure if it does not exist yet
-                AllData = SimulationSettings(AllData);
-            end
-        end
     %exp_settings: containing all the settings necessary to generate and present a trial
         if ~isfield(AllData,'exp_settings')
             %If this function is used in a real experiment, load the settings structure so that trials 
@@ -29,6 +23,12 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
         end
         OTG_settings = AllData.exp_settings.OTG;
         typenames = OTG_settings.typenames;
+    %simulate: run a simulation of the online trial generation procedure
+        if ~exist('window','var') || isempty(window) %If there is no Psychtoolbox window open, this function is used to run simulations
+            if ~isfield(AllData,'sim') %Create the simulation structure if it does not exist yet
+                AllData = SimulationSettings(AllData);
+            end
+        end
     %trialinfo: history of choices (empty structure at first trial)
         if ~isfield(AllData,'trialinfo')
             AllData.trialinfo = struct;
@@ -46,6 +46,10 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
                 choicetype = SampleChoiceType(AllData.trialinfo,OTG_settings); %See subfunction below
             end
         else %If a triallist of choice types is predefined, select the choice type of this trial
+            if size(AllData.triallist.choicetypes,1) < choicetrial
+                %No choice type is pre-specified: take the same type as the last trial by default
+                    AllData.triallist.choicetypes(choicetrial) = AllData.triallist.choicetypes(choicetrial-1);
+            end
             choicetype = AllData.triallist.choicetypes(choicetrial);
         end
     %type_trialno: the trial number of this particular choice type
@@ -504,15 +508,16 @@ function AllData = SimulationSettings(AllData)
 %model-fitting algorithm here is to approach this choice function as closely as
 %possible.
     AllData.sim.kC = 1.5; %Weight on cost
-    AllData.sim.gamma = 0.3; %Power on cost
-    AllData.sim.beta = 5; %Choice temperature
+    AllData.sim.gamma = 1.3; %Power on cost
+    AllData.sim.beta = 10; %Choice temperature
     AllData.sim.bias = 0.1; %Choice bias
     AllData.sim.kRew = 3; %Weight on reward
 %For visualization: 
     AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])
-    AllData.sim.indiff_curve = (AllData.sim.kRew - AllData.sim.kC.*linspace(0,1).^AllData.sim.gamma - AllData.sim.bias)./AllData.sim.kRew;
+    X = AllData.exp_settings.OTG.grid.gridX; %Cost (from 0 to 100%)
+    AllData.sim.indiff_curve = (AllData.sim.kRew - AllData.sim.kC.*X.^AllData.sim.gamma - AllData.sim.bias)./AllData.sim.kRew;
 %Triallist of the simulated choices:
-    AllData.triallist.choicetypes = ones(100,1); %Simulate trials of only one choice type
+    AllData.triallist.choicetypes = 1; %Simulate choices of type 1 (arbitrary)
 end
 
 function OTG_settings = Get_OTG_Settings
@@ -537,7 +542,7 @@ function OTG_settings = Get_OTG_Settings
     %Algorithm settings:
         OTG_settings.burntrials = 3;        % # of trials that must have been sampled before inverting the model
         OTG_settings.max_iter = 200;        % Max. # of iterations, after which we conclude the algorithm does not converge
-        OTG_settings.max_n_inv = 20;        % Max. # of trials entered in model inversion algorithm
+        OTG_settings.max_n_inv = Inf;       % Max. # of trials entered in model inversion algorithm
         OTG_settings.conv_crit = 1e-2;      % Max. # of iterations for the model inversion algorithm, after which it is forced to stop
         OTG_settings.adjust_rew_nonconverge = [0.2 0.4 0.6 0.8 1]; % Adjustment to the indifference reward: helps the algorithm get out when it is stuck on a wrong indifference estimate
 end
