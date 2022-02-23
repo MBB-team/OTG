@@ -7,7 +7,11 @@ function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
 % The individual cost visualizations of the 4 cost types have their own subfunctions.
 
     %Setup
-        tactile_screen = isfield(drawchoice,'plugins') & isfield(drawchoice.plugins,'touchscreen') & drawchoice.plugins.touchscreen == 1; %Logical: tactile screen or not
+        if isfield(drawchoice,'plugins') && isfield(drawchoice.plugins,'touchscreen')
+            tactile_screen = drawchoice.plugins.touchscreen == 1; %Logical: tactile screen or not
+        else
+            tactile_screen = false;
+        end
         [Xsize, Ysize] = Screen('WindowSize', window); screensize = [Xsize Ysize Xsize Ysize];
         Screen('TextFont',window,exp_settings.font.FontType);
         if drawchoice.example == 1

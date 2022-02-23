@@ -9,11 +9,16 @@
 
 % Setup
     %What do you want to demonstrate?
-        choicetype = 4; %1:delay/2:risk/3:physical effort/4:mental effort
+        choicetype = 1; %1:delay/2:risk/3:physical effort/4:mental effort
         n_example_trials = 3; %example trials (with random costs and rewards) before starting the calibration
-        n_calibration_trials = 20; %calibration trials for demo
+        n_calibration_trials = 15; %calibration trials for demo
     %Get the experiment settings
         exp_settings = BEC_Settings;
+        exp_settings.tactile.navigationArrows = false; %Show the navigation buttons that can be pressed on screen.
+        exp_settings.font.FixationFontSize = 30;
+        exp_settings.font.RewardFontSize = 20;
+%         exp_settings.choicescreen.costbox_left = [2/16 1/6 6.5/16 6/10]; %Left cost visualization
+%         exp_settings.choicescreen.costbox_right = [9.5/16 1/6 14/16 6/10]; %Right cost visualization
     %Create data structure and get experiment settings structure
         AllData = struct;
         AllData.exp_settings = exp_settings; 
@@ -24,7 +29,7 @@
     Screen('Preference', 'SuppressAllWarnings', 1);
     KbName('UnifyKeyNames'); %unify across platforms
     screens=Screen('Screens');
-    if max(screens)==2; i_screen = 1;
+    if max(screens)==2; i_screen = 2;
     else; i_screen = 0;
     end
     [w,h] = Screen('WindowSize',i_screen); 
@@ -40,6 +45,6 @@
         if exitflag; BEC_ExitExperiment(AllData); end
     end
 % Run calibration
-    [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,1);
+    [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,2);
 % Terminate
     sca
