@@ -95,7 +95,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
         reward = SampleReward(AllData,choicetype,cost);
     %Rule-of-thumb when the algorithm does not converge: adjust the reward away from indifference
         if type_trialno > OTG_settings.burntrials && AllData.OTG_posterior.(typenames{choicetype}).converged(end) == 0
-            reward = Adjust_Reward(AllData,reward,choicetype,type_trialno);
+            reward = Adjust_Reward(AllData,reward,cost,choicetype);
         end
     %Present the choice, record decision
         if isfield(AllData,'sim') %Simulate the choice
@@ -366,7 +366,7 @@ function [cost] = SampleCost(AllData,choicetype)
             plot(X,PDF)
             scatter(cost,PDF(X==cost))
             xlabel('LL Cost'); ylabel('normalized probability')
-            title('Probability density function')
+            title('Probability distribution')
             legend({'PDF','sampled cost'},'Location','SouthOutside','Orientation','horizontal')
         end
 end
@@ -404,44 +404,39 @@ function [reward] = SampleReward(AllData,choicetype,cost)
         end
 end
 
-function [adjusted_reward] = Adjust_Reward(AllData,reward,choicetype,type_trialno)
-% This function uses simple heuristics to adjust the reward *away* from the currently estimated
-% indifference curve, in case the algorithm consistently fails to converge. This may mean that the
-% participant's true indifference curve may be quite far away from the currently estimated
-% indifference curve, so presenting rewards increasingly further away from the current indifference
-% curve will get the algorithm evenually un-stuck.
+function [adjusted_reward] = Adjust_Reward(AllData,reward,cost,choicetype)
+% This function uses simple heuristics to adjust the reward *away* from the currently estimated indifference curve, in case the algorithm fails to
+% converge. Failure to converge may proliferate if the algorithm is "stuck" with an estimation of the indifference curve that is wrong.
     %Settings
-        trialinfo = struct2table(AllData.trialinfo);
-        OTG_settings = AllData.exp_settings.OTG;
-        typenames = OTG_settings.typenames;
-        grid = OTG_settings.grid;
-    %Number of recent subsequent non-converged trials:
-        last_converged = find(AllData.OTG_posterior.(typenames{choicetype}).converged,1,'last');
-        if isempty(last_converged) %No iterations until now could be converged
-            last_converged = 0;
-        end
-        n_not_converge = (type_trialno-1) - last_converged; 
-    %Select by how much we want to adjust the proposed reward, away from indifference:
-        if n_not_converge > length(OTG_settings.adjust_rew_nonconverge)
-            adjustment = OTG_settings.adjust_rew_nonconverge(end);
-        else
-            adjustment = OTG_settings.adjust_rew_nonconverge(n_not_converge);
-        end
-    %Inspect recent choice history
-        type_choices = trialinfo.choiceSS(trialinfo.choicetype==choicetype);
-        if type_choices > OTG_settings.max_n_inv
-            type_choices = type_choices(type_trialno-OTG_settings.max_n_inv+1:end);
-        end
+        grid = AllData.exp_settings.OTG.grid;
+        costbin = find(cost>grid.binlimits(:,1) & cost<=grid.binlimits(:,2)); %get cost bin number
+    %Get choice data
+        all_costs = [AllData.trialinfo.Cost]';
+        all_choicetypes = [AllData.trialinfo.choicetype]';
+        all_choiceSS = [AllData.trialinfo.choiceSS]';
+        %Limit to current choice type
+            all_costs = all_costs(all_choicetypes==choicetype);
+            all_choiceSS = all_choiceSS(all_choicetypes==choicetype);
+        %Limit to most recent choices if a recency criterion is applied
+            if length(all_choiceSS) > AllData.exp_settings.OTG.max_n_inv
+                all_costs = all_costs(end-AllData.exp_settings.OTG.max_n_inv+1 : end);
+                all_choiceSS = all_choiceSS(end-AllData.exp_settings.OTG.max_n_inv+1 : end);
+            end
+    %Identify choices in current cost bin
+        i_bin = all_costs>grid.binlimits(costbin,1) & all_costs<=grid.binlimits(costbin,2);
+        choicerate_bin = mean(all_choiceSS(i_bin));
     %Apply adjustment
-        if mean(type_choices) > 0.5
-            disp('Most recent choices were uncostly: adjust downwards')
-            adjusted_reward = reward - adjustment*(reward-grid.rewardlimits(1));
-        elseif mean(type_choices) < 0.5
-            disp('Most choices were costly: adjust upwards')
-            adjusted_reward = reward + adjustment*(grid.rewardlimits(2)-reward);
+        if ~isnan(choicerate_bin) %if NaN: no choices presented yet in this bin => don't correct
+            delta = 0.5 - choicerate_bin; %difference w.r.t. the target choice rate (50% for indifference)
+            k = 2/(1+exp(2-sum(i_bin))); %weighing factor of the number of choices already made in this bin
+            if choicerate_bin >= 0.5 %Mostly SS: SSRew is too high => adjust downward (delta is negative)
+                adjusted_reward = reward + k*delta*(reward - grid.rewardlimits(1));
+            else %Mostly LL: SSRew is too low => adjust upward (delta is positive)
+                adjusted_reward = reward + k*delta*(grid.rewardlimits(2)-reward);
+            end
         else
-            adjusted_reward = reward; %do nothing
-        end        
+            adjusted_reward = reward;
+        end
 end
 
 function Visualize_GN_iter(mu_iter,n,OTG_settings)
@@ -507,10 +502,10 @@ function AllData = SimulationSettings(AllData)
 %post-hoc, and here it is used to generate the choices. The purpose of the
 %model-fitting algorithm here is to approach this choice function as closely as
 %possible.
-    AllData.sim.kC = 1.5; %Weight on cost
-    AllData.sim.gamma = 1.3; %Power on cost
-    AllData.sim.beta = 10; %Choice temperature
-    AllData.sim.bias = 0.1; %Choice bias
+    AllData.sim.kC = 2.5; %Weight on cost
+    AllData.sim.gamma = 3; %Power on cost
+    AllData.sim.beta = 15; %Choice temperature
+    AllData.sim.bias = 0; %Choice bias
     AllData.sim.kRew = 3; %Weight on reward
 %For visualization: 
     AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])
@@ -540,7 +535,7 @@ function OTG_settings = Get_OTG_Settings
         OTG_settings.fixed_beta = 5;       % Assume this fixed value for the inverse choice temperature (based on past results) to improve model fit.
         OTG_settings.priorvar = 3*eye(OTG_settings.grid.nbins+1);   % Prior variance for each parameter
     %Algorithm settings:
-        OTG_settings.burntrials = 3;        % # of trials that must have been sampled before inverting the model
+        OTG_settings.burntrials = 1;        % # of trials that must have been sampled before inverting the model (minimum: 1)
         OTG_settings.max_iter = 200;        % Max. # of iterations, after which we conclude the algorithm does not converge
         OTG_settings.max_n_inv = Inf;       % Max. # of trials entered in model inversion algorithm
         OTG_settings.conv_crit = 1e-2;      % Max. # of iterations for the model inversion algorithm, after which it is forced to stop

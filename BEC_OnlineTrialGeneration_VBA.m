@@ -24,10 +24,8 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                     AllData.sim.beta = 15; %Choice temperature
                     AllData.sim.bias = 0; %Choice bias
                     AllData.sim.kRew = 3; %Weight on reward
-                %For visualization of the simulated indifference curve: 
-                    AllData.sim.indiff_curve = (AllData.sim.kRew - AllData.sim.kC.*linspace(0,1).^AllData.sim.gamma - AllData.sim.bias)./AllData.sim.kRew;
                 %Triallist of the simulated choices:
-                    AllData.triallist.choicetypes = ones(100,1); %Simulate trials of only one choice type
+                    AllData.triallist.choicetypes = 1; %Simulate trials of only one choice type (here arbitrarily set to 1 for Delay)
             end
         end
     %exp_settings: containing all the settings necessary to generate and present a trial
@@ -52,7 +50,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                     %Model inversion settings
                         OTG_settings.fixed_beta = 5;        % Assume this fixed value for the inverse choice temperature (based on past results) to improve model fit.
                         OTG_settings.priorvar = 2*eye(OTG_settings.grid.nbins+1);   % Prior variance for each parameter
-                        OTG_settings.max_n_inv = 20;        % Max. # of trials entered in model inversion algorithm
+                        OTG_settings.max_n_inv = 21;        % Max. # of trials entered in model inversion algorithm
                         OTG_settings.burntrials = 0;        % Min. # of trials that have to be presented before the model is inverted
                     %VBA: Dimensions
                         OTG_settings.dim.n_theta = 0;
@@ -95,6 +93,10 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 choicetype = SampleChoiceType(AllData.trialinfo,OTG_settings); %See subfunction below
             end
         else %If a triallist of choice types is predefined, select the choice type of this trial
+            if size(AllData.triallist.choicetypes,1) < choicetrial
+                %No choice type is pre-specified: take the same type as the last trial by default
+                    AllData.triallist.choicetypes(choicetrial) = AllData.triallist.choicetypes(choicetrial-1);
+            end
             choicetype = AllData.triallist.choicetypes(choicetrial);
         end
     %type_trialno: the trial number of this particular choice type
@@ -111,11 +113,14 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 %Get the participant's calibrated parameters if available
                     if isfield(AllData,['calibration_' typenames{choicetype}])
                         AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
-                    else %Otherwise, use population averages as priors
-                        AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
-                        AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
-                        AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
-                        AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
+                    else %Otherwise, use naïve priors or population averages as priors
+                        %Naieve priors
+                            AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
+                        %Population average priors
+                            AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
+                            AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
+                            AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
+                            AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
                     end
             end
         end
@@ -169,7 +174,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                     plot(X,PDF)
                     scatter(cost,PDF(X==cost))
                     xlabel('LL Cost'); ylabel('normalized probability')
-                    title('Probability density function')
+                    title('Probability distribution')
                     legend({'PDF','sampled cost'},'Location','SouthOutside','Orientation','horizontal')
                 end
             %Compute option values for simulated decision-maker (using a different value function)
