@@ -539,5 +539,4 @@ function OTG_settings = Get_OTG_Settings
         OTG_settings.max_iter = 200;        % Max. # of iterations, after which we conclude the algorithm does not converge
         OTG_settings.max_n_inv = Inf;       % Max. # of trials entered in model inversion algorithm
         OTG_settings.conv_crit = 1e-2;      % Max. # of iterations for the model inversion algorithm, after which it is forced to stop
-        OTG_settings.adjust_rew_nonconverge = [0.2 0.4 0.6 0.8 1]; % Adjustment to the indifference reward: helps the algorithm get out when it is stuck on a wrong indifference estimate
 end
