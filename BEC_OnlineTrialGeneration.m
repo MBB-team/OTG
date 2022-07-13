@@ -69,7 +69,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
                     else %Otherwise, use population averages as priors
                         %Naieve priors
                             AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
-                        %Population average priors
+                        %Population average priors (not recommended unless you have *very* few trials in your experiment
 %                             AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
 %                             AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
 %                             AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
@@ -176,7 +176,15 @@ function [u,y] = GetTrialFeatures(AllData)
 % come from the VBA toolbox by Jean Daunizeau and have been kept here for compatibility.
 % Get trial history from given choice type
     OTG_settings = AllData.exp_settings.OTG;
-    trialinfo = struct2table(AllData.trialinfo,'AsArray',true);
+    try %for compatibility with Octave
+        trialinfo = struct2table(AllData.trialinfo,'AsArray',true);
+    catch
+        trialinfo = struct;
+        listFields = fieldnames(AllData.trialinfo);
+        for iField = 1:length(listFields)
+            trialinfo.(listFields{iField}) = [AllData.trialinfo.(listFields{iField})]';
+        end
+    end
     choicetype = AllData.trialinfo(end).choicetype;
     u = [trialinfo.SSReward(trialinfo.choicetype==choicetype)'; %uncostly-option rewards;
          trialinfo.Cost(trialinfo.choicetype==choicetype)']; %costly-option costs
@@ -335,12 +343,28 @@ function [AllData] = Simulate_Choice(AllData,reward,cost,choicetype,choicetrial)
         LLRew = 1; %Reward for the costly ("larger-later") option: 1 by default
         SSCost = 0; %Cost for the uncostly option: 0 by default
         LLCost = cost; %Cost for the costly option (sampled above)
-        V1 = AllData.sim.kRew*SSRew - AllData.sim.kC*SSCost^AllData.sim.gamma + AllData.sim.bias; %Value of option 1 (uncostly option)
-        V2 = AllData.sim.kRew*LLRew - AllData.sim.kC*LLCost^AllData.sim.gamma; %Value of option 2 (costly option)
-        DV = AllData.sim.beta*(V1 - V2); %Decision value: (option 1) - (option 2)
+        X = AllData.exp_settings.OTG.grid.gridX; %The cost grid (for the calculation of the indifference curve - for visualization only)
+        switch AllData.sim.model %Note: bias is in the value function!
+            case 'additive'
+                V1 = AllData.sim.kRew * SSRew - AllData.sim.kC*SSCost ^ AllData.sim.gamma + AllData.sim.bias; %Value of option 1 (uncostly option)
+                V2 = AllData.sim.kRew * LLRew - AllData.sim.kC*LLCost ^ AllData.sim.gamma; %Value of option 2 (costly option)
+                %Indifference curve (for visualization only)
+                    AllData.sim.indiff_curve = LLRew - AllData.sim.kC/AllData.sim.kRew .* X .^ AllData.sim.gamma - AllData.sim.bias/AllData.sim.kRew; 
+            case 'exponential'
+                V1 = AllData.sim.kRew * SSRew * exp( -AllData.sim.kC * SSCost ^ AllData.sim.gamma) + AllData.sim.bias; %Value of option 1 (uncostly option)
+                V2 = AllData.sim.kRew * LLRew * exp( -AllData.sim.kC * LLCost ^ AllData.sim.gamma); %Value of option 2 (costly option)
+                %Indifference curve (for visualization only)
+                    AllData.sim.indiff_curve = LLRew .* exp( -AllData.sim.kC .* X .^ AllData.sim.gamma) - AllData.sim.bias/AllData.sim.kRew;
+            case 'hyperbolic'
+                V1 = AllData.sim.kRew * SSRew / (1 + AllData.sim.kC * SSCost ^ AllData.sim.gamma) + AllData.sim.bias; %Value of option 1 (uncostly option)
+                V2 = AllData.sim.kRew * LLRew / (1 + AllData.sim.kC * LLCost ^ AllData.sim.gamma); %Value of option 2 (costly option)
+                %Indifference curve (for visualization only)
+                    AllData.sim.indiff_curve = LLRew ./ (1 + AllData.sim.kC .* X .^ AllData.sim.gamma) - AllData.sim.bias/AllData.sim.kRew;
+        end
+        DV = AllData.sim.beta*(V1 - V2); %Decision value = inverse temperature x value difference
     %Simulate the decision
-        P_U = sigmoid(DV); %Probability of choosing the uncostly option (see sigmoid function below)
-        y = sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
+        P_U = sigmoid(DV); %Probability of choosing the uncostly option
+        y = BEC_sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
     %Enter the simulated choice in trialinfo
         AllData.trialinfo(choicetrial).choicetype = choicetype; %numeric choicetype (1:4)
         AllData.trialinfo(choicetrial).SSReward = reward; %reward of the uncostly ("SS": smaller & sooner) option
@@ -497,20 +521,18 @@ function vx = vec(X) % --- from VBA toolbox by Daunizeau & Rigoux
 end
 
 function AllData = SimulationSettings(AllData)
-%Create a simulation structure containing parameters of the simulated choice model
+%Create a simulation structure containing specifics of the simulated choice model
 %This is a more sophisticated choice model that is usually only used to fit choices
 %post-hoc, and here it is used to generate the choices. The purpose of the
 %model-fitting algorithm here is to approach this choice function as closely as
 %possible.
-    AllData.sim.kC = 2.5; %Weight on cost
-    AllData.sim.gamma = 3; %Power on cost
-    AllData.sim.beta = 15; %Choice temperature
-    AllData.sim.bias = 0; %Choice bias
-    AllData.sim.kRew = 3; %Weight on reward
-%For visualization: 
     AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])
-    X = AllData.exp_settings.OTG.grid.gridX; %Cost (from 0 to 100%)
-    AllData.sim.indiff_curve = (AllData.sim.kRew - AllData.sim.kC.*X.^AllData.sim.gamma - AllData.sim.bias)./AllData.sim.kRew;
+    AllData.sim.model = 'exponential'; %Name of the model; options: 'additive','exponential','hyperbolic'
+    AllData.sim.kC = 8; %Weight on cost
+    AllData.sim.gamma = 1; %Power on cost
+    AllData.sim.beta = 20; %Choice temperature
+    AllData.sim.bias = 0; %Choice bias
+    AllData.sim.kRew = 1; %Weight on reward
 %Triallist of the simulated choices:
     AllData.triallist.choicetypes = 1; %Simulate choices of type 1 (arbitrary)
 end

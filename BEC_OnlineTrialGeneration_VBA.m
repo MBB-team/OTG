@@ -13,17 +13,18 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
     %simulate: run a simulation on the online trial generation
         if ~exist('window','var') || isempty(window) %If there is no Psychtoolbox window open, this function is not used to sample and present choices to participants, but to run simulations
             if ~isfield(AllData,'sim') 
-                %Create a simulation structure containing parameters of the simulated choice model
+                %Create a simulation structure containing specifics of the simulated choice model
                 %This is a more sophisticated choice model that is usually only used to fit choices
                 %post-hoc, and here it is used to generate the choices. The purpose of the
                 %model-fitting algorithm here is to approach this choice function as closely as
                 %possible.
                     AllData.sim.visualize = 1; %Visualize the simulation ([1:yes / 0:no])
-                    AllData.sim.kC = 2.5; %Weight on cost
-                    AllData.sim.gamma = 3; %Power on cost
-                    AllData.sim.beta = 15; %Choice temperature
+                    AllData.sim.model = 'exponential'; %Name of the model; options: 'additive','exponential','hyperbolic'
+                    AllData.sim.kC = 8; %Weight on cost
+                    AllData.sim.gamma = 1; %Power on cost
+                    AllData.sim.beta = 20; %Choice temperature
                     AllData.sim.bias = 0; %Choice bias
-                    AllData.sim.kRew = 3; %Weight on reward
+                    AllData.sim.kRew = 1; %Weight on reward
                 %Triallist of the simulated choices:
                     AllData.triallist.choicetypes = 1; %Simulate trials of only one choice type (here arbitrarily set to 1 for Delay)
             end
@@ -50,7 +51,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                     %Model inversion settings
                         OTG_settings.fixed_beta = 5;        % Assume this fixed value for the inverse choice temperature (based on past results) to improve model fit.
                         OTG_settings.priorvar = 2*eye(OTG_settings.grid.nbins+1);   % Prior variance for each parameter
-                        OTG_settings.max_n_inv = 21;        % Max. # of trials entered in model inversion algorithm
+                        OTG_settings.max_n_inv = Inf;       % Max. # of trials entered in model inversion algorithm
                         OTG_settings.burntrials = 0;        % Min. # of trials that have to be presented before the model is inverted
                     %VBA: Dimensions
                         OTG_settings.dim.n_theta = 0;
@@ -113,14 +114,14 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                 %Get the participant's calibrated parameters if available
                     if isfield(AllData,['calibration_' typenames{choicetype}])
                         AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
-                    else %Otherwise, use naïve priors or population averages as priors
+                    else %Otherwise, use naive priors or population averages as priors
                         %Naieve priors
-                            AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
-                        %Population average priors
-                            AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
-                            AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
-                            AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
-                            AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
+                            AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; zeros(OTG_settings.grid.nbins,1)];
+                        %Population average priors (not recommended unless you have *very* few trials in your experiment)
+%                             AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
+%                             AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
+%                             AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
+%                             AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
                     end
             end
         end
@@ -177,26 +178,8 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                     title('Probability distribution')
                     legend({'PDF','sampled cost'},'Location','SouthOutside','Orientation','horizontal')
                 end
-            %Compute option values for simulated decision-maker (using a different value function)
-                SSRew = reward; %Reward for the uncostly option (sampled above)
-                LLRew = 1; %Reward for the costly ("larger-later") option: 1 by default
-                SSCost = 0; %Cost for the uncostly option: 0 by default
-                LLCost = cost; %Cost for the costly option (sampled above)
-                V1 = AllData.sim.kRew*SSRew - AllData.sim.kC*SSCost^AllData.sim.gamma + AllData.sim.bias; %Value of option 1 (uncostly option)
-                V2 = AllData.sim.kRew*LLRew - AllData.sim.kC*LLCost^AllData.sim.gamma; %Value of option 2 (costly option)
-                DV = AllData.sim.beta*(V1 - V2); %Decision value: (option 1) - (option 2)
-            %Simulate the decision
-                try
-                    P_U = VBA_sigmoid(DV); %Probability of choosing the uncostly option
-                catch %for compatibility with older VBA versions
-                    P_U = sigmoid(DV); %Probability of choosing the uncostly option
-                end
-                y = BEC_sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
-            %Enter the simulated choice in trialinfo
-                AllData.trialinfo(choicetrial).choicetype = choicetype; %numeric choicetype (1:4)
-                AllData.trialinfo(choicetrial).SSReward = reward; %reward of the uncostly ("SS": smaller & sooner) option
-                AllData.trialinfo(choicetrial).Cost = cost; %cost of the costly option
-                AllData.trialinfo(choicetrial).choiceSS = y; %choice: 1 = uncostly (smaller&sooner) option; 0 = costly option
+            %Simulate a choice
+                AllData = Simulate_Decision(AllData,reward,cost,choicetrial,choicetype);
         else %Present the sampled choice to the participant on the BECHAMEL choice screen
             trialinput.choicetype = choicetype;
             trialinput.SSReward = reward;
@@ -218,7 +201,15 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
         
 %% Update parameter estimates
     %Get trial history from given choice type        
-        trialinfo = struct2table(AllData.trialinfo,'AsArray',true);
+        try %for compatibility with Octave
+            trialinfo = struct2table(AllData.trialinfo,'AsArray',true);
+        catch
+            trialinfo = struct;
+            listFields = fieldnames(AllData.trialinfo);
+            for iField = 1:length(listFields)
+                trialinfo.(listFields{iField}) = [AllData.trialinfo.(listFields{iField})]';
+            end
+        end
         u = [trialinfo.SSReward(trialinfo.choicetype==choicetype)'; %uncostly-option rewards;
              trialinfo.Cost(trialinfo.choicetype==choicetype)']; %costly-option costs
         y = trialinfo.choiceSS(trialinfo.choicetype==choicetype)'; %choices
@@ -345,4 +336,45 @@ function [Z] = ObservationFunction(~,P,u,in)
         DV = V1 - V2; %Decision value
         Z = 1./(1 + exp(-beta*DV)); %Probability of chosing option 1
         Z = Z';
+end
+
+function AllData = Simulate_Decision(AllData,reward,cost,choicetrial,choicetype)
+% Simulate a decision, given the "true" choice model and the sampled reward and cost
+
+%Compute option values for simulated decision-maker (using a different value function)
+    SSRew = reward; %Reward for the uncostly option (sampled above)
+    LLRew = 1; %Reward for the costly ("larger-later") option: 1 by default
+    SSCost = 0; %Cost for the uncostly option: 0 by default
+    LLCost = cost; %Cost for the costly option (sampled above)
+    X = AllData.exp_settings.OTG.grid.gridX; %The cost grid (for the calculation of the indifference curve - for visualization only)
+    switch AllData.sim.model %Note: bias is in the value function!
+        case 'additive'
+            V1 = AllData.sim.kRew * SSRew - AllData.sim.kC*SSCost ^ AllData.sim.gamma + AllData.sim.bias; %Value of option 1 (uncostly option)
+            V2 = AllData.sim.kRew * LLRew - AllData.sim.kC*LLCost ^ AllData.sim.gamma; %Value of option 2 (costly option)
+            %Indifference curve (for visualization only)
+                AllData.sim.indiff_curve = LLRew - AllData.sim.kC/AllData.sim.kRew .* X .^ AllData.sim.gamma - AllData.sim.bias/AllData.sim.kRew; 
+        case 'exponential'
+            V1 = AllData.sim.kRew * SSRew * exp( -AllData.sim.kC * SSCost ^ AllData.sim.gamma) + AllData.sim.bias; %Value of option 1 (uncostly option)
+            V2 = AllData.sim.kRew * LLRew * exp( -AllData.sim.kC * LLCost ^ AllData.sim.gamma); %Value of option 2 (costly option)
+            %Indifference curve (for visualization only)
+                AllData.sim.indiff_curve = LLRew .* exp( -AllData.sim.kC .* X .^ AllData.sim.gamma) - AllData.sim.bias/AllData.sim.kRew;
+        case 'hyperbolic'
+            V1 = AllData.sim.kRew * SSRew / (1 + AllData.sim.kC * SSCost ^ AllData.sim.gamma) + AllData.sim.bias; %Value of option 1 (uncostly option)
+            V2 = AllData.sim.kRew * LLRew / (1 + AllData.sim.kC * LLCost ^ AllData.sim.gamma); %Value of option 2 (costly option)
+            %Indifference curve (for visualization only)
+                AllData.sim.indiff_curve = LLRew ./ (1 + AllData.sim.kC .* X .^ AllData.sim.gamma) - AllData.sim.bias/AllData.sim.kRew;
+    end
+    DV = AllData.sim.beta*(V1 - V2); %Decision value = inverse temperature x value difference
+%Simulate the decision
+    try
+        P_U = VBA_sigmoid(DV); %Probability of choosing the uncostly option
+    catch %for compatibility with older VBA versions
+        P_U = sigmoid(DV); %Probability of choosing the uncostly option
+    end
+    y = BEC_sampleFromArbitraryP([P_U,1-P_U]',[1,0]',1); %Choice: uncostly option (1) or costly option (0)
+%Enter the simulated choice in trialinfo
+    AllData.trialinfo(choicetrial).choicetype = choicetype; %numeric choicetype (1:4)
+    AllData.trialinfo(choicetrial).SSReward = reward; %reward of the uncostly ("SS": smaller & sooner) option
+    AllData.trialinfo(choicetrial).Cost = cost; %cost of the costly option
+    AllData.trialinfo(choicetrial).choiceSS = y; %choice: 1 = uncostly (smaller&sooner) option; 0 = costly option
 end
