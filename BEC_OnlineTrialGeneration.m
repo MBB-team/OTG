@@ -230,8 +230,8 @@ function [mu,converged,mu_iter] = Run_GaussNewton(mu0, S0, u, y, OTG_settings)
                 converged = 0; break
             end
         %First and second derivative of log posterior function:
-            df = -pinv(S0)*(mu-mu0); % Gradient (first derivative) of log(p(b|y))
-            df2 = -pinv(S0); % Hessian (second derivative) of log(p(b|y))
+            df = -pinv(S0)*(mu-mu0); % Gradient (first derivative) of log-prior
+            df2 = -pinv(S0); % Hessian (second derivative) of log-prior
         %Get parameter values (1st iteration: priors; afterwards: updated)
             b = exp(mu(1)); %bias term
             k1 = exp(mu(2)); %weight on cost, bin 1
