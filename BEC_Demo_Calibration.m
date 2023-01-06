@@ -10,8 +10,8 @@
 % Setup
     %What do you want to demonstrate?
         choicetype = 1; %1:delay/2:risk/3:physical effort/4:mental effort
-        n_example_trials = 3; %example trials (with random costs and rewards) before starting the calibration
-        n_calibration_trials = 15; %calibration trials for demo
+        n_example_trials = 0; %example trials (with random costs and rewards) before starting the calibration
+        n_calibration_trials = 30; %calibration trials for demo
     %Get the experiment settings
         exp_settings = BEC_Settings;
         exp_settings.tactile.navigationArrows = false; %Show the navigation buttons that can be pressed on screen.

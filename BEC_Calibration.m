@@ -164,6 +164,7 @@ function [hf] = CalibrationFigure(hf,calinfo,grid)
     %Clear axis
         figure(hf)
         cla; hold on
+        ha = gca;
     %Plot estimated indifference lines, per bin
         if isfield(calinfo,'muPhi')
             %Get parameters
@@ -178,7 +179,7 @@ function [hf] = CalibrationFigure(hf,calinfo,grid)
                 P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
                 Im = imagesc(grid.gridX([2 end]),grid.gridY([1 end]),P_indiff);
                 Im.AlphaData = 0.75;
-                colorbar; caxis([0 1]);
+                hc = colorbar; caxis([0 1]); ylabel(hc, 'Current indifference estimate','FontSize',14)
             %Plot the fragmented indifference curve
                 for i_bin = 1:in.grid.nbins
                     %Get this bin's indifference line's parameters
@@ -198,13 +199,15 @@ function [hf] = CalibrationFigure(hf,calinfo,grid)
                 end       
         end %if isfield
     %Plot choices
-        scatter(calinfo.u(2,calinfo.y==1),calinfo.u(1,calinfo.y==1),40,'r','filled');
-        scatter(calinfo.u(2,calinfo.y==0),calinfo.u(1,calinfo.y==0),40,'b','filled');
+        hs(1) = scatter(calinfo.u(2,calinfo.y==1),calinfo.u(1,calinfo.y==1),40,'r','filled');
+        hs(2) = scatter(calinfo.u(2,calinfo.y==0),calinfo.u(1,calinfo.y==0),40,'b','filled');
     %Plot layout
         axis([0 1 0 1])
-        title('Generated trials & P(indifference)')
-        ylabel('Reward for the uncostly option')
-        xlabel('Cost of the costly option') 
+        title('Generated trials & Indifference grid','FontSize',16)
+        ylabel('Small reward','FontSize',14)
+        xlabel('Cost','FontSize',14) 
+        legend(hs,{'uncostly option chosen','costly option chosen'},'Location','SouthOutside','Orientation','Horizontal');
+        ha.FontSize = 12;
     %Draw now
         drawnow
 end %function
