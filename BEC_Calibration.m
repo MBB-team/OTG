@@ -1,4 +1,5 @@
 function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_figure)
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
 % Calibrate choice preferences using an online trial generation and parameter estimation procedure.
 % inputs:
 %     "exp_settings": the settings structure produced by BEC_Settings
@@ -8,8 +9,6 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
 %           0: if you do not want to show a figure
 %           1: if you want to make and save, but not show on screen, a summary figure of the results
 %           2: if you want to show, but not save, the real-time model-fitting during calibration (for demo purposes)
-% RLH - Update: October 2020
-% Note: entirely coded for 5 cost bins
 
 %% Configuration
     exp_settings = AllData.exp_settings;
@@ -20,7 +19,8 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
     %Options: set priors
         options.priors.SigmaPhi = exp_settings.OTG.prior_var_cal*eye(dim.n_phi); %Prior for parameter variance
         options.priors.muPhi(1) = exp_settings.OTG.prior_bias_cal; %Prior for choice bias
-        options.priors.muPhi(2:dim.n_phi,1) = log(1/diff(grid.rewardlimits)); %Priors for weights on cost      
+        options.priors.muPhi(2:dim.n_phi,1) = log(1/diff(grid.rewardlimits)); %Priors for weights on cost    
+        options.beta = exp_settings.OTG.fixed_beta; % Fix the inverse choice temperature in the calculation of the indifference grid (optional, default = 5) -- this makes the cost selection distribution curve a bit more dense
     calinfo.options = options; %output
     calinfo.grid = grid; %output
     all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %Sampling grid: all rewards
@@ -35,7 +35,7 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
                 cost = burntrials(2,trial);
             else %Update after previous trial and sample new trial
                 %Parameter values
-                    if trial == 1
+                    if ~isfield(calinfo,'posterior')
                         muPhi = options.priors.muPhi;
                     else
                         muPhi = calinfo.posterior.muPhi;
@@ -55,8 +55,10 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
                             C_i = grid.binlimits(i_bin,2); %Cost level of the bin edge
                             R_i = R2 - k*C_i - bias; %Indifference reward level
                     end
-                %Compute the probability of being at indifference, scaled from zero to one
+                %Compute an indifference score, scaled from zero to one
                     P_SS = ObservationFunction([],muPhi,u_ind,options.inG);
+                    DV = -log(1./P_SS-1);
+                    P_SS = VBA_sigmoid(calinfo.options.beta.*DV); %multiply DV with a fixed weight in order to make the cost selection probability distribution denser
                     P_indiff = (0.5-abs(P_SS'-0.5))./0.5; 
                     calinfo.P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
                 %Sample this upcoming trial's cost level
@@ -88,11 +90,17 @@ function [AllData,exitflag] = BEC_Calibration(AllData,choicetype,window,make_fig
             calinfo.y(trial) = trialoutput.choiceSS;
             calinfo.RT(trial) = trialoutput.RT;
         %Invert model with all inputs and choices
-            dim.n_t = trial;
-            posterior = VBA_NLStateSpaceModel(calinfo.y,calinfo.u,[],@ObservationFunction,dim,options);
-            calinfo.muPhi(:,trial) = posterior.muPhi;
-            calinfo.SigmaPhi(:,trial) = diag(posterior.SigmaPhi); 
-            calinfo.posterior = posterior;
+            u = calinfo.u(:,~isnan(calinfo.y));
+            y = calinfo.y(~isnan(calinfo.y));
+            dim.n_t = length(y);
+            if dim.n_t > 0
+                posterior = VBA_NLStateSpaceModel(y,u,[],@ObservationFunction,dim,options);
+                if isstruct(posterior)
+                    calinfo.muPhi(:,trial) = posterior.muPhi;
+                    calinfo.SigmaPhi(:,trial) = diag(posterior.SigmaPhi); 
+                    calinfo.posterior = posterior;
+                end
+            end
         %Show updated calibration figure during demonstration
             if exist('make_figure','var') && ~isempty(make_figure) && make_figure == 2
                 %Create the figure if it does not exist yet
@@ -130,7 +138,6 @@ function [Z] = ObservationFunction(~,P,u,in)
     %Parameters of each indifference line (two parameters per bin)
         all_bias = zeros(in.grid.nbins,1); 
         all_k = zeros(in.grid.nbins,1);
-        beta = in.beta; %Assume a fixed inv. choice temperature for better model fitting (value based on past results)
         for i_bin = 1:in.grid.nbins
             %Get this bin's indifference line's two parameters
                 %Weight on cost
@@ -154,7 +161,7 @@ function [Z] = ObservationFunction(~,P,u,in)
         end
     %Compute probability of choosing option 1 (Z)
         DV = V1 - V2; %Decision value
-        Z = 1./(1 + exp(-beta*DV)); %Probability of chosing option 1
+        Z = 1./(1 + exp(-DV)); %Probability of chosing option 1
         Z = Z';
 end
 
@@ -170,11 +177,13 @@ function [hf] = CalibrationFigure(hf,calinfo,grid)
             %Get parameters
                 muPhi = calinfo.muPhi(:,end);
                 in = calinfo.options.inG;
-            %Compute the probability of being at indifference, scaled from 0 to 1, for each point in the sampling grid
+            %Compute an indifference score, scaled from 0 to 1, for each point in the sampling grid
                 all_R1 = repmat(grid.gridY',1,grid.nbins*grid.bincostlevels); %Sampling grid: all rewards
                 all_cost = repmat(grid.gridX(2:end),grid.binrewardlevels,1); %Sampling grid: all costs
                 u_ind = [reshape(all_R1,[numel(all_R1) 1]) reshape(all_cost,[numel(all_cost) 1])]'; %Full grid - enter in observation function
                 P_SS = ObservationFunction([],muPhi,u_ind,in);
+                DV = -log(1./P_SS-1);
+                P_SS = VBA_sigmoid(calinfo.options.beta.*DV); %multiply DV with a fixed weight in order to make the cost selection probability distribution denser
                 P_indiff = (0.5-abs(P_SS'-0.5))./0.5; 
                 P_indiff = reshape(P_indiff,grid.binrewardlevels,grid.nbins*grid.bincostlevels);
                 Im = imagesc(grid.gridX([2 end]),grid.gridY([1 end]),P_indiff);

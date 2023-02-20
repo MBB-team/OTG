@@ -1,7 +1,8 @@
-%% BEC_Show_Another_Example
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convencience function similar to "BEC_InstructionScreens". It puts one slide on screen asking whether the participant wants to see 
+% another example (press left) or proceed (press right). Also functional with touchscreen!
+
 function [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,which_instruction)
-% Function similar to "BEC_InstructionScreens". Puts one slide on screen asking whether the participant wants to see 
-% another example (left) or proceed (right). Also functional with touchscreen!
 
     %Prepare
         %Settings structure

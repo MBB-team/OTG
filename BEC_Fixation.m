@@ -1,3 +1,6 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function used to show a fixation cross on screen (typically between trials).
+
 function [exitflag,timestamp] = BEC_Fixation(window,exp_settings,time)
 
 %Put fixation cross on screen

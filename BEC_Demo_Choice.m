@@ -1,5 +1,6 @@
-% Demonstration of choice types.
-% Opens a screen and presents one choice, to be set below.
+% This demo script is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+    % Demonstration of example choices.
+    % Opens a screen and presents a battery of choices of a chosen cost type, to be set below.
 
 % Get settings structure:
     exp_settings = BEC_Settings;
@@ -16,8 +17,8 @@
     end
     HideCursor  
     
-% Choice screen
-    for trial = 1
+% Choice screen (specify the demonstration settings here)
+    for trial = 1:10 %fill in the number of examples here
         %Set the choice trial settings-----------------------------------------------------------------------------------------
             trialinput.choicetype = 2;   %Define choice type by number (1:delay/2:risk/3:physical effort/4:mental effort)
             trialinput.SSReward = rand;  %Reward for the uncostly (SS) option (between 0 and 1)

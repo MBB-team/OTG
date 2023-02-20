@@ -1,3 +1,6 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function that listens to the keyboard as the participant needs to press a certain key or set of keys.
+
 function [resp,time]=BEC_WaitForKeyPress(keys,timeOutTime)
 %Takes a cell array of keys, to which it will listen and return the index
 %if any of those keys are pressed. Returns -1 when q is pressed. If it

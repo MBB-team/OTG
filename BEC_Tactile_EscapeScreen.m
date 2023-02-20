@@ -1,10 +1,12 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function  for experiments on a tactile screen: a screen appears and asks for confirmation after the [X] escape cross is pressed 
+% during the experiment. The user replies 'yes' (terminate experiment) or 'no' (don't terminate).
+
 function [Escape_experiment] = BEC_Tactile_EscapeScreen(exp_settings,window)
-% Function for tactile screen: a screen appears and asks for confirmation after the [X] escape cross is pressed during the experiment. The user
-% replies 'yes' (terminate experiment) or 'no' (don't terminate).
-% AllData.exp_settings.tactile.quit_text = 'Êtes-vous sur.e de vouloir quitter l''expérience?';
-% AllData.exp_settings.tactile.QuitScreenFontSize = 32;
 
 %% "Are you sure you want to quit"-window
+% Set the quit text here:
+    quit_text = 'Êtes-vous sur.e de vouloir quitter l''expérience?';
 
 % Open window
     [Xsize, Ysize]=Screen('WindowSize',window); %Get current screen size
@@ -12,7 +14,6 @@ function [Escape_experiment] = BEC_Tactile_EscapeScreen(exp_settings,window)
     [window2,winRect2] = Screen('OpenWindow',0,exp_settings.colors.grey,newWindowRect); %0 for Windows Desktop screen
 
 % Draw text on new window
-    quit_text = 'Êtes-vous sur.e de vouloir quitter l''expérience?';
     Screen('TextSize',window2,exp_settings.tactile.QuitScreenFontSize); %Careful to set the text size back to what it was before
     DrawFormattedText(window2, quit_text, 'center', 1/3*winRect2(4), exp_settings.colors.white);
     

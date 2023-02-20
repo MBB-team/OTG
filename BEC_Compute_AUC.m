@@ -1,7 +1,8 @@
 function [AUC] = BEC_Compute_AUC(muPhi,costlevels_per_bin)
-% Calculate area under the curve of value function
-%   input: muPhi, the parameter posteriors from the online trial generation (OTG) algorithm
-%   output: AUC, the area under the curve
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% Calculate area under the curve of the indifference curve.
+%       input: muPhi, the parameter posteriors from the online trial generation (OTG) algorithm
+%       output: AUC, the area under the curve
 
 % Verify input
     if isempty(muPhi) || any(isnan(muPhi))

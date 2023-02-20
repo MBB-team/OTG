@@ -1,4 +1,7 @@
-%% Exit experiment (cleanup and close)
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% This is a convenience function for Psychtoolbox experiments. It closes the Psychtoolbox session in a controlled manner, notably by calling functions
+% needed to close any plugged in devices.
+
 function BEC_ExitExperiment(AllData)
     sca; %Screen: close all
     clear player %Terminate the music player, if active

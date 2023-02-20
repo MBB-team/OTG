@@ -1,7 +1,8 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It visualizes of online trial generation, per trial. This function is made such that it is compatible both with simulations of the OTG, as well 
+% as with datasets of results that are acquired experimentally.
+
 function BEC_Visualize_OTG(AllData,choicetrial)
-% Visualization of online trial generation, per trial.
-% This function is made such that it is compatible both with simulations of the OTG, as well as with
-% datasets of results that are acquired in the lab.
 
 % Settings
     OTG_settings = AllData.exp_settings.OTG;

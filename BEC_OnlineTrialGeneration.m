@@ -1,5 +1,7 @@
 function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
-% Generates one trial based on a choice model, fitted on the history of choices of the participant.
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It generates one trial each time it is called, based on a choice model fitted on the history of choices of the participant.
+% Note that this is the version of the online trial generation algorithm that does *not* use VBA.
 % This function requires the following inputs:
 %       AllData:    the structure that contains all the necessary data and settings. May be an empty
 %                   structure at the time of the first choice trial, in that case all the necessary 
@@ -62,20 +64,21 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
     %OTG_prior: prior estimates of model parameters, per choice type
         if ~isfield(AllData,'OTG_prior')
             AllData.OTG_prior = struct;
-            if type_trialno == 1 %Get values from choice calibration if present, or enter population average
-                %Get the participant's calibrated parameters if available
-                    if isfield(AllData,['calibration_' typenames{choicetype}])
-                        AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
-                    else %Otherwise, use population averages as priors
-                        %Naieve priors
-                            AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
-                        %Population average priors (not recommended unless you have *very* few trials in your experiment
+        end
+        if type_trialno == 1 %Get values from choice calibration if present, or enter population average
+            %Get the participant's calibrated parameters if available
+                if isfield(AllData,['calibration_' typenames{choicetype}])
+                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
+                else %Otherwise, use population averages as priors
+                    %Naieve priors
+                        AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];
+                    %Population average priors (not recommended unless you have *very* few trials in your experiment and no idea of what a "normal"
+%                         participant's preferences might be
 %                             AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
 %                             AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
 %                             AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
 %                             AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];                        
-                    end
-            end
+                end
         end
     %OTG_posterior: posterior estimates from the online trial generation, per choice type
         if ~isfield(AllData,'OTG_posterior')
@@ -93,7 +96,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
         cost = SampleCost(AllData,choicetype);
     %Sample the reward of the uncostly option, based on the indifference value and the sampled cost
         reward = SampleReward(AllData,choicetype,cost);
-    %Rule-of-thumb when the algorithm does not converge: adjust the reward away from indifference
+    %Heuristic when the algorithm does not converge: adjust the reward away from indifference
         if type_trialno > OTG_settings.burntrials && AllData.OTG_posterior.(typenames{choicetype}).converged(end) == 0
             reward = Adjust_Reward(AllData,reward,cost,choicetype);
         end
@@ -190,6 +193,9 @@ function [u,y] = GetTrialFeatures(AllData)
          trialinfo.Cost(trialinfo.choicetype==choicetype)']; %costly-option costs
     y = trialinfo.choiceSS(trialinfo.choicetype==choicetype)'; %choices
     n = sum(trialinfo.choicetype==choicetype);
+%Remove NaN trials (these occur when the participant takes longer for a trial than a set time limit)
+    u = u(:,~isnan(y));
+    y = y(~isnan(y));
 %Restrict data for inversion to the most recent trials, according to a predefined recency criterion
     if n > OTG_settings.max_n_inv
         n = OTG_settings.max_n_inv;
@@ -376,7 +382,7 @@ function [cost] = SampleCost(AllData,choicetype)
     %Settings
         typenames = AllData.exp_settings.OTG.typenames;
         grid = AllData.exp_settings.OTG.grid;
-    %Grid with probability of indifference for each cost/reward combination
+    %Grid with degree of indifference for each cost/reward combination
         P_indiff = AllData.OTG_posterior.(typenames{choicetype}).P_indiff; 
     %Make probability density function by summing P_indiff per cost level
         PDF = sum(P_indiff); 
@@ -554,7 +560,7 @@ function OTG_settings = Get_OTG_Settings
         OTG_settings.grid.gridY = OTG_settings.grid.rewardlimits(1):(OTG_settings.grid.rewardlimits(2)-OTG_settings.grid.rewardlimits(1))/(OTG_settings.grid.binrewardlevels-1):OTG_settings.grid.rewardlimits(2);  % Uncostly option rewards for the indifference grid
         OTG_settings.grid.gridX = OTG_settings.grid.costlimits(1):(OTG_settings.grid.costlimits(2)-OTG_settings.grid.costlimits(1))/(OTG_settings.grid.bincostlevels*OTG_settings.grid.nbins):OTG_settings.grid.costlimits(2);   % Cost amounts for sampling grid
     %Parameter settings
-        OTG_settings.fixed_beta = 5;       % Assume this fixed value for the inverse choice temperature (based on past results) to improve model fit.
+        OTG_settings.fixed_beta = 5;        % Fix the inverse choice temperature in the calculation of the indifference grid (optional, default = 5)
         OTG_settings.priorvar = 3*eye(OTG_settings.grid.nbins+1);   % Prior variance for each parameter
     %Algorithm settings:
         OTG_settings.burntrials = 1;        % # of trials that must have been sampled before inverting the model (minimum: 1)

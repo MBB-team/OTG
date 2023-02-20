@@ -1,4 +1,5 @@
 function [timings] = BEC_DrawRiskCost(window,exp_settings,drawchoice)
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
 % Visualize the wheel-of-fortune, the visualization of the risk cost from the BECHAMEL toolbox.
 % This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
 % idiosyncracies of Psychtoolbox.

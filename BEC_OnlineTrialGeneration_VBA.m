@@ -1,5 +1,7 @@
 function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
-% Generates one trial based on a choice model, fitted on the history of choices of the participant.
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It generates one trial each time it is called, based on a choice model fitted on the history of choices of the participant.
+% Note that this is the version of the algorithm that makes uses of VBA and should be preferred in Matlab-based experiments.
 % This function requires the following inputs:
 %       AllData:    the structure that contains all the necessary data and settings. May be an empty
 %                   structure at the time of the first choice trial, in that case all the necessary 
@@ -37,7 +39,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                     AllData.exp_settings = BEC_Settings; %Full settings structure
                 else %In case the function is used for simulations; enter these default settings only:
                     %Choice types
-                        OTG_settings.choicetypes = [1 2 3 4];
+                        OTG_settings.choicetypes = 1; %[1 2 3 4];
                         OTG_settings.typenames = {'delay','risk','physical_effort','mental_effort'};
                     %Sampling grid
                         OTG_settings.grid.nbins = 5;             % number of cost bins
@@ -49,7 +51,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
                         OTG_settings.grid.gridY = OTG_settings.grid.rewardlimits(1):(OTG_settings.grid.rewardlimits(2)-OTG_settings.grid.rewardlimits(1))/(OTG_settings.grid.binrewardlevels-1):OTG_settings.grid.rewardlimits(2);  % Uncostly option rewards for the indifference grid
                         OTG_settings.grid.gridX = OTG_settings.grid.costlimits(1):(OTG_settings.grid.costlimits(2)-OTG_settings.grid.costlimits(1))/(OTG_settings.grid.bincostlevels*OTG_settings.grid.nbins):OTG_settings.grid.costlimits(2);   % Cost amounts for sampling grid
                     %Model inversion settings
-                        OTG_settings.fixed_beta = 5;        % Assume this fixed value for the inverse choice temperature (based on past results) to improve model fit.
+                        OTG_settings.fixed_beta = 5;        % Fix the inverse choice temperature in the calculation of the indifference grid (optional, default = 5)
                         OTG_settings.priorvar = 2*eye(OTG_settings.grid.nbins+1);   % Prior variance for each parameter
                         OTG_settings.max_n_inv = Inf;       % Max. # of trials entered in model inversion algorithm
                         OTG_settings.burntrials = 0;        % Min. # of trials that have to be presented before the model is inverted
@@ -110,20 +112,21 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
     %OTG_prior: prior estimates of model parameters, per choice type
         if ~isfield(AllData,'OTG_prior')
             AllData.OTG_prior = struct;
-            if type_trialno == 1 %Get values from choice calibration if present, or enter population average
-                %Get the participant's calibrated parameters if available
-                    if isfield(AllData,['calibration_' typenames{choicetype}])
-                        AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
-                    else %Otherwise, use naive priors or population averages as priors
-                        %Naieve priors
-                            AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; zeros(OTG_settings.grid.nbins,1)];
-                        %Population average priors (not recommended unless you have *very* few trials in your experiment)
+        end
+        if type_trialno == 1 %Get values from choice calibration if present, or enter population average
+            %Get the participant's calibrated parameters if available
+                if isfield(AllData,['calibration_' typenames{choicetype}])
+                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
+                else %Otherwise, use naive priors or population averages as priors
+                    %Naieve priors
+                        AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; zeros(OTG_settings.grid.nbins,1)];
+                    %Population average priors (not recommended unless you have *very* few trials in your experiment) and no idea of how a "normal"
+%                       participant might behave.
 %                             AllData.OTG_prior.delay.muPhi = [-3.6628;0.2041;-2.2642;-2.8915;-3.2661;-1.8419];
 %                             AllData.OTG_prior.risk.muPhi = [-1.4083;0.8217;-1.1018;-1.1148;-0.6224;0.2078];
 %                             AllData.OTG_prior.physical_effort.muPhi = [-5.4728;-2.9728;-2.4963;-1.8911;-0.3541;-1.7483];
 %                             AllData.OTG_prior.mental_effort.muPhi = [-4.0760;0.2680;-0.5499;-2.0245;-2.6053;-1.9991];
-                    end
-            end
+                end
         end
     %OTG_posterior: posterior estimates from the online trial generation, per choice type
         if ~isfield(AllData,'OTG_posterior')
@@ -138,7 +141,7 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
         
 %% Sample and present a choice of the given choice type
     %Sample cost level of the costly option using P_indiff
-        P_indiff = AllData.OTG_posterior.(typenames{choicetype}).P_indiff; %Grid with probability of indifference for each cost/reward combination
+        P_indiff = AllData.OTG_posterior.(typenames{choicetype}).P_indiff; %Grid with degree of indifference for each cost/reward combination
         PDF = sum(P_indiff); PDF = PDF/sum(PDF); %Make probability density function
         cost = BEC_sampleFromArbitraryP(PDF',grid.gridX(2:end)',1); %Sample a cost level (see subfunction below)
         costbin = find(cost>grid.binlimits(:,1) & cost<=grid.binlimits(:,2)); %get cost bin number
@@ -213,8 +216,11 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
         u = [trialinfo.SSReward(trialinfo.choicetype==choicetype)'; %uncostly-option rewards;
              trialinfo.Cost(trialinfo.choicetype==choicetype)']; %costly-option costs
         y = trialinfo.choiceSS(trialinfo.choicetype==choicetype)'; %choices
-        n = sum(trialinfo.choicetype==choicetype);
+    %Remove NaN trials (these occur when the participant takes longer for a trial than a set time limit)
+        u = u(:,~isnan(y));
+        y = y(~isnan(y));
     %Restrict data for inversion to the most recent trials, according to a predefined recency criterion
+        n = length(y);
         if n > OTG_settings.max_n_inv
             n = OTG_settings.max_n_inv;
             u = u(:,end-(n-1):end);

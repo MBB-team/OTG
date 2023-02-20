@@ -1,5 +1,7 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function that presents the rating screen for evaluating one's moods or emotions on an analog scale using a slider.
+
 function [Ratings,timings,exitflag] = BEC_RateEmotion(window,AllData,which_rating)
-% Presents the rating screen for evaluating one's moods or emotions on an analog scale using a slider.
 % Inputs:
 %           window: the Psychtoolbox window
 %           AllData: the experiment data structure

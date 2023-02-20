@@ -1,5 +1,7 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a function that allows for a plugin during an OTG-based experiment (here, an EyeTribe eyetracker).
+
 function [eye_calibration] = BEC_SetupEyetracker(window)
-% Set up the eyetracker
 % Script mostly borrowed from Gilles Rautureau, April 2019
 
 EyeTribeInit(60,90); % init EyeTribe at 60Hz and 90 seconds buffer

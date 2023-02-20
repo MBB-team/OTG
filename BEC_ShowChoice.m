@@ -1,5 +1,10 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is integral to the OTG toolbox because it is the main function to show a generated choice on screen.
+% Choice presentation is done in a characteristic binary manner (with symbolically visualized costs on top and rewards at the bottom).
+% The decision-maker chooses between the option presented on the left and the option presented on the right by pressing the corresponding key or by
+% tapping (on a touchscreen). The Psychtoolbox is used for the visual presentation of the choices.
+
 function [trialoutput,exitflag] = BEC_ShowChoice(window,exp_settings,trialinput)
-% Battery of Economic Choices - show the choice screen
 % Inputs:
 %     window                %The Psychtoolbox session window
 %     exp_settings          %The experiment settings structure

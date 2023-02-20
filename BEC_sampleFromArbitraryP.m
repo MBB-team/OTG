@@ -1,6 +1,7 @@
-function [X] = BEC_sampleFromArbitraryP(p,gridX,N)
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
 % NOTE: this function is copied from an old version of VBA, by Jean Daunizeau and Lionel Rigoux
-% ----------------------------------------------------------------------------------------------------------------------
+
+function [X] = BEC_sampleFromArbitraryP(p,gridX,N)
 % inverse transform sampling scheme
 % function [X] = sampleFromArbitraryP(p,gridX,N)
 % This function samples from an arbitrary 1D probability distribution

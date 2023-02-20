@@ -1,5 +1,7 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is an auxiliary function to BEC_ShowChoice.
+
 function [timings] = BEC_DrawChoiceScreen(exp_settings,drawchoice,window)
-% Auxiliary function to BEC_ShowChoice.
 % Draws the choice screen, as defined in the structure "drawchoice", in Psychtoolbox. "window" is the open PTB window,
 % exp_settings is the experimental settings structure. This function returns the exact onset time of the choice on
 % screen. 

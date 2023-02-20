@@ -1,9 +1,8 @@
 function [timings] = BEC_DrawDelayCost(window,exp_settings,drawchoice)
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
 % Visualize the calendars of the delay cost visualization of the BECHAMEL toolbox.
 % This function is an auxiliary function to BEC_DrawChoiceScreen, which draws the choice to be visualized in the
 % idiosyncracies of Psychtoolbox.
-% Note: this is the more recent version of the delay cost visualization (created February 2021). For the original
-% calendar representation, see "BEC_DrawDelayCost2"
 
 %Settings
     days_per_month = [31 28 31 30 31 30 31 31 30 31 30 31]; %The calendar year. Leave untouched.

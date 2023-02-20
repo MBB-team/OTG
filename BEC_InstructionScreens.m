@@ -1,3 +1,6 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function ot present slides on screen (e.g. instructions).
+
 function [exitflag,timings] = BEC_InstructionScreens(window,AllData,which_instruction)
 % Enter the slides to put on screen. Wait for the space bar or right arrow 
 % to be pressed in order to move on to the next slide, or left arrow to return to previous slide.

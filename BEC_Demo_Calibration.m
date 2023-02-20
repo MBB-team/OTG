@@ -1,11 +1,12 @@
 %% BEC_Demo_Calibration
-% Demonstration of the choice calibration procedure. Just below, select which type of cost you want to show, how many
-% example trials you want to show first, and how many calibration trials you want to perform.
-% This script then calls BEC_Calibration, the function that is used to calibrate a participant's individual preferences.
-% It does so by trying to approximate the participant's indifference curve using an online trial generation procedure. 
-% A figure is produced that visualizes this iterative procedure with every choice you make. The colors in the grid
-% present the likelihood of being at indifference: yellow means a high probability of being at indifference, blue values
-% are further removed from the indifference curve.
+% This demonstration script is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+    % Demonstration of the choice calibration procedure. Just below, select which type of cost you want to show, how many
+    % example trials you want to show first, and how many calibration trials you want to perform.
+    % This script then calls BEC_Calibration, the function that is used to calibrate a participant's individual preferences.
+    % It does so by trying to approximate the participant's indifference curve using an online trial generation procedure. 
+    % A figure is produced that visualizes this iterative procedure with every choice you make. The colors in the grid
+    % present the likelihood of being at indifference: yellow means a high probability of being at indifference, blue values
+    % are further removed from the indifference curve.
 
 % Setup
     %What do you want to demonstrate?

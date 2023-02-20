@@ -1,3 +1,7 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function for experiments on a tactile screen: a screen appears and asks to fill in the patient ID (with the digits/symbols that 
+% are provided). This ID will feature in the filename that the dataset will be saved with.
+
 function [ID,exitflag] = BEC_Tactile_PatientID(exp_settings,window)
 % Settings
     header_text = 'Avant de commencer, remplissez le numéro du patient :';

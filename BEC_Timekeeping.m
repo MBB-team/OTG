@@ -1,5 +1,7 @@
+% This function is part of the OTG toolbox, used for generating and presenting a battery of economic choices.
+% It is a convenience function that keeps track of events, their timing, and sends triggers to plugged-in devices
+
 function [timings] = BEC_Timekeeping(event,plugins,seconds)
-% Keeps track of events, their timing, and sends trigger to plugged-in devices
 % Inputs:
 %   event: a string name of the event, from the list defined below
 %   plugins: any plugged-in devices that you want to send triggers to, e.g.: Arduino, EyeTribe, BIOPAC
@@ -8,7 +10,7 @@ function [timings] = BEC_Timekeeping(event,plugins,seconds)
 %   timings.event : the name of the event
 %   timings.time : the onset time in the convenient format [year month day hour minute seconds]
 %   timings.seconds : (when "seconds" is specified) the exact onset time, i.e. the timestamp in GetSecs format
-%   (if plugged in) timings.trigger_iEEG : the trigger that was sent to Arduino for iEEG recordings
+%   (if plugged in) timings.trigger_Arduino : the trigger that was sent to Arduino
 %   (if plugged in) timings.trigger_BIOPAC : the trigger(s) that were sent to BIOPAC for physiology recordings
 %   (if plugged in) timings.pupil_mark,timings.pupil_scene : the marker and scene that were sent to EyeTribe for pupil recordings
 
@@ -25,68 +27,68 @@ function [timings] = BEC_Timekeeping(event,plugins,seconds)
     switch event
         %Start and end of experiment
             case {'StartExperiment','EndExperiment'}
-                trigger_iEEG = 88*ones(1,5); %RH's unique trigger stamp to mark the beginning/end of the experiment
+                trigger_Arduino = 88*ones(1,5); %RH's unique trigger stamp to mark the beginning/end of the experiment
         %Start of main experiment
             case 'StartMainExperiment'
-                trigger_iEEG = 50*ones(1,3);
+                trigger_Arduino = 50*ones(1,3);
         %Instructions
             case 'InstructionScreen'
-                trigger_iEEG = 1;
+                trigger_Arduino = 1;
                 pupil_mark = 1;
         %Emotion induction
             case 'Induction_fixation_pre'
-                trigger_iEEG = 2;
+                trigger_Arduino = 2;
                 pupil_mark = 2;
             case 'Induction'
-                trigger_iEEG = 3;
+                trigger_Arduino = 3;
                 pupil_mark = 3;
                 trigger_BIOPAC = 3; %This is the only event where triggers get sent to BIOPAC
             case 'Induction_fixation_post'
-                trigger_iEEG = 4;
+                trigger_Arduino = 4;
                 pupil_mark = 4;
         %Choices
             case 'Choice_fixation'
-                trigger_iEEG = 5;
+                trigger_Arduino = 5;
                 pupil_mark = 5;
             case 'Choice_screenonset' %The screen appears, but you can't make a decision yet
-                trigger_iEEG = 6;
+                trigger_Arduino = 6;
                 pupil_mark = 6;
             case 'Choice_decisiononset' %The "+" turns into a "?", you may now make a decision
-                trigger_iEEG = 7;
+                trigger_Arduino = 7;
                 pupil_mark = 7;
             case 'Choice_decisiontime' %The time stamp of the decision
-                trigger_iEEG = 8;
+                trigger_Arduino = 8;
                 pupil_mark = 8;
             case 'Choice_confirmation' %The confirmation on screen
-                trigger_iEEG = 9;
+                trigger_Arduino = 9;
                 %pupil_mark = 9; % ---- do not send this to the eyetracker; the time gap between 
                 %'Choice_decisiontime' and 'Choice_confirmation' is minimal.
         %Ratings
             case 'RatingScreenOnset'
-                trigger_iEEG = 10;
+                trigger_Arduino = 10;
                 pupil_mark = 10;
             case 'RatingConfirmation'
-                trigger_iEEG = 11;
+                trigger_Arduino = 11;
                 pupil_mark = 11;
             case 'RatingCompleted'
-                trigger_iEEG = 12;
+                trigger_Arduino = 12;
                 pupil_mark = 12;
         %Washout
             case 'Washout'
-                trigger_iEEG = 13;
+                trigger_Arduino = 13;
                 pupil_mark = 13;
     end
 %Send trigger/marker
     if exist('plugins','var')
-        %iEEG: send triggers to Arduino
+        %Arduino: send triggers to external device
             if isfield(plugins,'Arduino') && plugins.Arduino == 1 %Note: plugins.Arduino is a logical
-                if ~exist('trigger_iEEG','var') %No trigger for iEEG has been set
-                    timings.trigger_iEEG = []; %Output: empty
+                if ~exist('trigger_Arduino','var') %No trigger for iEEG has been set
+                    timings.trigger_Arduino = []; %Output: empty
                 else %A trigger has been set
-                    timings.trigger_iEEG = trigger_iEEG; %Store the trigger
-                    for i = 1:length(timings.trigger_iEEG) %Loop through trigger values in case there are multiple
-                        SendArduinoTrigger(timings.trigger_iEEG(i)) %Send trigger to Arduino
-                        if length(timings.trigger_iEEG)>1 %In case of a loop: pause for 50ms
+                    timings.trigger_Arduino = trigger_Arduino; %Store the trigger
+                    for i = 1:length(timings.trigger_Arduino) %Loop through trigger values in case there are multiple
+                        SendArduinoTrigger(timings.trigger_Arduino(i)) %Send trigger to Arduino
+                        if length(timings.trigger_Arduino)>1 %In case of a loop: pause for 50ms
                             pause(0.05)
                         end
                     end %for i
