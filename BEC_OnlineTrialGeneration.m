@@ -67,8 +67,8 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration(AllData,window)
         end
         if type_trialno == 1 %Get values from choice calibration if present, or enter population average
             %Get the participant's calibrated parameters if available
-                if isfield(AllData,['calibration_' typenames{choicetype}])
-                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
+                if isfield(AllData,'calibration') && isfield(AllData.calibration,typenames{choicetype})
+                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.calibration.(typenames{choicetype}).posterior.muPhi;
                 else %Otherwise, use population averages as priors
                     %Naieve priors
                         AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; log(0.99)*ones(OTG_settings.grid.nbins,1)];

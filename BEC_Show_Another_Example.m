@@ -22,7 +22,7 @@ function [left_or_right,timings] = BEC_Show_Another_Example(window,AllData,which
                 end
             else
                 %Default
-                    slide = exp_settings.instructions_emotions.another_example; %Get slides
+                    slide = 11;
                 %Tactile with arrows
                     if tactile_screen
                         slide = 11;

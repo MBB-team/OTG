@@ -113,10 +113,10 @@ function [AllData,exitflag] = BEC_OnlineTrialGeneration_VBA(AllData,window)
         if ~isfield(AllData,'OTG_prior')
             AllData.OTG_prior = struct;
         end
-        if type_trialno == 1 %Get values from choice calibration if present, or enter population average
+        if type_trialno == 1 %Before starting, get values from choice calibration if present, or enter population average
             %Get the participant's calibrated parameters if available
-                if isfield(AllData,['calibration_' typenames{choicetype}])
-                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.(['calibration_' typenames{choicetype}]).posterior.muPhi;
+                if isfield(AllData,'calibration') && isfield(AllData.calibration,typenames{choicetype})
+                    AllData.OTG_prior.(typenames{choicetype}).muPhi = AllData.calibration.(typenames{choicetype}).posterior.muPhi;
                 else %Otherwise, use naive priors or population averages as priors
                     %Naieve priors
                         AllData.OTG_prior.(typenames{choicetype}).muPhi = [-3; zeros(OTG_settings.grid.nbins,1)];

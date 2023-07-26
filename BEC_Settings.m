@@ -147,6 +147,7 @@ function [exp_settings] = BEC_Settings
             exp_settings.OTG.options.inG.ind.k4 = 5;    % Slope of bin 4 (parameter #5)
             exp_settings.OTG.options.inG.ind.k5 = 6;    % Slope of bin 5 (parameter #6)
             exp_settings.OTG.options.inG.grid = exp_settings.OTG.grid; %Grid is entered in observation function too
+            exp_settings.OTG.options.inG.beta = exp_settings.OTG.fixed_beta; %Inv. choice temp. for observation function
     
 %% Rating screen settings
 % These are examples of ratings that can be presented with the "BEC_RateEmotion" function.
